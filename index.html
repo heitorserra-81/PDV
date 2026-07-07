@@ -217,6 +217,13 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .notif{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:150;background:var(--green);color:#0d1f14;font-weight:800;padding:14px 22px;border-radius:16px;box-shadow:0 12px 34px rgba(0,0,0,.5);display:none;max-width:92vw;text-align:center;animation:drop .35s}
 .notif.on{display:block}
 .fotoprev{width:74px;height:74px;border-radius:16px;object-fit:cover;border:2px solid var(--line);display:block;margin-top:8px}
+.mesa::before,.mesa::after{content:'';position:absolute;left:50%;transform:translateX(-50%);width:38%;height:7px;border-radius:99px;background:var(--line)}
+.mesa::before{top:-5px}.mesa::after{bottom:-5px}
+.mesa.ocupada::before,.mesa.ocupada::after{background:var(--amber);opacity:.65}
+.mesa.conta::before,.mesa.conta::after{background:var(--green);opacity:.75}
+.mesa.agrupada{opacity:.5;border-style:dashed}
+.mesa.agrupada::before,.mesa.agrupada::after{display:none}
+.mesagrid{row-gap:20px}
 </style>
 </head>
 <body>
@@ -278,6 +285,15 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
   <div class="wrap"><div class="mesagrid" id="mesaGrid"></div></div>
 </div>
 
+<div class="screen" id="scBloq">
+  <div class="wrap" style="display:flex;flex-direction:column;justify-content:center;min-height:100dvh;text-align:center">
+    <span style="font-size:52px">⏳</span>
+    <h2 style="margin-top:14px">Aguardando liberação</h2>
+    <p style="color:var(--mut);margin-top:10px;line-height:1.7">Olá, <b id="bloqNome"></b>!<br>Peça ao gerente para te liberar em<br><b>Computador → Gaveta → Equipe do dia</b>.<br>Assim que liberar, esta tela abre sozinha.</p>
+    <button class="btn o" style="margin-top:22px" onclick="show('scHome')">← Voltar</button>
+  </div>
+</div>
+
 <!-- ============ GARÇOM: MESA ============ -->
 <div class="screen" id="scMesa">
   <div class="top"><button class="iconb" onclick="show('scMesas')">←</button><div style="flex:1"><h2 id="mesaTitulo">Mesa</h2><div class="sub" id="mesaSub"></div></div><button class="iconb" onclick="mesaMenu()">⋯</button></div>
@@ -293,7 +309,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 
 <!-- ============ CARDÁPIO ============ -->
 <div class="screen" id="scCardapio">
-  <div class="top"><button class="iconb" onclick="voltarDoCardapio()">←</button><div style="flex:1"><h2 id="cardTitulo">Cardápio</h2><div class="sub" id="cardSub"></div></div></div>
+  <div class="top"><button class="iconb" onclick="voltarDoCardapio()">←</button><div style="flex:1"><h2 id="cardTitulo">Cardápio</h2><div class="sub" id="cardSub"></div></div><button class="iconb" id="btnCardPessoa" onclick="addPessoa()" title="Adicionar pessoa">👤＋</button><button class="iconb" id="btnCardComanda" onclick="renderMesaAberta();show('scMesa')" title="Ver comanda">🧾</button><button class="iconb" id="btnCardMenu" onclick="mesaMenu()">⋯</button></div>
   <div class="wrap">
     <div class="cats" id="catChips"></div>
     <div class="prodgrid" id="prodGrid"></div>
@@ -446,6 +462,8 @@ const TS = () => firebase.firestore.FieldValue.serverTimestamp();
 let REST = new URLSearchParams(location.search).get('rest') || localStorage.getItem('pdv_rest') || '';
 let CFG = null, PRODUTOS = [], MESAS = {}, GRUPOS = [], EQUIPE = [], CLIENTES = [], GAVETA = null;
 let unsubs = [], garcom = localStorage.getItem('pdv_garcom') || '', garcomFoto = localStorage.getItem('pdv_garcom_foto') || '';
+let garcomId = localStorage.getItem('pdv_garcom_id') || '', gerenteOk = false;
+const gParam = new URLSearchParams(location.search).get('g') || '';
 let adminOk = false, mesaAtual = null, carrinho = [], catAtiva = 'Todos', contexto = 'garcom';
 let pedidosVistos = new Set(), primeiraCarga = true, deferredPrompt = null, clienteSel = null;
 let ocupado = false; // trava anti toque-duplo
@@ -503,7 +521,9 @@ async function boot(){
     }));
     unsubs.push(col('equipe').orderBy('nome').onSnapshot(s => {
       EQUIPE = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      autoLoginLink(); checarHabilitacao();
       if($('scConfig').classList.contains('on')) renderEquipe();
+      if($('scComp').classList.contains('on') && $('compGav').style.display !== 'none') renderGaveta();
     }));
     unsubs.push(col('mesas').onSnapshot(s => {
       MESAS = {}; s.docs.forEach(d => MESAS[d.id] = d.data());
@@ -567,7 +587,8 @@ function sairRest(){ pararListeners(); REST=''; localStorage.removeItem('pdv_res
 
 /* ---------- login do garçom (com equipe) ---------- */
 function entrarGarcom(){
-  if(!garcom){ abrirNome(); return; }
+  if(!garcom || (!garcomId && EQUIPE.some(f => f.funcao === 'garcom'))){ abrirNome(); return; }
+  if(garcomId && !garcomHabilitado()){ mostrarBloqueio(); return; }
   $('garcomNomeTop').textContent = garcom;
   renderMesas('mesaGrid', false); escutarProntos(); show('scMesas');
 }
@@ -576,16 +597,17 @@ function abrirNome(){
   $('ovNomeBox').innerHTML = `
     <h3 style="font-size:18px">👤 Quem é você?</h3>
     ${garcons.length ? `<div class="menuops">${garcons.map(f =>
-      `<button onclick="escolherFunc('${f.id}')">${avatarHTML(f.nome, f.foto)}<span>${esc(f.nome)}</span></button>`).join('')}</div>
-      <label>Ou digite outro nome</label>` : '<label>Seu nome</label>'}
-    <input id="inGarcomNome" placeholder="ex: Heitor">
-    <button class="btn g" style="margin-top:16px" onclick="salvarGarcom()">Começar</button>`;
+      `<button onclick="escolherFunc('${f.id}')">${avatarHTML(f.nome, f.foto)}<span style="flex:1">${esc(f.nome)}</span>${f.habilitado ? '<span class="badge g">liberado</span>' : '<span class="badge r">bloqueado</span>'}</button>`).join('')}</div>
+      <p style="color:var(--mut);font-size:12px;margin-top:12px;line-height:1.5">Não está na lista? Peça ao gerente para te cadastrar em Configurações → Equipe. Cada funcionário também pode receber um link pessoal que já entra logado.</p>`
+    : `<label>Seu nome</label><input id="inGarcomNome" placeholder="ex: Heitor">
+      <button class="btn g" style="margin-top:16px" onclick="salvarGarcom()">Começar</button>`}
+    <button class="btn o" style="margin-top:12px" onclick="fecharOv('ovNome');show('scHome')">Cancelar</button>`;
   abrirOv('ovNome');
 }
 function escolherFunc(id){
   const f = EQUIPE.find(x => x.id === id); if(!f) return;
-  garcom = f.nome; garcomFoto = f.foto || '';
-  localStorage.setItem('pdv_garcom', garcom); localStorage.setItem('pdv_garcom_foto', garcomFoto);
+  garcom = f.nome; garcomFoto = f.foto || ''; garcomId = f.id;
+  localStorage.setItem('pdv_garcom', garcom); localStorage.setItem('pdv_garcom_foto', garcomFoto); localStorage.setItem('pdv_garcom_id', garcomId);
   fecharOv('ovNome'); entrarGarcom();
 }
 function salvarGarcom(){
@@ -595,7 +617,7 @@ function salvarGarcom(){
   localStorage.setItem('pdv_garcom', v); localStorage.removeItem('pdv_garcom_foto');
   fecharOv('ovNome'); entrarGarcom();
 }
-function trocarGarcom(){ garcom=''; garcomFoto=''; localStorage.removeItem('pdv_garcom'); abrirNome(); }
+function trocarGarcom(){ garcom=''; garcomFoto=''; garcomId=''; localStorage.removeItem('pdv_garcom'); localStorage.removeItem('pdv_garcom_id'); abrirNome(); }
 let unsubProntos = null;
 function escutarProntos(){
   if(unsubProntos) return;
@@ -631,21 +653,28 @@ function renderMesas(elId, modoCaixa){
     const m = MESAS[String(i)] || {};
     const st = m.status || 'livre';
     const resta = itensRestanteTotal(m);
+    if(st === 'agrupada'){
+      html += `<div class="mesa agrupada" onclick="${modoCaixa ? `abrirCaixaMesa(${m.agrupadaEm})` : `abrirMesa(${m.agrupadaEm})`}">
+        <div class="n">${i}</div><div class="st">🔗 c/ mesa ${m.agrupadaEm}</div></div>`;
+      continue;
+    }
     const stTxt = st === 'livre' ? 'Livre' : (st === 'conta' ? 'Pediu conta' : 'Ocupada');
     html += `<div class="mesa ${st}" onclick="${modoCaixa ? `abrirCaixaMesa(${i})` : `abrirMesa(${i})`}">
       ${st !== 'livre' && m.numPessoas ? `<div class="pess">👥${m.numPessoas}</div>` : ''}
       ${st !== 'livre' && (m.garcomFoto || m.garcom) ? `<div class="gpic">${avatarHTML(m.garcom, m.garcomFoto, 'sm')}</div>` : ''}
       <div class="n">${i}</div><div class="st">${stTxt}</div>
       ${resta > 0 ? `<div class="tot">${fmt(resta)}</div>` : ''}
-      ${st !== 'livre' ? `<div class="tempo">${minsAberta(m)}</div>` : ''}</div>`;
+      ${st !== 'livre' ? `<div class="tempo">${minsAberta(m)}</div>` : ''}
+      ${(m.grupoCom || []).length ? `<div class="tempo">🪑 +${m.grupoCom.length} mesa(s)</div>` : ''}</div>`;
   }
   $(elId).innerHTML = html;
 }
 function abrirMesa(n){
+  const m0 = MESAS[String(n)] || {};
+  if(m0.status === 'agrupada'){ abrirMesa(m0.agrupadaEm); return; }
   mesaAtual = n; carrinho = []; contexto = 'garcom';
-  const m = MESAS[String(n)];
-  if(!m || m.status === 'livre' || !m.status){ fluxoAbrirMesa(n); return; }
-  renderMesaAberta(); show('scMesa');
+  if(!m0.status || m0.status === 'livre'){ fluxoAbrirMesa(n); return; }
+  abrirCardapio();
 }
 let abrirQtdP = 2;
 function fluxoAbrirMesa(n){
@@ -665,7 +694,7 @@ async function confirmarAbrirMesa(n){
     status: 'ocupada', garcom, garcomFoto, numPessoas: abrirQtdP,
     pessoas: [], itens: [], pagoAvulso: 0, abertaEm: firebase.firestore.Timestamp.now()
   });
-  fecharOv('ovExtra'); renderMesaAberta(); show('scMesa');
+  fecharOv('ovExtra'); abrirCardapio();
 }
 function renderMesaAberta(){
   const m = MESAS[String(mesaAtual)] || {};
@@ -729,6 +758,9 @@ function mesaMenu(){
   $('ovExtraBox').innerHTML = `
     <h3 style="font-size:19px">Mesa ${mesaAtual} — ações</h3>
     <div class="menuops">
+      <button onclick="fecharOv('ovExtra');renderMesaAberta();show('scMesa')"><span style="font-size:20px">🧾</span><span>Ver comanda da mesa</span></button>
+      <button onclick="agruparUI()"><span style="font-size:20px">🪑</span><span>Agrupar outra mesa nesta</span></button>
+      ${(m.grupoCom || []).length ? `<button onclick="desagrupar()"><span style="font-size:20px">↔️</span><span>Separar mesas agrupadas (${m.grupoCom.length})</span></button>` : ''}
       <button onclick="escolherDestino('mesa')"><span style="font-size:20px">🔀</span><span>Transferir mesa inteira</span></button>
       ${(m.pessoas || []).length ? `<button onclick="transferirPessoasUI()"><span style="font-size:20px">👥</span><span>Transferir só algumas pessoas</span></button>` : ''}
       <button onclick="juntarUI()"><span style="font-size:20px">🔗</span><span>Juntar outra mesa nesta</span></button>
@@ -754,6 +786,8 @@ function escolherDestino(tipo){
     <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
 }
 async function transferirMesa(dest){
+  const mm = MESAS[String(mesaAtual)] || {};
+  if((mm.grupoCom || []).length){ toast('Separe as mesas agrupadas antes de transferir'); return; }
   await trava(async () => {
     const oRef = col('mesas').doc(String(mesaAtual)), dRef = col('mesas').doc(String(dest));
     await db.runTransaction(async t => {
@@ -837,14 +871,15 @@ async function juntarMesa(src){
 /* ---------- cardápio ---------- */
 function abrirCardapio(){
   contexto = 'garcom'; catAtiva = 'Todos';
+  const m = MESAS[String(mesaAtual)] || {};
   $('cardTitulo').textContent = 'Mesa ' + mesaAtual;
-  $('cardSub').textContent = 'Toque no produto para adicionar';
+  $('cardSub').textContent = '👥 ' + (m.numPessoas || 1) + ' pessoas · restante ' + fmt(itensRestanteTotal(m));
   renderCardapio('prodGrid','catChips'); atualizarCartBar(); show('scCardapio');
 }
 function voltarDoCardapio(){
   if(carrinho.length && !confirm('Há itens não enviados no carrinho. Sair mesmo assim?')) return;
   carrinho = []; atualizarCartBar();
-  if(contexto === 'balcao'){ show('scBalcao'); } else { renderMesaAberta(); show('scMesa'); }
+  if(contexto === 'balcao'){ show('scBalcao'); } else { show('scMesas'); }
 }
 function categorias(){
   const set = [...new Set(PRODUTOS.map(p => p.categoria || 'Geral'))].sort();
@@ -1038,7 +1073,7 @@ async function enviarPedido(){
           itens: (dm.itens || []).concat(itens), abertaEm: dm.abertaEm || firebase.firestore.Timestamp.now(), numPessoas: dm.numPessoas || 1, pessoas: dm.pessoas || [], pagoAvulso: dm.pagoAvulso || 0 }, { merge: true });
       });
       toast('Pedido enviado! 🖨️');
-      renderMesaAberta(); show('scMesa');
+      show('scMesas');
     }catch(e){ console.error(e); carrinho = itens; atualizarCartBar(); toast('Falha ao enviar. Tente de novo.'); }
   });
 }
@@ -1138,6 +1173,7 @@ async function abrirReimpressao(){
 let cxMesa = null, cxPagamentos = [], cxTaxaOn = true, cxBase = 0, cxDesc = 0, cxModo = 'tudo', cxSel = [], cxPessoa = null, cxPartes = 2, cxDescricao = '';
 function abrirCaixaMesa(n){
   const m = MESAS[String(n)] || {};
+  if(m.status === 'agrupada'){ abrirCaixaMesa(m.agrupadaEm); return; }
   if(!(m.itens || []).length && !(m.status && m.status !== 'livre')){ toast('Mesa ' + n + ' está livre'); return; }
   cxMesa = n; cxModo = null; renderModoPagto();
 }
@@ -1331,6 +1367,7 @@ async function finalizarPagto(){
 }
 async function aplicarPagtoNaMesa(t){
   const ref = col('mesas').doc(String(cxMesa));
+  let grupoLiberar = null;
   await db.runTransaction(async tr => {
     const d = await tr.get(ref);
     const m = d.data() || {};
@@ -1338,6 +1375,7 @@ async function aplicarPagtoNaMesa(t){
     let pessoas = (m.pessoas || []).slice();
     let pagoAvulso = m.pagoAvulso || 0;
     if(cxModo === 'tudo'){
+      grupoLiberar = m.grupoCom || [];
       tr.set(ref, { status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0 });
       return;
     }
@@ -1365,11 +1403,17 @@ async function aplicarPagtoNaMesa(t){
     }
     const restante = round2(itens.filter(i => !i.pago).reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0) - pagoAvulso);
     if(restante <= 0.009){
+      grupoLiberar = m.grupoCom || [];
       tr.set(ref, { status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0 });
     }else{
       tr.set(ref, { ...m, itens, pessoas, pagoAvulso });
     }
   });
+  if(grupoLiberar && grupoLiberar.length){
+    const b = db.batch();
+    grupoLiberar.forEach(g => b.set(col('mesas').doc(String(g)), { status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0 }));
+    await b.commit();
+  }
 }
 
 /* ---------- balcão + clientes ---------- */
@@ -1427,8 +1471,12 @@ async function salvarCliente(){
 
 /* ---------- gaveta (abertura / sangria / fechamento) ---------- */
 function renderGaveta(){
+  const gar = EQUIPE.filter(f => f.funcao === 'garcom' || f.funcao === 'gerente');
+  const eqHTML = gar.length ? `<div class="card"><b style="font-size:14px">👥 Equipe do dia — liberar garçons</b>
+    <p style="color:var(--mut);font-size:12px;margin-top:6px">Toque para liberar/bloquear. Garçom bloqueado não consegue lançar pedidos (exige senha do gerente).</p>
+    <div class="pills" style="margin-top:10px">${gar.map(f => `<button class="pill ${f.habilitado ? 'on' : ''}" onclick="togHabilitado('${f.id}')">${esc(f.nome)}</button>`).join('')}</div></div>` : '';
   if(!GAVETA){
-    $('compGav').innerHTML = `
+    $('compGav').innerHTML = eqHTML + `
       <div class="empty"><span class="ic">💵</span>Nenhum caixa aberto.</div>
       <button class="btn g" onclick="abrirGaveta()">🔓 Abrir caixa</button>
       <button class="btn o" style="margin-top:10px" onclick="historicoGavetas()">🗂 Histórico de caixas</button>`;
@@ -1438,7 +1486,7 @@ function renderGaveta(){
   const sang = movs.filter(x => x.tipo === 'sangria').reduce((a,x) => a + x.valor, 0);
   const refo = movs.filter(x => x.tipo === 'reforco').reduce((a,x) => a + x.valor, 0);
   const hora = GAVETA.abertoEm && GAVETA.abertoEm.toDate ? GAVETA.abertoEm.toDate().toLocaleString('pt-BR') : '';
-  $('compGav').innerHTML = `
+  $('compGav').innerHTML = eqHTML + `
     <div class="gav"><div><b>🟢 Caixa aberto</b><div style="font-size:12px;color:var(--mut);margin-top:3px">${hora} · por ${esc(GAVETA.abertoPor || '')}</div></div>
       <div style="text-align:right"><div style="font-size:11px;color:var(--mut)">Fundo de troco</div><b style="font-family:'IBM Plex Mono',monospace;color:var(--amber)">${fmt(GAVETA.fundo)}</b></div></div>
     <div class="repgrid">
@@ -1912,6 +1960,7 @@ function editarProduto(id){
       <button class="btn sm" style="flex:0 0 auto" onclick="$('epFile').click()">📸</button></div>
     <input type="file" id="epFile" accept="image/*" style="display:none" onchange="escolherFoto(this,'epFoto','epPrev')">
     <img id="epPrev" class="fotoprev" src="${p && p.foto ? esc(p.foto) : ''}" style="${p && p.foto ? '' : 'display:none'}" onerror="this.style.display='none'">
+    <button class="btn o sm" style="margin-top:8px" onclick="copiarPromptFoto()">🎨 Copiar prompt de foto (IA de imagens)</button>
     <label>Grupos de adicionais (biblioteca)</label>
     ${GRUPOS.length ? `<div class="pills" id="epGrps">${GRUPOS.map(g =>
       `<button class="pill ${edGrupos.includes(g.id) ? 'on' : ''}" onclick="togProdGrupo('${g.id}', this)">${esc(g.nome)}</button>`).join('')}</div>`
@@ -2043,7 +2092,8 @@ function renderEquipe(){
   $('eqpLista').innerHTML = EQUIPE.map(f => `
     <div class="pagrow" style="cursor:pointer" onclick="editarFunc('${f.id}')">
       ${avatarHTML(f.nome, f.foto)}<b style="flex:1">${esc(f.nome)}</b>
-      <span class="badge a">${nomeF[f.funcao] || f.funcao}</span></div>`).join('')
+      <span class="badge a">${nomeF[f.funcao] || f.funcao}</span>
+      <button class="iconb" style="width:36px;height:36px;flex:0 0 36px" title="Copiar link pessoal" onclick="event.stopPropagation();copiarLinkGarcom('${f.id}')">🔗</button></div>`).join('')
     || '<div class="empty"><span class="ic">👥</span>Ninguém cadastrado ainda.</div>';
 }
 let funcId = null;
@@ -2294,6 +2344,98 @@ function instalarApp(){
 document.addEventListener('keydown', e => {
   if(e.key === 'Enter' && $('scEntrada').classList.contains('on')) entrarRest();
 });
+
+/* ---------- habilitação diária + link pessoal ---------- */
+function autoLoginLink(){
+  if(!gParam) return;
+  const f = EQUIPE.find(x => x.id === gParam);
+  if(f && garcomId !== f.id){
+    garcomId = f.id; garcom = f.nome; garcomFoto = f.foto || '';
+    localStorage.setItem('pdv_garcom', garcom);
+    localStorage.setItem('pdv_garcom_foto', garcomFoto);
+    localStorage.setItem('pdv_garcom_id', garcomId);
+  }
+}
+function garcomHabilitado(){
+  if(!garcomId) return true;
+  const f = EQUIPE.find(x => x.id === garcomId);
+  return !!(f && f.habilitado);
+}
+function mostrarBloqueio(){ $('bloqNome').textContent = garcom; show('scBloq'); }
+function checarHabilitacao(){
+  const emGarcom = ['scMesas','scMesa','scCardapio'].some(id => $(id).classList.contains('on'));
+  if(emGarcom && garcomId && !garcomHabilitado()) mostrarBloqueio();
+  if($('scBloq').classList.contains('on') && garcomHabilitado()){ toast('Você foi liberado! 🎉'); entrarGarcom(); }
+}
+async function togHabilitado(id){
+  if(!gerenteOk){ if(!senhaGerente()) return; gerenteOk = true; }
+  const f = EQUIPE.find(x => x.id === id); if(!f) return;
+  await col('equipe').doc(id).update({ habilitado: !f.habilitado });
+  logAcao(f.habilitado ? 'bloqueio_garcom' : 'liberacao_garcom', { nome: f.nome });
+  toast(f.nome + (f.habilitado ? ' bloqueado 🔒' : ' liberado ✅'));
+}
+function copiarLinkGarcom(id){
+  const url = location.origin + location.pathname + '?rest=' + REST + '&g=' + id;
+  navigator.clipboard.writeText(url).then(() => toast('Link pessoal copiado 🔗 Envie para o funcionário'));
+}
+
+/* ---------- agrupar / separar mesas ---------- */
+function agruparUI(){
+  const n = (CFG && CFG.numMesas) || 20;
+  let opts = [];
+  for(let i = 1; i <= n; i++){
+    const st = (MESAS[String(i)] || {}).status || 'livre';
+    if(i !== mesaAtual && st !== 'agrupada') opts.push(i);
+  }
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🪑 Agrupar qual mesa na ${mesaAtual}?</h3>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Viram um grupo só: a comanda fica na mesa ${mesaAtual} e a outra aparece marcada como agrupada até separar ou fechar a conta.</p>
+    <div class="mesagrid" style="margin-top:14px">${opts.map(i => {
+      const st = (MESAS[String(i)] || {}).status || 'livre';
+      return `<div class="mesa ${st}" onclick="agruparMesa(${i})"><div class="n">${i}</div><div class="st">${st === 'livre' ? 'Livre' : 'Ocupada'}</div></div>`;
+    }).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+}
+async function agruparMesa(src){
+  await trava(async () => {
+    const sRef = col('mesas').doc(String(src)), dRef = col('mesas').doc(String(mesaAtual));
+    await db.runTransaction(async t => {
+      const s = await t.get(sRef), d = await t.get(dRef);
+      const sm = s.data() || {}, dm = d.data() || {};
+      t.set(dRef, { ...dm,
+        status: dm.status || 'ocupada', garcom: dm.garcom || garcom, garcomFoto: dm.garcomFoto || garcomFoto,
+        abertaEm: dm.abertaEm || firebase.firestore.Timestamp.now(),
+        itens: (dm.itens || []).concat(sm.itens || []),
+        pessoas: (dm.pessoas || []).concat(sm.pessoas || []),
+        pagoAvulso: (dm.pagoAvulso || 0) + (sm.pagoAvulso || 0),
+        numPessoas: (dm.numPessoas || 1) + (sm.numPessoas || 0),
+        grupoCom: (dm.grupoCom || []).concat([src]) });
+      t.set(sRef, { status: 'agrupada', agrupadaEm: mesaAtual });
+    });
+    logAcao('agrupar_mesas', { mesa: mesaAtual, agrupou: src });
+    fecharOv('ovExtra'); toast('Mesa ' + src + ' agrupada na ' + mesaAtual + ' 🪑');
+  });
+}
+async function desagrupar(){
+  const m = MESAS[String(mesaAtual)] || {};
+  const grupo = m.grupoCom || [];
+  if(!grupo.length) return;
+  const batch = db.batch();
+  grupo.forEach(g => batch.set(col('mesas').doc(String(g)), { status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0 }));
+  batch.update(col('mesas').doc(String(mesaAtual)), { grupoCom: [] });
+  await batch.commit();
+  logAcao('separar_mesas', { mesa: mesaAtual, quantas: grupo.length });
+  fecharOv('ovExtra'); toast('Mesas separadas (a comanda ficou na ' + mesaAtual + ')');
+}
+
+/* ---------- prompt de foto por IA ---------- */
+function copiarPromptFoto(){
+  const nome = $('epNome').value.trim(), desc = $('epDesc').value.trim();
+  if(!nome){ toast('Preencha o nome do produto primeiro'); return; }
+  const p = 'Fotografia profissional de cardapio de restaurante: ' + nome + '. ' + (desc ? desc + '. ' : '') +
+    'Prato servido em louca branca redonda sobre mesa de madeira escura, angulo de 45 graus, luz natural suave vindo da lateral esquerda, fundo levemente desfocado, aparencia apetitosa e realista, alta resolucao, formato quadrado. Sem texto, sem maos, sem talheres extras, sem logotipos.';
+  navigator.clipboard.writeText(p).then(() => toast('Prompt copiado 🎨 Cole na IA de imagens e depois envie a foto aqui'));
+}
 
 boot();
 </script>
