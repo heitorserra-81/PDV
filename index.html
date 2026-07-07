@@ -303,6 +303,11 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
     </div>
     <div id="cfgProd">
       <button class="btn" onclick="editarProduto(null)">＋ Novo produto</button>
+      <div class="row" style="margin-top:10px">
+        <button class="btn o sm" style="flex:1" onclick="abrirTemplates()">📦 Templates prontos</button>
+        <button class="btn o sm" style="flex:1" onclick="abrirImportIA()">🤖 Importar com IA</button>
+        <button class="btn o sm" style="flex:1" onclick="abrirBackup()">💾 Backup</button>
+      </div>
       <div id="prodLista" style="margin-top:16px"></div>
     </div>
     <div id="cfgSet" style="display:none">
@@ -345,6 +350,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <div class="overlay" id="ovCart"><div class="sheet" id="ovCartBox"></div></div>
 <div class="overlay" id="ovCaixa"><div class="sheet" id="ovCaixaBox"></div></div>
 <div class="overlay" id="ovEditProd"><div class="sheet" id="ovEditProdBox"></div></div>
+<div class="overlay" id="ovExtra"><div class="sheet" id="ovExtraBox"></div></div>
 <div class="overlay" id="ovSenha"><div class="sheet">
   <h3 style="font-size:18px">🔒 Área do administrador</h3>
   <label>Senha</label><input id="inSenha" type="password">
@@ -433,7 +439,11 @@ async function boot(){
       if($('scMesa').classList.contains('on') && mesaAtual) renderMesaAberta();
     }));
     show('scHome');
-  }catch(e){ console.error(e); toast('Erro ao conectar. Verifique a internet.'); }
+  }catch(e){
+    console.error(e);
+    if(String(e.code).includes('permission')) toast('⛔ Regras do Firestore bloqueando: libere a coleção pdv_restaurantes');
+    else toast('Erro ao conectar: ' + (e.code || e.message || 'verifique a internet'));
+  }
 }
 function aplicarConfig(){
   if(!CFG) return;
@@ -455,16 +465,23 @@ async function criarRest(){
   const cod = $('stCod').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
   const senha = $('stSenha').value.trim();
   if(!nome || !cod || !senha){ toast('Preencha nome, código e senha'); return; }
-  const ex = await db.collection('pdv_restaurantes').doc(cod).get();
-  if(ex.exists){ toast('Esse código já está em uso'); return; }
-  await db.collection('pdv_restaurantes').doc(cod).set({
-    nome, senha, modo: $('stModo').value,
-    numMesas: parseInt($('stMesas').value) || 20,
-    taxa: 10, autoImprimir: true, som: true, impConta: '',
-    setores: [{ id:'cozinha', nome:'Cozinha', impressora:'' }, { id:'bar', nome:'Bar', impressora:'' }],
-    criadoEm: TS()
-  });
-  REST = cod; toast('Estabelecimento criado! 🎉'); boot();
+  try{
+    const ex = await db.collection('pdv_restaurantes').doc(cod).get();
+    if(ex.exists){ toast('Esse código já está em uso'); return; }
+    await db.collection('pdv_restaurantes').doc(cod).set({
+      nome, senha, modo: $('stModo').value,
+      numMesas: parseInt($('stMesas').value) || 20,
+      taxa: 10, autoImprimir: true, som: true, impConta: '',
+      setores: [{ id:'cozinha', nome:'Cozinha', impressora:'' }, { id:'bar', nome:'Bar', impressora:'' }],
+      criadoEm: TS()
+    });
+    REST = cod; toast('Estabelecimento criado! 🎉'); boot();
+  }catch(e){
+    console.error(e);
+    if(String(e.code).includes('permission')) toast('⛔ Regras do Firestore bloqueando: libere a coleção pdv_restaurantes');
+    else if(String(e.message).includes('COLE_AQUI') || String(e.code).includes('api-key') || String(e.message).toLowerCase().includes('api key')) toast('⛔ Cole o firebaseConfig no topo do arquivo');
+    else toast('Erro: ' + (e.code || e.message || e));
+  }
 }
 function sairRest(){ pararListeners(); REST=''; localStorage.removeItem('pdv_rest'); adminOk=false; show('scEntrada'); }
 
@@ -1068,6 +1085,201 @@ async function excluirProduto(){
   if(!confirm('Excluir este produto do cardápio?')) return;
   await col('produtos').doc(edId).delete();
   fecharOv('ovEditProd'); toast('Produto excluído');
+}
+
+
+/* ---------- templates prontos ---------- */
+const M = (nome, opcoes) => ({ nome, opcoes });
+const P = (nome, preco, categoria, setor, descricao, modificadores) => ({ nome, preco, categoria, setor, descricao: descricao || '', foto: '', modificadores: modificadores || [] });
+const MOD_GELO = [M('Gelo?', ['Com gelo', 'Sem gelo']), M('Limão?', ['Com limão', 'Sem limão'])];
+const TEMPLATES = {
+  lanchonete: { nome: '🍔 Lanchonete', itens: [
+    P('X-Salada', 18, 'Lanches', 'cozinha', 'Pão, hambúrguer, queijo, alface, tomate e maionese da casa', [M('Adicional?', ['Sem adicional', 'Bacon', 'Ovo', 'Cheddar extra']), M('Maionese?', ['Com maionese', 'Sem maionese'])]),
+    P('X-Bacon', 22, 'Lanches', 'cozinha', 'Pão, hambúrguer, queijo, bacon crocante e maionese', [M('Adicional?', ['Sem adicional', 'Ovo', 'Cheddar extra', 'Dobro de bacon'])]),
+    P('X-Tudo', 26, 'Lanches', 'cozinha', 'Hambúrguer, queijo, bacon, ovo, presunto, alface, tomate e milho', [M('Tirar algo?', ['Completo', 'Sem ovo', 'Sem milho', 'Sem salada'])]),
+    P('X-Egg', 20, 'Lanches', 'cozinha', 'Pão, hambúrguer, queijo, ovo e salada'),
+    P('Hambúrguer simples', 14, 'Lanches', 'cozinha', 'Pão, hambúrguer e maionese'),
+    P('Misto quente', 12, 'Lanches', 'cozinha', 'Pão de forma, presunto e queijo na chapa'),
+    P('Cachorro-quente', 12, 'Lanches', 'cozinha', 'Salsicha, molho, milho, ervilha e batata palha', [M('Salsicha?', ['1 salsicha', '2 salsichas']), M('Batata palha?', ['Com batata palha', 'Sem batata palha']), M('Purê?', ['Com purê', 'Sem purê'])]),
+    P('Beirute de frango', 24, 'Lanches', 'cozinha', 'Pão sírio, frango desfiado, queijo derretido e salada'),
+    P('Batata frita P', 15, 'Porções', 'cozinha', 'Porção individual crocante', [M('Cobertura?', ['Simples', 'Cheddar e bacon'])]),
+    P('Batata frita G', 25, 'Porções', 'cozinha', 'Porção grande para compartilhar', [M('Cobertura?', ['Simples', 'Cheddar e bacon'])]),
+    P('Frango a passarinho', 30, 'Porções', 'cozinha', 'Porção com alho frito e limão'),
+    P('Calabresa acebolada', 28, 'Porções', 'cozinha', 'Calabresa fatiada com cebola e pão'),
+    P('Pastel', 9, 'Porções', 'cozinha', 'Massa fininha e crocante', [M('Sabor', ['Carne', 'Queijo', 'Pizza', 'Frango com catupiry'])]),
+    P('Coca-Cola lata', 6, 'Bebidas', 'bar', '350ml gelada', [M('Copo?', ['Com copo', 'Sem copo']), ...MOD_GELO]),
+    P('Guaraná lata', 6, 'Bebidas', 'bar', '350ml gelado', MOD_GELO),
+    P('Refrigerante 600ml', 8, 'Bebidas', 'bar', '', [M('Sabor', ['Coca-Cola', 'Guaraná', 'Fanta laranja', 'Sprite'])]),
+    P('Suco natural', 10, 'Bebidas', 'bar', 'Copo 400ml feito na hora', [M('Sabor', ['Laranja', 'Maracujá', 'Abacaxi', 'Morango']), M('Adoçar?', ['Com açúcar', 'Sem açúcar', 'Adoçante'])]),
+    P('Água sem gás', 4, 'Bebidas', 'bar', '500ml'),
+    P('Água com gás', 5, 'Bebidas', 'bar', '500ml', [M('Limão?', ['Com limão', 'Sem limão'])]),
+    P('Cerveja lata', 8, 'Bebidas', 'bar', '350ml estupidamente gelada'),
+    P('Milk-shake', 16, 'Sobremesas', 'bar', 'Copo 400ml cremoso', [M('Sabor', ['Chocolate', 'Morango', 'Ovomaltine', 'Baunilha'])]),
+    P('Açaí 300ml', 15, 'Sobremesas', 'bar', 'Com banana e granola', [M('Extra?', ['Simples', 'Leite condensado', 'Paçoca', 'Nutella'])]),
+    P('Pudim', 8, 'Sobremesas', 'cozinha', 'Fatia caseira de leite condensado')
+  ]},
+  pizzaria: { nome: '🍕 Pizzaria', itens: [
+    P('Pizza Mussarela', 45, 'Pizzas salgadas', 'cozinha', 'Molho, mussarela, orégano e azeitona', [M('Borda?', ['Sem borda', 'Borda de catupiry', 'Borda de cheddar'])]),
+    P('Pizza Calabresa', 48, 'Pizzas salgadas', 'cozinha', 'Calabresa fatiada, cebola e mussarela', [M('Borda?', ['Sem borda', 'Borda de catupiry', 'Borda de cheddar']), M('Cebola?', ['Com cebola', 'Sem cebola'])]),
+    P('Pizza Portuguesa', 55, 'Pizzas salgadas', 'cozinha', 'Presunto, ovo, cebola, ervilha, mussarela e azeitona', [M('Borda?', ['Sem borda', 'Borda de catupiry', 'Borda de cheddar'])]),
+    P('Pizza Frango com catupiry', 55, 'Pizzas salgadas', 'cozinha', 'Frango desfiado temperado com catupiry original', [M('Borda?', ['Sem borda', 'Borda de catupiry', 'Borda de cheddar'])]),
+    P('Pizza Marguerita', 50, 'Pizzas salgadas', 'cozinha', 'Mussarela, tomate, manjericão fresco e parmesão', [M('Borda?', ['Sem borda', 'Borda de catupiry', 'Borda de cheddar'])]),
+    P('Pizza Quatro queijos', 58, 'Pizzas salgadas', 'cozinha', 'Mussarela, provolone, parmesão e gorgonzola', [M('Borda?', ['Sem borda', 'Borda de catupiry', 'Borda de cheddar'])]),
+    P('Pizza Pepperoni', 58, 'Pizzas salgadas', 'cozinha', 'Pepperoni importado e mussarela', [M('Borda?', ['Sem borda', 'Borda de catupiry', 'Borda de cheddar'])]),
+    P('Pizza Chocolate', 48, 'Pizzas doces', 'cozinha', 'Chocolate ao leite com granulado', [M('Extra?', ['Simples', 'Com morango', 'Com confete'])]),
+    P('Calzone', 30, 'Pizzas salgadas', 'cozinha', 'Massa fechada recheada', [M('Sabor', ['Calabresa', 'Frango com catupiry', 'Quatro queijos'])]),
+    P('Esfiha', 4, 'Esfihas', 'cozinha', 'Aberta, massa fofinha', [M('Sabor', ['Carne', 'Queijo', 'Calabresa', 'Frango'])]),
+    P('Refrigerante 2L', 14, 'Bebidas', 'bar', '', [M('Sabor', ['Coca-Cola', 'Guaraná', 'Fanta laranja'])]),
+    P('Refrigerante lata', 6, 'Bebidas', 'bar', '350ml', MOD_GELO),
+    P('Cerveja long neck', 10, 'Bebidas', 'bar', 'Long neck gelada'),
+    P('Suco natural', 10, 'Bebidas', 'bar', 'Copo 400ml', [M('Sabor', ['Laranja', 'Maracujá', 'Abacaxi'])])
+  ]},
+  restaurante: { nome: '🍝 Restaurante', itens: [
+    P('Bruschetta', 22, 'Entradas', 'cozinha', 'Pão italiano, tomate, manjericão e azeite'),
+    P('Carpaccio', 38, 'Entradas', 'cozinha', 'Finas fatias de carne, alcaparras, parmesão e mostarda'),
+    P('Parmegiana de frango', 42, 'Pratos principais', 'cozinha', 'Filé de frango empanado, molho de tomate e queijo gratinado', [M('Acompanhamento', ['Arroz e fritas', 'Arroz e purê'])]),
+    P('Filé à parmegiana', 58, 'Pratos principais', 'cozinha', 'Filé mignon empanado, molho de tomate e queijo', [M('Acompanhamento', ['Arroz e fritas', 'Arroz e purê'])]),
+    P('Picanha grelhada', 68, 'Pratos principais', 'cozinha', 'Picanha na chapa com arroz, farofa e vinagrete', [M('Ponto da carne', ['Mal passada', 'Ao ponto', 'Bem passada'])]),
+    P('Peixe grelhado', 52, 'Pratos principais', 'cozinha', 'Filé de tilápia com legumes e arroz', [M('Molho?', ['Com molho de alcaparras', 'Sem molho'])]),
+    P('Risoto de camarão', 62, 'Pratos principais', 'cozinha', 'Arroz arbóreo cremoso com camarões'),
+    P('Espaguete à bolonhesa', 38, 'Massas', 'cozinha', 'Massa fresca com molho de carne', [M('Queijo ralado?', ['Com queijo', 'Sem queijo'])]),
+    P('Fettuccine Alfredo', 42, 'Massas', 'cozinha', 'Molho branco cremoso com parmesão'),
+    P('Nhoque ao sugo', 36, 'Massas', 'cozinha', 'Nhoque de batata com molho de tomate caseiro'),
+    P('Lasanha à bolonhesa', 44, 'Massas', 'cozinha', 'Camadas de massa, carne, presunto e queijo'),
+    P('Executivo do dia', 28, 'Pratos principais', 'cozinha', 'Prato feito do dia — consulte o garçom'),
+    P('Petit gâteau', 22, 'Sobremesas', 'cozinha', 'Bolinho quente de chocolate com sorvete de creme'),
+    P('Tiramisù', 20, 'Sobremesas', 'cozinha', 'Clássico italiano com café e mascarpone'),
+    P('Pudim de leite', 12, 'Sobremesas', 'cozinha', 'Fatia com calda de caramelo'),
+    P('Refrigerante lata', 7, 'Bebidas', 'bar', '350ml', MOD_GELO),
+    P('Suco natural', 12, 'Bebidas', 'bar', 'Copo 400ml', [M('Sabor', ['Laranja', 'Maracujá', 'Abacaxi', 'Limão'])]),
+    P('Água sem gás', 5, 'Bebidas', 'bar', '500ml'),
+    P('Água com gás', 6, 'Bebidas', 'bar', '500ml'),
+    P('Cerveja long neck', 12, 'Bebidas', 'bar', 'Long neck gelada'),
+    P('Taça de vinho', 24, 'Bebidas', 'bar', 'Tinto ou branco da casa', [M('Tipo', ['Tinto', 'Branco'])]),
+    P('Caipirinha', 20, 'Bebidas', 'bar', 'Feita na hora', [M('Fruta', ['Limão', 'Morango', 'Maracujá']), M('Base', ['Cachaça', 'Vodka'])])
+  ]},
+  boteco: { nome: '🍻 Bar & Petiscos', itens: [
+    P('Torresmo', 25, 'Petiscos', 'cozinha', 'Crocante com limão'),
+    P('Bolinho de bacalhau', 32, 'Petiscos', 'cozinha', 'Porção com 8 unidades'),
+    P('Iscas de tilápia', 38, 'Petiscos', 'cozinha', 'Empanadas com molho tártaro'),
+    P('Batata frita G', 25, 'Petiscos', 'cozinha', 'Porção grande', [M('Cobertura?', ['Simples', 'Cheddar e bacon'])]),
+    P('Amendoim', 8, 'Petiscos', 'cozinha', 'Torrado com alho'),
+    P('Caldinho', 12, 'Petiscos', 'cozinha', 'Copo quente', [M('Sabor', ['Feijão', 'Mocotó', 'Camarão'])]),
+    P('Espetinho', 10, 'Petiscos', 'cozinha', 'Na brasa com farofa', [M('Tipo', ['Carne', 'Frango', 'Coração', 'Queijo coalho', 'Linguiça'])]),
+    P('Chopp', 9, 'Bebidas', 'bar', '300ml tulipa gelada'),
+    P('Cerveja 600ml', 14, 'Bebidas', 'bar', 'Garrafa gelada', [M('Marca', ['Original', 'Heineken', 'Brahma', 'Skol'])]),
+    P('Cerveja long neck', 10, 'Bebidas', 'bar', 'Long neck gelada', [M('Marca', ['Heineken', 'Budweiser', 'Corona'])]),
+    P('Caipirinha', 18, 'Bebidas', 'bar', 'Feita na hora', [M('Fruta', ['Limão', 'Morango', 'Maracujá', 'Abacaxi']), M('Base', ['Cachaça', 'Vodka', 'Saquê'])]),
+    P('Refrigerante lata', 6, 'Bebidas', 'bar', '350ml', MOD_GELO),
+    P('Água', 4, 'Bebidas', 'bar', '500ml', [M('Tipo', ['Sem gás', 'Com gás'])])
+  ]}
+};
+function setorValido(id){
+  const sets = (CFG && CFG.setores) || [];
+  return sets.some(s => s.id === id) ? id : (sets[0] ? sets[0].id : '');
+}
+async function batchAddProdutos(lista){
+  const batch = db.batch();
+  lista.forEach(p => batch.set(col('produtos').doc(), { ...p, setor: setorValido(p.setor), criadoEm: TS() }));
+  await batch.commit();
+}
+function abrirTemplates(){
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">📦 Templates prontos</h3>
+    <p style="color:var(--mut);font-size:13px;margin-top:6px;line-height:1.5">Aplica um cardápio completo com preços, descrições e adicionais. Depois é só editar o que quiser — os produtos atuais não são apagados.</p>
+    ${Object.keys(TEMPLATES).map(k => `
+      <div class="pagrow" style="cursor:pointer;margin-top:10px" onclick="aplicarTemplate('${k}')">
+        <b>${TEMPLATES[k].nome}</b><span class="badge g">${TEMPLATES[k].itens.length} produtos</span></div>`).join('')}
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
+async function aplicarTemplate(k){
+  const t = TEMPLATES[k];
+  if(!confirm('Adicionar os ' + t.itens.length + ' produtos do template "' + t.nome.replace(/^\S+\s/, '') + '"?')) return;
+  try{
+    await batchAddProdutos(t.itens);
+    fecharOv('ovExtra'); toast(t.itens.length + ' produtos adicionados 🎉');
+  }catch(e){ console.error(e); toast('Erro: ' + (e.code || e.message)); }
+}
+
+/* ---------- importar com IA ---------- */
+const PROMPT_IA = 'Analise o cardapio desta foto (ou PDF/texto) e responda SOMENTE com um array JSON puro, sem markdown e sem explicacao, onde cada item tem exatamente estes campos: "nome" (string), "preco" (numero), "categoria" (string), "setor" ("cozinha" para comidas ou "bar" para bebidas), "descricao" (string curta, pode ser vazia), "modificadores" (array de objetos {"nome": "pergunta", "opcoes": ["opcao1","opcao2"]}, pode ser vazio). Inclua todos os itens do cardapio com os precos exatos.';
+function abrirImportIA(){
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🤖 Importar cardápio com IA</h3>
+    <p style="color:var(--mut);font-size:13px;margin-top:6px;line-height:1.6"><b>1.</b> Copie o comando abaixo<br><b>2.</b> Cole no Claude ou ChatGPT junto com a <b>foto do cardápio</b><br><b>3.</b> Cole a resposta aqui embaixo e pronto: vira tudo botão.</p>
+    <button class="btn o sm" style="margin-top:12px" onclick="copiarPrompt()">📋 Copiar comando para a IA</button>
+    <label>Cole aqui a resposta da IA</label>
+    <textarea id="iaJson" rows="7" placeholder='[ { "nome": "X-Salada", "preco": 18, ... } ]' style="font-family:'IBM Plex Mono',monospace;font-size:12.5px"></textarea>
+    <button class="btn g" style="margin-top:14px" onclick="importarIA()">Criar produtos</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
+function copiarPrompt(){ navigator.clipboard.writeText(PROMPT_IA).then(() => toast('Comando copiado 📋')); }
+async function importarIA(){
+  let txt = $('iaJson').value.trim().replace(/```json|```/g, '').trim();
+  let lista;
+  try{ lista = JSON.parse(txt); }catch(e){ toast('Não consegui ler o JSON. Cole a resposta completa da IA.'); return; }
+  if(!Array.isArray(lista) || !lista.length){ toast('A resposta precisa ser uma lista de produtos'); return; }
+  const limpos = lista.filter(p => p && p.nome && !isNaN(parseFloat(p.preco))).map(p => ({
+    nome: String(p.nome).trim(),
+    preco: Math.round(parseFloat(p.preco) * 100) / 100,
+    categoria: String(p.categoria || 'Geral').trim(),
+    setor: p.setor === 'bar' ? 'bar' : 'cozinha',
+    descricao: String(p.descricao || '').trim(),
+    foto: '',
+    modificadores: Array.isArray(p.modificadores) ? p.modificadores.filter(g => g && g.nome && Array.isArray(g.opcoes) && g.opcoes.length).map(g => ({ nome: String(g.nome), opcoes: g.opcoes.map(String) })) : []
+  }));
+  if(!limpos.length){ toast('Nenhum produto válido encontrado'); return; }
+  try{
+    await batchAddProdutos(limpos);
+    fecharOv('ovExtra'); toast(limpos.length + ' produtos criados 🤖🎉');
+  }catch(e){ console.error(e); toast('Erro: ' + (e.code || e.message)); }
+}
+
+/* ---------- backup do cardápio ---------- */
+async function abrirBackup(){
+  const snap = await col('modelos').orderBy('criadoEm', 'desc').get();
+  const modelos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">💾 Backup do cardápio</h3>
+    <p style="color:var(--mut);font-size:13px;margin-top:6px;line-height:1.5">Salve o cardápio atual como modelo para restaurar depois ou reaproveitar em outro estabelecimento.</p>
+    <button class="btn" style="margin-top:12px" onclick="salvarBackup()">Salvar cardápio atual (${PRODUTOS.length} produtos)</button>
+    ${modelos.length ? '<label>Modelos salvos</label>' : ''}
+    ${modelos.map(m => `
+      <div class="pagrow"><b>${esc(m.nome)}</b><span class="badge a">${(m.produtos || []).length} itens</span>
+        <button class="btn o sm" onclick="restaurarBackup('${m.id}')">Restaurar</button>
+        <button class="x" style="color:var(--red);font-size:16px" onclick="excluirBackup('${m.id}')">✕</button></div>`).join('')}
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
+async function salvarBackup(){
+  if(!PRODUTOS.length){ toast('Nenhum produto para salvar'); return; }
+  const nome = prompt('Nome do modelo:', (CFG && CFG.nome ? CFG.nome + ' — ' : '') + new Date().toLocaleDateString('pt-BR'));
+  if(!nome) return;
+  const produtos = PRODUTOS.map(({ id, criadoEm, ...p }) => p);
+  await col('modelos').add({ nome, produtos, criadoEm: TS() });
+  toast('Modelo salvo 💾'); abrirBackup();
+}
+async function restaurarBackup(id){
+  const d = await col('modelos').doc(id).get();
+  if(!d.exists) return;
+  const produtos = d.data().produtos || [];
+  const substituir = PRODUTOS.length ? confirm('OK = SUBSTITUIR o cardápio atual pelos ' + produtos.length + ' itens do modelo.\nCancelar = apenas ADICIONAR ao cardápio atual.') : false;
+  try{
+    if(substituir){
+      const snap = await col('produtos').get();
+      const del = db.batch();
+      snap.docs.forEach(x => del.delete(x.ref));
+      await del.commit();
+    }
+    await batchAddProdutos(produtos);
+    fecharOv('ovExtra'); toast('Cardápio restaurado ✅');
+  }catch(e){ console.error(e); toast('Erro: ' + (e.code || e.message)); }
+}
+async function excluirBackup(id){
+  if(!confirm('Excluir este modelo salvo?')) return;
+  await col('modelos').doc(id).delete(); abrirBackup();
 }
 
 /* ---------- PWA ---------- */
