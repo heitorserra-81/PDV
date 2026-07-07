@@ -224,6 +224,12 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.agrupada{opacity:.5;border-style:dashed}
 .mesa.agrupada::before,.mesa.agrupada::after{display:none}
 .mesagrid{row-gap:20px}
+.mesa{transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .2s}
+.mesa.segurando{transform:scale(1.08) translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.45);z-index:5}
+.catorder{display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.catorder b{flex:1;font-size:14px}
+.catorder .ordbtns{display:flex;gap:4px}
+.catorder .ordbtns button{width:32px;height:32px;border-radius:9px;background:var(--surf);border:1.5px solid var(--line);font-size:14px}
 </style>
 </head>
 <body>
@@ -397,6 +403,9 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <label>Taxa de serviço (%)</label><input id="cfgTaxa" type="number" min="0" max="30" onchange="salvarCampo('taxa', parseFloat(this.value)||0)">
       <div class="sw"><div><b>Impressão automática</b><small>Imprimir pedidos assim que chegam</small></div><div class="tog" id="togAuto" onclick="togCampo('autoImprimir', this)"></div></div>
       <div class="sw"><div><b>Alerta sonoro</b><small>Som quando chega pedido novo</small></div><div class="tog" id="togSom" onclick="togCampo('som', this)"></div></div>
+      <label>📋 Ordem das categorias no cardápio</label>
+      <div id="catOrdList"></div>
+      <p style="color:var(--mut);font-size:12px;margin:-6px 0 4px">Vale para o cardápio do garçom e do balcão.</p>
       <label>🍕 Categorias com meio-a-meio (frações)</label>
       <div class="pills" id="fracPills"></div>
       <label>Regra de preço da pizza fracionada</label>
@@ -646,6 +655,11 @@ function itensRestanteTotal(m){
 function totalPagoMesa(m){
   return round2((m.itens || []).reduce((a,x) => a + (x.pago ? x.preco * x.qtd : (x.valorPago || 0)), 0) + (m.pagoAvulso || 0));
 }
+function segurarMesa(el){
+  el.classList.add('segurando');
+  clearTimeout(el._segT);
+  el._segT = setTimeout(() => el.classList.remove('segurando'), 260);
+}
 function renderMesas(elId, modoCaixa){
   const n = (CFG && CFG.numMesas) || 20;
   let html = '';
@@ -654,12 +668,12 @@ function renderMesas(elId, modoCaixa){
     const st = m.status || 'livre';
     const resta = itensRestanteTotal(m);
     if(st === 'agrupada'){
-      html += `<div class="mesa agrupada" onclick="${modoCaixa ? `abrirCaixaMesa(${m.agrupadaEm})` : `abrirMesa(${m.agrupadaEm})`}">
+      html += `<div class="mesa agrupada" onpointerdown="segurarMesa(this)" onclick="${modoCaixa ? `abrirCaixaMesa(${m.agrupadaEm})` : `abrirMesa(${m.agrupadaEm})`}">
         <div class="n">${i}</div><div class="st">🔗 c/ mesa ${m.agrupadaEm}</div></div>`;
       continue;
     }
     const stTxt = st === 'livre' ? 'Livre' : (st === 'conta' ? 'Pediu conta' : 'Ocupada');
-    html += `<div class="mesa ${st}" onclick="${modoCaixa ? `abrirCaixaMesa(${i})` : `abrirMesa(${i})`}">
+    html += `<div class="mesa ${st}" onpointerdown="segurarMesa(this)" onclick="${modoCaixa ? `abrirCaixaMesa(${i})` : `abrirMesa(${i})`}">
       ${st !== 'livre' && m.numPessoas ? `<div class="pess">👥${m.numPessoas}</div>` : ''}
       ${st !== 'livre' && (m.garcomFoto || m.garcom) ? `<div class="gpic">${avatarHTML(m.garcom, m.garcomFoto, 'sm')}</div>` : ''}
       <div class="n">${i}</div><div class="st">${stTxt}</div>
@@ -882,7 +896,15 @@ function voltarDoCardapio(){
   if(contexto === 'balcao'){ show('scBalcao'); } else { show('scMesas'); }
 }
 function categorias(){
-  const set = [...new Set(PRODUTOS.map(p => p.categoria || 'Geral'))].sort();
+  const set = [...new Set(PRODUTOS.map(p => p.categoria || 'Geral'))];
+  const ordem = (CFG && CFG.ordemCategorias) || [];
+  set.sort((a, b) => {
+    const ia = ordem.indexOf(a), ib = ordem.indexOf(b);
+    if(ia === -1 && ib === -1) return a.localeCompare(b);
+    if(ia === -1) return 1;
+    if(ib === -1) return -1;
+    return ia - ib;
+  });
   return ['Todos', ...set];
 }
 function setCat(i, gridId, chipsId){ catAtiva = categorias()[i]; renderCardapio(gridId, chipsId); }
@@ -1850,7 +1872,7 @@ function preencherConfig(){
   $('togAuto').classList.toggle('on', CFG.autoImprimir !== false);
   $('togSom').classList.toggle('on', CFG.som !== false);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
-  renderFracPills(); renderSetores();
+  renderFracPills(); renderSetores(); renderCatOrd();
 }
 function renderFracPills(){
   const cats = categorias().slice(1);
@@ -1858,6 +1880,23 @@ function renderFracPills(){
   $('fracPills').innerHTML = cats.length ? cats.map((c, i) =>
     `<button class="pill ${sel.includes(c) ? 'on' : ''}" onclick="togFrac(${i})">${esc(c)}</button>`).join('')
     : '<span style="color:var(--mut);font-size:12.5px">Cadastre produtos primeiro</span>';
+}
+function renderCatOrd(){
+  const cats = categorias().slice(1);
+  $('catOrdList').innerHTML = cats.length ? cats.map((c, i) => `
+    <div class="catorder"><b>${esc(c)}</b>
+      <div class="ordbtns">
+        <button ${i === 0 ? 'disabled' : ''} onclick="moverCategoria(${i},-1)">↑</button>
+        <button ${i === cats.length - 1 ? 'disabled' : ''} onclick="moverCategoria(${i},1)">↓</button>
+      </div></div>`).join('') : '<p style="color:var(--mut);font-size:12.5px">Cadastre produtos primeiro</p>';
+}
+async function moverCategoria(i, dir){
+  const cats = categorias().slice(1);
+  const j = i + dir;
+  if(j < 0 || j >= cats.length) return;
+  [cats[i], cats[j]] = [cats[j], cats[i]];
+  await rcol().update({ ordemCategorias: cats });
+  toast('Ordem salva ✅');
 }
 async function togFrac(i){
   const c = categorias().slice(1)[i];
