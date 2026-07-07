@@ -175,11 +175,53 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
   .sheet{border-radius:24px;max-height:86dvh}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ====== v2: avatares, pessoas, menus, relatórios ====== */
+.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--line);background:var(--card)}
+.avatar.sm{width:24px;height:24px;border-width:1.5px}
+.avatar.lg{width:56px;height:56px}
+.avatxt{display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#181410;background:var(--amber)}
+.mesa .gpic{position:absolute;top:7px;right:7px}
+.mesa .tempo{font-size:9.5px;color:var(--mut)}
+.mesa .pess{position:absolute;top:7px;left:7px;font-size:10px;color:var(--mut);font-weight:700}
+.pchips{display:flex;gap:8px;overflow-x:auto;padding:10px 0;scrollbar-width:none}
+.pchips::-webkit-scrollbar{display:none}
+.pchip{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:99px;background:var(--card);border:1.5px solid var(--line);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.pchip.on{background:var(--amber);color:#181410;border-color:var(--amber)}
+.pgrupo{margin-top:14px}
+.pgrupo .ph{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--amber);padding-bottom:4px}
+.pgrupo .psub{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+.prod.esg{opacity:.38;filter:grayscale(1);pointer-events:none;position:relative}
+.prod.esg::after{content:'ESGOTADO';position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.05em}
+.menuops{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.menuops button{display:flex;align-items:center;gap:12px;padding:15px;border-radius:14px;background:var(--card);border:1.5px solid var(--line);font-weight:700;font-size:14.5px;text-align:left;transition:transform .1s, border-color .2s}
+.menuops button:active{transform:scale(.97)}
+.menuops button:hover{border-color:var(--amber)}
+.chk{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px dashed var(--line);cursor:pointer}
+.chk .box{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:14px;color:#181410;transition:all .15s}
+.chk.on .box{background:var(--green);border-color:var(--green)}
+.chk .ci{flex:1}
+.chk .cv{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px}
+.modosel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.modosel button{padding:16px 10px;border-radius:14px;background:var(--card);border:1.5px solid var(--line);font-weight:700;font-size:13px;transition:all .15s}
+.modosel button .mi{display:block;font-size:24px;margin-bottom:6px}
+.modosel button.on{border-color:var(--amber);background:linear-gradient(160deg,#2e2519,var(--card))}
+.repcard{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px;text-align:center}
+.repcard .rv{font-size:22px;font-weight:800;color:var(--amber);font-family:'IBM Plex Mono',monospace;margin-top:4px}
+.repcard .rl{font-size:11px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.repgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.repbar{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13.5px}
+.repbar .rb{flex:1;height:8px;background:var(--surf);border-radius:99px;overflow:hidden}
+.repbar .rb i{display:block;height:100%;background:var(--amber);border-radius:99px}
+.repbar .rn{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12.5px;min-width:70px;text-align:right}
+.gav{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.notif{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:150;background:var(--green);color:#0d1f14;font-weight:800;padding:14px 22px;border-radius:16px;box-shadow:0 12px 34px rgba(0,0,0,.5);display:none;max-width:92vw;text-align:center;animation:drop .35s}
+.notif.on{display:block}
+.fotoprev{width:74px;height:74px;border-radius:16px;object-fit:cover;border:2px solid var(--line);display:block;margin-top:8px}
 </style>
 </head>
 <body>
 
-<!-- ============ TELA: ENTRADA / RESTAURANTE ============ -->
+<!-- ============ ENTRADA ============ -->
 <div class="screen on" id="scEntrada">
   <div class="wrap" style="display:flex;flex-direction:column;justify-content:center;min-height:100dvh;padding-bottom:20px">
     <div style="text-align:center;margin-bottom:26px">
@@ -191,36 +233,28 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <label>Código do estabelecimento</label>
       <input id="inRest" placeholder="ex: marchesini" autocapitalize="none">
       <button class="btn" style="margin-top:14px" onclick="entrarRest()">Entrar</button>
-      <button class="btn o" style="margin-top:10px" onclick="abrirSetup()">＋ Criar novo estabelecimento</button>
+      <button class="btn o" style="margin-top:10px" onclick="show('scSetup')">＋ Criar novo estabelecimento</button>
     </div>
     <div class="credit">Desenvolvido por Heitor Serra Neto</div>
   </div>
 </div>
 
-<!-- ============ TELA: SETUP ============ -->
+<!-- ============ SETUP ============ -->
 <div class="screen" id="scSetup">
   <div class="top"><button class="iconb" onclick="show('scEntrada')">←</button><h2>Novo estabelecimento</h2></div>
   <div class="wrap">
-    <label>Nome do estabelecimento</label>
-    <input id="stNome" placeholder="ex: Marchesini di Roverbella">
-    <label>Código (será usado no link)</label>
-    <input id="stCod" placeholder="ex: marchesini" autocapitalize="none">
-    <label>Senha do administrador</label>
-    <input id="stSenha" type="password" placeholder="Senha para o painel de configurações">
+    <label>Nome do estabelecimento</label><input id="stNome" placeholder="ex: Marchesini di Roverbella">
+    <label>Código (será usado no link)</label><input id="stCod" placeholder="ex: marchesini" autocapitalize="none">
+    <label>Senha do administrador</label><input id="stSenha" type="password" placeholder="Senha do painel de configurações">
     <label>Modo de operação</label>
-    <select id="stModo">
-      <option value="restaurante">Restaurante (mesas e comandas)</option>
-      <option value="loja">Loja / Balcão (venda direta)</option>
-      <option value="ambos">Ambos</option>
-    </select>
-    <label>Número de mesas</label>
-    <input id="stMesas" type="number" value="20" min="1" max="200">
+    <select id="stModo"><option value="restaurante">Restaurante (mesas e comandas)</option><option value="loja">Loja / Balcão (venda direta)</option><option value="ambos">Ambos</option></select>
+    <label>Número de mesas</label><input id="stMesas" type="number" value="20" min="1" max="200">
     <button class="btn g" style="margin-top:22px" onclick="criarRest()">Criar estabelecimento</button>
-    <p style="color:var(--mut);font-size:12.5px;margin-top:14px;line-height:1.5">Os setores <b>Cozinha</b> e <b>Bar</b> já vêm criados. Você pode adicionar, remover e vincular impressoras nas Configurações.</p>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:14px;line-height:1.5">Setores <b>Cozinha</b> e <b>Bar</b> já vêm criados. A senha do gerente começa igual à do administrador — troque nas Configurações.</p>
   </div>
 </div>
 
-<!-- ============ TELA: ESCOLHA DE FUNÇÃO ============ -->
+<!-- ============ HOME ============ -->
 <div class="screen" id="scHome">
   <div class="top">
     <div class="brand"><div class="logo">PJ</div><div><h2 id="homeNome">—</h2><div class="sub" id="homeCod"></div></div></div>
@@ -229,33 +263,35 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
   <div class="wrap">
     <div class="rolegrid">
       <div class="rolecard" onclick="entrarGarcom()"><span class="ic">🧑‍🍳</span><b>Garçom</b><span>Tirar pedidos nas mesas pelo celular</span></div>
-      <div class="rolecard" onclick="entrarComputador()"><span class="ic">🖥️</span><b>Computador</b><span>Monitor de pedidos, impressão e caixa</span></div>
-      <div class="rolecard" id="cardBalcao" onclick="entrarBalcao()"><span class="ic">🛒</span><b>Balcão</b><span>Venda direta rápida</span></div>
-      <div class="rolecard" onclick="abrirConfig()"><span class="ic">⚙️</span><b>Configurações</b><span>Produtos, setores, impressoras e senha</span></div>
+      <div class="rolecard" onclick="entrarComputador()"><span class="ic">🖥️</span><b>Computador</b><span>Pedidos, impressão, caixa e relatórios</span></div>
+      <div class="rolecard" id="cardBalcao" onclick="entrarBalcao()"><span class="ic">🛒</span><b>Balcão</b><span>Venda direta e pedido por telefone</span></div>
+      <div class="rolecard" onclick="abrirConfig()"><span class="ic">⚙️</span><b>Configurações</b><span>Produtos, adicionais, equipe e impressoras</span></div>
     </div>
     <button class="btn o" style="margin-top:20px" id="btnInstalar" onclick="instalarApp()">📲 Instalar aplicativo</button>
     <div class="credit">Desenvolvido por Heitor Serra Neto</div>
   </div>
 </div>
 
-<!-- ============ TELA: GARÇOM - MESAS ============ -->
+<!-- ============ GARÇOM: MESAS ============ -->
 <div class="screen" id="scMesas">
   <div class="top"><button class="iconb" onclick="show('scHome')">←</button><div style="flex:1"><h2>Mesas</h2><div class="sub" id="garcomNomeTop"></div></div><button class="iconb" onclick="trocarGarcom()">👤</button></div>
   <div class="wrap"><div class="mesagrid" id="mesaGrid"></div></div>
 </div>
 
-<!-- ============ TELA: GARÇOM - MESA ABERTA ============ -->
+<!-- ============ GARÇOM: MESA ============ -->
 <div class="screen" id="scMesa">
-  <div class="top"><button class="iconb" onclick="show('scMesas')">←</button><div style="flex:1"><h2 id="mesaTitulo">Mesa</h2><div class="sub" id="mesaSub"></div></div></div>
+  <div class="top"><button class="iconb" onclick="show('scMesas')">←</button><div style="flex:1"><h2 id="mesaTitulo">Mesa</h2><div class="sub" id="mesaSub"></div></div><button class="iconb" onclick="mesaMenu()">⋯</button></div>
   <div class="wrap">
+    <div class="pchips" id="mesaPessoas"></div>
     <div id="mesaItens"></div>
-    <div class="totline big"><span>Total</span><span id="mesaTotal">R$ 0,00</span></div>
+    <div class="totline"><span>Já pago</span><span id="mesaPago">R$ 0,00</span></div>
+    <div class="totline big"><span>Restante</span><span id="mesaTotal">R$ 0,00</span></div>
     <button class="btn" style="margin-top:18px" onclick="abrirCardapio()">＋ Adicionar itens</button>
     <button class="btn g" style="margin-top:10px" id="btnConta" onclick="pedirConta()">🧾 Pedir a conta</button>
   </div>
 </div>
 
-<!-- ============ TELA: CARDÁPIO ============ -->
+<!-- ============ CARDÁPIO ============ -->
 <div class="screen" id="scCardapio">
   <div class="top"><button class="iconb" onclick="voltarDoCardapio()">←</button><div style="flex:1"><h2 id="cardTitulo">Cardápio</h2><div class="sub" id="cardSub"></div></div></div>
   <div class="wrap">
@@ -265,26 +301,31 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
   <div class="cartbar" id="cartBar" style="display:none"><div class="inner"><button class="btn g" onclick="abrirCarrinho()"><span id="cartResumo"></span></button></div></div>
 </div>
 
-<!-- ============ TELA: COMPUTADOR ============ -->
+<!-- ============ COMPUTADOR ============ -->
 <div class="screen" id="scComp">
   <div class="top">
     <button class="iconb" onclick="show('scHome')">←</button>
     <div style="flex:1"><h2>Computador</h2><div class="sub" id="qzStatus">Impressora: verificando…</div></div>
+    <button class="iconb" onclick="abrirReimpressao()" title="Reimprimir">🕘</button>
     <button class="iconb" onclick="conectarImpressao(true)" title="Conectar impressão">🖨️</button>
   </div>
   <div class="wrap wide">
     <div class="tabs">
       <button class="on" id="tabPed" onclick="compTab('ped')">📄 Pedidos</button>
-      <button id="tabCaixa" onclick="compTab('caixa')">💰 Mesas & Caixa</button>
+      <button id="tabCaixa" onclick="compTab('caixa')">🍽 Mesas</button>
+      <button id="tabGav" onclick="compTab('gav')">💵 Gaveta</button>
+      <button id="tabRel" onclick="compTab('rel')">📊 Relatórios</button>
     </div>
-    <div id="compPed"><div class="cupons" id="cuponsBox"></div><div class="empty" id="pedVazio"><span class="ic">🍃</span>Nenhum pedido pendente.<br>Os novos pedidos aparecem aqui na hora.</div></div>
+    <div id="compPed"><div class="cupons" id="cuponsBox"></div><div class="empty" id="pedVazio"><span class="ic">🍃</span>Nenhum pedido em andamento.</div></div>
     <div id="compCaixa" style="display:none"><div class="mesagrid" id="mesaGridCaixa"></div></div>
+    <div id="compGav" style="display:none"></div>
+    <div id="compRel" style="display:none"></div>
   </div>
 </div>
 
-<!-- ============ TELA: BALCÃO ============ -->
+<!-- ============ BALCÃO ============ -->
 <div class="screen" id="scBalcao">
-  <div class="top"><button class="iconb" onclick="show('scHome')">←</button><div style="flex:1"><h2>Venda balcão</h2><div class="sub">Toque nos produtos para adicionar</div></div></div>
+  <div class="top"><button class="iconb" onclick="show('scHome')">←</button><div style="flex:1"><h2>Venda balcão</h2><div class="sub" id="balcaoCliente">Sem cliente vinculado</div></div><button class="iconb" onclick="abrirClientes()">👤</button></div>
   <div class="wrap wide">
     <div class="cats" id="catChipsB"></div>
     <div class="prodgrid" id="prodGridB"></div>
@@ -292,27 +333,39 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
   <div class="cartbar" id="cartBarB" style="display:none"><div class="inner"><button class="btn g" onclick="abrirCarrinho()"><span id="cartResumoB"></span></button></div></div>
 </div>
 
-<!-- ============ TELA: CONFIG ============ -->
+<!-- ============ CONFIG ============ -->
 <div class="screen" id="scConfig">
   <div class="top"><button class="iconb" onclick="show('scHome')">←</button><h2>Configurações</h2></div>
   <div class="wrap">
-    <div class="tabs">
+    <div class="tabs" style="flex-wrap:wrap">
       <button class="on" id="tabProd" onclick="cfgTab('prod')">Produtos</button>
+      <button id="tabGrp" onclick="cfgTab('grp')">Adicionais</button>
+      <button id="tabEqp" onclick="cfgTab('eqp')">Equipe</button>
       <button id="tabSet" onclick="cfgTab('set')">Setores</button>
       <button id="tabGeral" onclick="cfgTab('geral')">Geral</button>
     </div>
     <div id="cfgProd">
       <button class="btn" onclick="editarProduto(null)">＋ Novo produto</button>
       <div class="row" style="margin-top:10px">
-        <button class="btn o sm" style="flex:1" onclick="abrirTemplates()">📦 Templates prontos</button>
-        <button class="btn o sm" style="flex:1" onclick="abrirImportIA()">🤖 Importar com IA</button>
+        <button class="btn o sm" style="flex:1" onclick="abrirTemplates()">📦 Templates</button>
+        <button class="btn o sm" style="flex:1" onclick="abrirImportIA()">🤖 Importar IA</button>
         <button class="btn o sm" style="flex:1" onclick="abrirBackup()">💾 Backup</button>
       </div>
       <div id="prodLista" style="margin-top:16px"></div>
     </div>
+    <div id="cfgGrp" style="display:none">
+      <p style="color:var(--mut);font-size:13px;line-height:1.55;margin-bottom:12px">Crie o grupo <b>uma vez</b> (ex: "Gelo?") e vincule a vários produtos. Opções podem ter <b>preço extra</b> e o grupo pode aceitar <b>várias escolhas</b>.</p>
+      <button class="btn" onclick="editarGrupo(null)">＋ Novo grupo de adicionais</button>
+      <div id="grpLista" style="margin-top:16px"></div>
+    </div>
+    <div id="cfgEqp" style="display:none">
+      <p style="color:var(--mut);font-size:13px;line-height:1.55;margin-bottom:12px">Cadastre garçons, caixas e gerentes com foto. O garçom entra escolhendo seu perfil e a foto aparece na mesa.</p>
+      <button class="btn" onclick="editarFunc(null)">＋ Novo funcionário</button>
+      <div id="eqpLista" style="margin-top:16px"></div>
+    </div>
     <div id="cfgSet" style="display:none">
       <div class="card"><b style="font-size:14px">🖨️ Impressão automática (QZ Tray)</b>
-        <p style="color:var(--mut);font-size:12.5px;line-height:1.55;margin-top:8px">Instale o <b>QZ Tray</b> no computador (qz.io) e deixe aberto. Cada setor imprime na sua impressora, sem cliques. Sem o QZ Tray, o app usa a janela de impressão do navegador.</p>
+        <p style="color:var(--mut);font-size:12.5px;line-height:1.55;margin-top:8px">Instale o <b>QZ Tray</b> (qz.io) no computador e deixe aberto. Cada setor imprime na sua impressora automaticamente. Sem ele, o app usa a janela do navegador.</p>
         <button class="btn o sm" style="margin-top:12px" onclick="conectarImpressao(true)">Conectar e buscar impressoras</button>
       </div>
       <div id="setLista"></div>
@@ -321,24 +374,22 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <select id="cfgImpConta" onchange="salvarCampo('impConta', this.value)"><option value="">— janela do navegador —</option></select>
     </div>
     <div id="cfgGeral" style="display:none">
-      <label>Nome do estabelecimento</label>
-      <input id="cfgNome" onchange="salvarCampo('nome', this.value)">
+      <label>Nome do estabelecimento</label><input id="cfgNome" onchange="salvarCampo('nome', this.value)">
       <label>Modo de operação</label>
-      <select id="cfgModo" onchange="salvarCampo('modo', this.value)">
-        <option value="restaurante">Restaurante (mesas)</option>
-        <option value="loja">Loja / Balcão</option>
-        <option value="ambos">Ambos</option>
-      </select>
-      <label>Número de mesas</label>
-      <input id="cfgMesas" type="number" min="1" max="200" onchange="salvarCampo('numMesas', parseInt(this.value)||20)">
-      <label>Taxa de serviço (%)</label>
-      <input id="cfgTaxa" type="number" min="0" max="30" onchange="salvarCampo('taxa', parseFloat(this.value)||0)">
-      <div class="sw"><div><b>Impressão automática</b><small>Imprimir pedidos assim que chegam na tela</small></div><div class="tog" id="togAuto" onclick="togCampo('autoImprimir', this)"></div></div>
-      <div class="sw"><div><b>Alerta sonoro</b><small>Tocar som quando chega pedido novo</small></div><div class="tog" id="togSom" onclick="togCampo('som', this)"></div></div>
-      <label>Trocar senha do administrador</label>
-      <input id="cfgSenha" type="password" placeholder="Nova senha (deixe vazio para manter)">
-      <button class="btn o sm" style="margin-top:10px" onclick="trocarSenha()">Salvar nova senha</button>
-      <label>Link de acesso deste estabelecimento</label>
+      <select id="cfgModo" onchange="salvarCampo('modo', this.value)"><option value="restaurante">Restaurante (mesas)</option><option value="loja">Loja / Balcão</option><option value="ambos">Ambos</option></select>
+      <label>Número de mesas</label><input id="cfgMesas" type="number" min="1" max="200" onchange="salvarCampo('numMesas', parseInt(this.value)||20)">
+      <label>Taxa de serviço (%)</label><input id="cfgTaxa" type="number" min="0" max="30" onchange="salvarCampo('taxa', parseFloat(this.value)||0)">
+      <div class="sw"><div><b>Impressão automática</b><small>Imprimir pedidos assim que chegam</small></div><div class="tog" id="togAuto" onclick="togCampo('autoImprimir', this)"></div></div>
+      <div class="sw"><div><b>Alerta sonoro</b><small>Som quando chega pedido novo</small></div><div class="tog" id="togSom" onclick="togCampo('som', this)"></div></div>
+      <label>🍕 Categorias com meio-a-meio (frações)</label>
+      <div class="pills" id="fracPills"></div>
+      <label>Regra de preço da pizza fracionada</label>
+      <select id="cfgFracRegra" onchange="salvarCampo('fracRegra', this.value)"><option value="cara">Prevalece a mais cara (padrão do mercado)</option><option value="prop">Proporcional (média dos sabores)</option></select>
+      <label>Senha do gerente (cancelamentos, descontos, sangria)</label>
+      <div class="row"><input id="cfgSenhaGer" type="password" placeholder="Nova senha do gerente"><button class="btn sm" onclick="trocarSenhaGer()">Salvar</button></div>
+      <label>Senha do administrador</label>
+      <div class="row"><input id="cfgSenha" type="password" placeholder="Nova senha do admin"><button class="btn sm" onclick="trocarSenha()">Salvar</button></div>
+      <label>Link de acesso</label>
       <div class="row"><input id="cfgLink" readonly><button class="btn sm" onclick="copiarLink()">Copiar</button></div>
       <div class="credit">Desenvolvido por Heitor Serra Neto</div>
     </div>
@@ -357,12 +408,9 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
   <button class="btn" style="margin-top:16px" onclick="checarSenha()">Entrar</button>
   <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovSenha')">Cancelar</button>
 </div></div>
-<div class="overlay" id="ovNome"><div class="sheet">
-  <h3 style="font-size:18px">👤 Seu nome</h3>
-  <label>Como você se chama?</label><input id="inGarcomNome" placeholder="ex: Heitor">
-  <button class="btn g" style="margin-top:16px" onclick="salvarGarcom()">Começar</button>
-</div></div>
+<div class="overlay" id="ovNome"><div class="sheet" id="ovNomeBox"></div></div>
 
+<div class="notif" id="notif"></div>
 <div class="toast" id="toast"></div>
 <div id="printArea"></div>
 
@@ -371,10 +419,8 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js"></script>
 <script>
 /* ================================================================
-   PDV JÁ — Etapa 1 · Desenvolvido por Heitor Serra Neto
-   ================================================================
-   ⚠️ COLE AQUI O SEU firebaseConfig (o mesmo do Entrega Já /
-   Staff Check, projeto staffcheck-d6f20) e pronto:
+   PDV JÁ — Etapa 2 · Desenvolvido por Heitor Serra Neto
+   ⚠️ COLE AQUI O SEU firebaseConfig (projeto staffcheck-d6f20):
 ================================================================ */
 const firebaseConfig = {
   apiKey: "COLE_AQUI",
@@ -384,39 +430,58 @@ const firebaseConfig = {
   messagingSenderId: "COLE_AQUI",
   appId: "COLE_AQUI"
 };
+/* Fotos (opcional): cole a URL e a anon key do seu Supabase (mesmo do
+   KonectaRH) e crie um bucket PÚBLICO chamado "pdv". Sem isso, as fotos
+   funcionam por URL manual normalmente. */
+const SUPA_URL = "";   // ex: https://xxxx.supabase.co
+const SUPA_KEY = "";
 /* ================================================================ */
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 const TS = () => firebase.firestore.FieldValue.serverTimestamp();
 
 /* ---------- estado ---------- */
 let REST = new URLSearchParams(location.search).get('rest') || localStorage.getItem('pdv_rest') || '';
-let CFG = null;            // documento de configuração
-let PRODUTOS = [];         // cache de produtos
-let MESAS = {};            // cache de mesas {num: dados}
-let unsubs = [];           // listeners ativos
-let garcom = localStorage.getItem('pdv_garcom') || '';
-let adminOk = false;
-let mesaAtual = null;      // número da mesa aberta (null = balcão)
-let carrinho = [];         // itens ainda não enviados
-let catAtiva = 'Todos';
-let contexto = 'garcom';   // 'garcom' | 'balcao'
-let pedidosVistos = new Set();
-let primeiraCarga = true;
-let deferredPrompt = null;
+let CFG = null, PRODUTOS = [], MESAS = {}, GRUPOS = [], EQUIPE = [], CLIENTES = [], GAVETA = null;
+let unsubs = [], garcom = localStorage.getItem('pdv_garcom') || '', garcomFoto = localStorage.getItem('pdv_garcom_foto') || '';
+let adminOk = false, mesaAtual = null, carrinho = [], catAtiva = 'Todos', contexto = 'garcom';
+let pedidosVistos = new Set(), primeiraCarga = true, deferredPrompt = null, clienteSel = null;
+let ocupado = false; // trava anti toque-duplo
 
 const rcol = () => db.collection('pdv_restaurantes').doc(REST);
 const col = (c) => rcol().collection(c);
 const fmt = (v) => 'R$ ' + (v || 0).toFixed(2).replace('.', ',');
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $ = (id) => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const round2 = (v) => Math.round(v * 100) / 100;
 
 function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('on')); $(id).classList.add('on'); window.scrollTo(0,0); }
 function abrirOv(id){ $(id).classList.add('on'); }
 function fecharOv(id){ $(id).classList.remove('on'); }
-function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2600); }
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2800); }
+function notif(msg){ const n = $('notif'); n.textContent = msg; n.classList.add('on'); clearTimeout(n._t); n._t = setTimeout(() => n.classList.remove('on'), 6000); beep(); }
 function pararListeners(){ unsubs.forEach(u => u()); unsubs = []; }
+function avatarHTML(nome, foto, cls){
+  cls = cls || '';
+  if(foto) return `<img class="avatar ${cls}" src="${esc(foto)}" onerror="this.outerHTML='<span class=\'avatar avatxt ${cls}\'>${esc((nome||'?')[0].toUpperCase())}</span>'">`;
+  return `<span class="avatar avatxt ${cls}">${esc((nome || '?')[0].toUpperCase())}</span>`;
+}
+async function trava(fn){
+  if(ocupado) return; ocupado = true;
+  try{ await fn(); } finally { ocupado = false; }
+}
+function senhaGerente(){
+  const s = prompt('🔑 Senha do gerente:');
+  if(s === null) return false;
+  if(s === ((CFG && (CFG.senhaGerente || CFG.senha)) || '')) return true;
+  toast('Senha do gerente incorreta'); return false;
+}
+async function logAcao(tipo, dados){
+  try{ await col('log').add({ tipo, ...dados, por: garcom || 'Computador', criadoEm: TS() }); }catch(e){}
+}
 
 /* ---------- boot ---------- */
 async function boot(){
@@ -432,16 +497,32 @@ async function boot(){
       if($('scBalcao').classList.contains('on')) renderCardapio('prodGridB','catChipsB');
       if($('scConfig').classList.contains('on')) renderProdLista();
     }));
+    unsubs.push(col('grupos').orderBy('nome').onSnapshot(s => {
+      GRUPOS = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      if($('scConfig').classList.contains('on')) renderGrupos();
+    }));
+    unsubs.push(col('equipe').orderBy('nome').onSnapshot(s => {
+      EQUIPE = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      if($('scConfig').classList.contains('on')) renderEquipe();
+    }));
     unsubs.push(col('mesas').onSnapshot(s => {
       MESAS = {}; s.docs.forEach(d => MESAS[d.id] = d.data());
       if($('scMesas').classList.contains('on')) renderMesas('mesaGrid', false);
       if($('scComp').classList.contains('on')) renderMesas('mesaGridCaixa', true);
       if($('scMesa').classList.contains('on') && mesaAtual) renderMesaAberta();
     }));
+    unsubs.push(col('caixas').where('status', '==', 'aberto').onSnapshot(s => {
+      GAVETA = s.docs.length ? { id: s.docs[0].id, ...s.docs[0].data() } : null;
+      if($('scComp').classList.contains('on') && $('compGav').style.display !== 'none') renderGaveta();
+    }));
+    setInterval(() => { // atualiza tempos das mesas
+      if($('scMesas').classList.contains('on')) renderMesas('mesaGrid', false);
+      if($('scComp').classList.contains('on') && $('compCaixa').style.display !== 'none') renderMesas('mesaGridCaixa', true);
+    }, 60000);
     show('scHome');
   }catch(e){
     console.error(e);
-    if(String(e.code).includes('permission')) toast('⛔ Regras do Firestore bloqueando: libere a coleção pdv_restaurantes');
+    if(String(e.code).includes('permission')) toast('⛔ Regras do Firestore bloqueando: libere pdv_restaurantes');
     else toast('Erro ao conectar: ' + (e.code || e.message || 'verifique a internet'));
   }
 }
@@ -459,7 +540,6 @@ function entrarRest(){
   if(!v){ toast('Digite o código'); return; }
   REST = v; boot();
 }
-function abrirSetup(){ show('scSetup'); }
 async function criarRest(){
   const nome = $('stNome').value.trim();
   const cod = $('stCod').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
@@ -469,70 +549,289 @@ async function criarRest(){
     const ex = await db.collection('pdv_restaurantes').doc(cod).get();
     if(ex.exists){ toast('Esse código já está em uso'); return; }
     await db.collection('pdv_restaurantes').doc(cod).set({
-      nome, senha, modo: $('stModo').value,
+      nome, senha, senhaGerente: senha, modo: $('stModo').value,
       numMesas: parseInt($('stMesas').value) || 20,
       taxa: 10, autoImprimir: true, som: true, impConta: '',
+      fracRegra: 'cara', categoriasFracao: [],
       setores: [{ id:'cozinha', nome:'Cozinha', impressora:'' }, { id:'bar', nome:'Bar', impressora:'' }],
       criadoEm: TS()
     });
     REST = cod; toast('Estabelecimento criado! 🎉'); boot();
   }catch(e){
     console.error(e);
-    if(String(e.code).includes('permission')) toast('⛔ Regras do Firestore bloqueando: libere a coleção pdv_restaurantes');
-    else if(String(e.message).includes('COLE_AQUI') || String(e.code).includes('api-key') || String(e.message).toLowerCase().includes('api key')) toast('⛔ Cole o firebaseConfig no topo do arquivo');
+    if(String(e.code).includes('permission')) toast('⛔ Regras do Firestore bloqueando: libere pdv_restaurantes');
     else toast('Erro: ' + (e.code || e.message || e));
   }
 }
 function sairRest(){ pararListeners(); REST=''; localStorage.removeItem('pdv_rest'); adminOk=false; show('scEntrada'); }
 
-/* ---------- garçom ---------- */
+/* ---------- login do garçom (com equipe) ---------- */
 function entrarGarcom(){
-  if(!garcom){ abrirOv('ovNome'); return; }
+  if(!garcom){ abrirNome(); return; }
   $('garcomNomeTop').textContent = garcom;
-  renderMesas('mesaGrid', false); show('scMesas');
+  renderMesas('mesaGrid', false); escutarProntos(); show('scMesas');
+}
+function abrirNome(){
+  const garcons = EQUIPE.filter(f => f.funcao === 'garcom' || f.funcao === 'gerente');
+  $('ovNomeBox').innerHTML = `
+    <h3 style="font-size:18px">👤 Quem é você?</h3>
+    ${garcons.length ? `<div class="menuops">${garcons.map(f =>
+      `<button onclick="escolherFunc('${f.id}')">${avatarHTML(f.nome, f.foto)}<span>${esc(f.nome)}</span></button>`).join('')}</div>
+      <label>Ou digite outro nome</label>` : '<label>Seu nome</label>'}
+    <input id="inGarcomNome" placeholder="ex: Heitor">
+    <button class="btn g" style="margin-top:16px" onclick="salvarGarcom()">Começar</button>`;
+  abrirOv('ovNome');
+}
+function escolherFunc(id){
+  const f = EQUIPE.find(x => x.id === id); if(!f) return;
+  garcom = f.nome; garcomFoto = f.foto || '';
+  localStorage.setItem('pdv_garcom', garcom); localStorage.setItem('pdv_garcom_foto', garcomFoto);
+  fecharOv('ovNome'); entrarGarcom();
 }
 function salvarGarcom(){
   const v = $('inGarcomNome').value.trim();
-  if(!v){ toast('Digite seu nome'); return; }
-  garcom = v; localStorage.setItem('pdv_garcom', v);
+  if(!v){ toast('Digite seu nome ou escolha um perfil'); return; }
+  garcom = v; garcomFoto = '';
+  localStorage.setItem('pdv_garcom', v); localStorage.removeItem('pdv_garcom_foto');
   fecharOv('ovNome'); entrarGarcom();
 }
-function trocarGarcom(){ garcom=''; localStorage.removeItem('pdv_garcom'); abrirOv('ovNome'); }
+function trocarGarcom(){ garcom=''; garcomFoto=''; localStorage.removeItem('pdv_garcom'); abrirNome(); }
+let unsubProntos = null;
+function escutarProntos(){
+  if(unsubProntos) return;
+  unsubProntos = col('pedidos').where('status', '==', 'pronto').onSnapshot(s => {
+    s.docChanges().forEach(ch => {
+      if(ch.type === 'added'){
+        const p = ch.doc.data();
+        if(p.garcom === garcom) notif('✅ Pedido da ' + (p.mesa ? 'mesa ' + p.mesa : 'venda balcão') + ' está PRONTO!');
+      }
+    });
+  });
+  unsubs.push(unsubProntos);
+}
 
+/* ---------- mesas ---------- */
+function minsAberta(m){
+  if(!m.abertaEm || !m.abertaEm.toMillis) return '';
+  const min = Math.floor((Date.now() - m.abertaEm.toMillis()) / 60000);
+  if(min < 1) return 'agora';
+  if(min < 60) return 'há ' + min + 'min';
+  return 'há ' + Math.floor(min/60) + 'h' + String(min%60).padStart(2,'0');
+}
+function itensRestanteTotal(m){
+  return round2((m.itens || []).filter(i => !i.pago).reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0) - (m.pagoAvulso || 0));
+}
+function totalPagoMesa(m){
+  return round2((m.itens || []).reduce((a,x) => a + (x.pago ? x.preco * x.qtd : (x.valorPago || 0)), 0) + (m.pagoAvulso || 0));
+}
 function renderMesas(elId, modoCaixa){
   const n = (CFG && CFG.numMesas) || 20;
   let html = '';
-  for(let i=1; i<=n; i++){
+  for(let i = 1; i <= n; i++){
     const m = MESAS[String(i)] || {};
     const st = m.status || 'livre';
-    const total = (m.itens || []).reduce((a,x) => a + x.preco * x.qtd, 0);
+    const resta = itensRestanteTotal(m);
     const stTxt = st === 'livre' ? 'Livre' : (st === 'conta' ? 'Pediu conta' : 'Ocupada');
-    html += `<div class="mesa ${st}" onclick="${modoCaixa ? `abrirCaixa(${i})` : `abrirMesa(${i})`}">
+    html += `<div class="mesa ${st}" onclick="${modoCaixa ? `abrirCaixaMesa(${i})` : `abrirMesa(${i})`}">
+      ${st !== 'livre' && m.numPessoas ? `<div class="pess">👥${m.numPessoas}</div>` : ''}
+      ${st !== 'livre' && (m.garcomFoto || m.garcom) ? `<div class="gpic">${avatarHTML(m.garcom, m.garcomFoto, 'sm')}</div>` : ''}
       <div class="n">${i}</div><div class="st">${stTxt}</div>
-      ${total > 0 ? `<div class="tot">${fmt(total)}</div>` : ''}</div>`;
+      ${resta > 0 ? `<div class="tot">${fmt(resta)}</div>` : ''}
+      ${st !== 'livre' ? `<div class="tempo">${minsAberta(m)}</div>` : ''}</div>`;
   }
   $(elId).innerHTML = html;
 }
 function abrirMesa(n){
   mesaAtual = n; carrinho = []; contexto = 'garcom';
+  const m = MESAS[String(n)];
+  if(!m || m.status === 'livre' || !m.status){ fluxoAbrirMesa(n); return; }
   renderMesaAberta(); show('scMesa');
+}
+let abrirQtdP = 2;
+function fluxoAbrirMesa(n){
+  abrirQtdP = 2;
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🪑 Abrir mesa ${n}</h3>
+    <label>Quantas pessoas?</label>
+    <div class="qty"><button onclick="mudarQtdP(-1)">−</button><b id="qtdPView">2</b><button onclick="mudarQtdP(1)">＋</button></div>
+    <p style="color:var(--mut);font-size:12.5px;line-height:1.5">O número de pessoas alimenta o ticket médio e a divisão da conta. Comandas com nome podem ser criadas depois, dentro da mesa.</p>
+    <button class="btn g" style="margin-top:14px" onclick="confirmarAbrirMesa(${n})">Abrir mesa</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+function mudarQtdP(d){ abrirQtdP = Math.max(1, abrirQtdP + d); $('qtdPView').textContent = abrirQtdP; }
+async function confirmarAbrirMesa(n){
+  await col('mesas').doc(String(n)).set({
+    status: 'ocupada', garcom, garcomFoto, numPessoas: abrirQtdP,
+    pessoas: [], itens: [], pagoAvulso: 0, abertaEm: firebase.firestore.Timestamp.now()
+  });
+  fecharOv('ovExtra'); renderMesaAberta(); show('scMesa');
 }
 function renderMesaAberta(){
   const m = MESAS[String(mesaAtual)] || {};
-  const itens = m.itens || [];
+  const itens = (m.itens || []).filter(i => !i.pago);
+  const pagos = (m.itens || []).filter(i => i.pago);
   $('mesaTitulo').textContent = 'Mesa ' + mesaAtual;
-  $('mesaSub').textContent = m.status === 'conta' ? '🧾 Conta pedida — aguardando caixa' : (itens.length ? itens.reduce((a,x)=>a+x.qtd,0) + ' itens na comanda' : 'Mesa livre');
-  $('mesaItens').innerHTML = itens.length ? itens.map(it => `
-    <div class="item"><div class="q">${it.qtd}×</div>
-      <div class="info"><b>${esc(it.nome)}</b>${itemMods(it)}</div>
-      <div class="val">${fmt(it.preco * it.qtd)}</div></div>`).join('')
-    : '<div class="empty"><span class="ic">🪑</span>Nenhum item ainda.<br>Toque em "Adicionar itens" para começar.</div>';
-  $('mesaTotal').textContent = fmt(itens.reduce((a,x) => a + x.preco * x.qtd, 0));
-  $('btnConta').style.display = itens.length ? '' : 'none';
+  $('mesaSub').textContent = (m.status === 'conta' ? '🧾 Conta pedida · ' : '') + '👥 ' + (m.numPessoas || 1) + ' pessoas · ' + minsAberta(m);
+  const pessoas = m.pessoas || [];
+  $('mesaPessoas').innerHTML = `<div class="pchip" style="pointer-events:none">🍽 Mesa</div>` +
+    pessoas.map(p => `<div class="pchip" style="pointer-events:none">${p.pagou ? '✅ ' : ''}${esc(p.nome)}</div>`).join('') +
+    `<div class="pchip" onclick="addPessoa()">＋ Pessoa</div>`;
+  // agrupar por pessoa
+  const grupos = { '': { nome: '🍽 Mesa (todos)', itens: [] } };
+  pessoas.forEach(p => grupos[p.id] = { nome: '👤 ' + p.nome, itens: [] });
+  itens.forEach(it => { const k = grupos[it.pessoa] ? it.pessoa : ''; grupos[k].itens.push(it); });
+  let html = '';
+  Object.keys(grupos).forEach(k => {
+    const g = grupos[k];
+    if(!g.itens.length) return;
+    const sub = g.itens.reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0);
+    html += `<div class="pgrupo"><div class="ph">${esc(g.nome)}<span class="psub">${fmt(sub)}</span></div>` +
+      g.itens.map(it => `<div class="item"><div class="q">${it.qtd}×</div>
+        <div class="info"><b>${esc(it.nome)}</b>${itemMods(it)}${it.valorPago ? `<div class="mods" style="color:var(--green)">parcialmente pago: ${fmt(it.valorPago)}</div>` : ''}</div>
+        <div class="val">${fmt(it.preco * it.qtd)}</div>
+        <button class="x" onclick="cancelarItem('${it.uid}')">✕</button></div>`).join('') + '</div>';
+  });
+  if(pagos.length) html += `<div class="pgrupo"><div class="ph" style="color:var(--green)">✅ Já pagos<span class="psub">${fmt(pagos.reduce((a,x)=>a+x.preco*x.qtd,0))}</span></div></div>`;
+  $('mesaItens').innerHTML = html || '<div class="empty"><span class="ic">🪑</span>Nenhum item ainda.<br>Toque em "Adicionar itens".</div>';
+  $('mesaPago').textContent = fmt(totalPagoMesa(m));
+  $('mesaTotal').textContent = fmt(itensRestanteTotal(m));
+  $('btnConta').style.display = (m.itens || []).length ? '' : 'none';
 }
 function itemMods(it){
   const l = [...(it.mods || [])]; if(it.obs) l.push('Obs: ' + it.obs);
   return l.length ? `<div class="mods">${esc(l.join(' · '))}</div>` : '';
+}
+async function addPessoa(){
+  const m = MESAS[String(mesaAtual)] || {};
+  const pessoas = (m.pessoas || []).slice();
+  const nome = prompt('Nome da pessoa (comanda individual):', 'Pessoa ' + (pessoas.length + 1));
+  if(!nome) return;
+  pessoas.push({ id: uid(), nome: nome.trim(), pagou: false });
+  await col('mesas').doc(String(mesaAtual)).set({ pessoas, numPessoas: Math.max(m.numPessoas || 1, pessoas.length) }, { merge: true });
+}
+async function cancelarItem(itemUid){
+  const m = MESAS[String(mesaAtual)] || {};
+  const it = (m.itens || []).find(x => x.uid === itemUid);
+  if(!it) return;
+  if(!senhaGerente()) return;
+  const motivo = prompt('Motivo do cancelamento de "' + it.qtd + 'x ' + it.nome + '":');
+  if(motivo === null) return;
+  const itens = (m.itens || []).filter(x => x.uid !== itemUid);
+  await col('mesas').doc(String(mesaAtual)).set({ itens }, { merge: true });
+  logAcao('cancelamento', { mesa: mesaAtual, item: it.nome, qtd: it.qtd, valor: it.preco * it.qtd, motivo });
+  toast('Item cancelado (registrado no log)');
+}
+
+/* ---------- menu ⋯ da mesa (transferir / juntar) ---------- */
+function mesaMenu(){
+  const m = MESAS[String(mesaAtual)] || {};
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">Mesa ${mesaAtual} — ações</h3>
+    <div class="menuops">
+      <button onclick="escolherDestino('mesa')"><span style="font-size:20px">🔀</span><span>Transferir mesa inteira</span></button>
+      ${(m.pessoas || []).length ? `<button onclick="transferirPessoasUI()"><span style="font-size:20px">👥</span><span>Transferir só algumas pessoas</span></button>` : ''}
+      <button onclick="juntarUI()"><span style="font-size:20px">🔗</span><span>Juntar outra mesa nesta</span></button>
+      <button onclick="fecharOv('ovExtra');abrirCaixaMesa(${mesaAtual})"><span style="font-size:20px">💰</span><span>Receber pagamento</span></button>
+    </div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
+let pessoasTransf = [];
+function escolherDestino(tipo){
+  const n = (CFG && CFG.numMesas) || 20;
+  let livres = [];
+  for(let i = 1; i <= n; i++){
+    const st = (MESAS[String(i)] || {}).status || 'livre';
+    if(i !== mesaAtual && (st === 'livre' || tipo === 'pessoas')) livres.push(i);
+  }
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">Para qual mesa?</h3>
+    <div class="mesagrid" style="margin-top:14px">${livres.map(i => {
+      const st = (MESAS[String(i)] || {}).status || 'livre';
+      return `<div class="mesa ${st}" onclick="${tipo === 'mesa' ? `transferirMesa(${i})` : `transferirPessoas(${i})`}"><div class="n">${i}</div><div class="st">${st === 'livre' ? 'Livre' : 'Ocupada'}</div></div>`;
+    }).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+}
+async function transferirMesa(dest){
+  await trava(async () => {
+    const oRef = col('mesas').doc(String(mesaAtual)), dRef = col('mesas').doc(String(dest));
+    await db.runTransaction(async t => {
+      const o = await t.get(oRef), d = await t.get(dRef);
+      if(d.exists && d.data().status && d.data().status !== 'livre') throw new Error('Mesa destino ocupada');
+      t.set(dRef, o.data());
+      t.set(oRef, { status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0 });
+    });
+    logAcao('transferencia', { de: mesaAtual, para: dest });
+    fecharOv('ovExtra'); toast('Mesa ' + mesaAtual + ' → ' + dest + ' ✅');
+    mesaAtual = dest; renderMesaAberta();
+  });
+}
+function transferirPessoasUI(){
+  const m = MESAS[String(mesaAtual)] || {};
+  pessoasTransf = [];
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">Quem vai mudar de mesa?</h3>
+    <div style="margin-top:8px">${(m.pessoas || []).filter(p => !p.pagou).map(p => `
+      <div class="chk" id="tp_${p.id}" onclick="togPessoaTransf('${p.id}')"><div class="box"></div><div class="ci"><b>${esc(p.nome)}</b></div></div>`).join('')}</div>
+    <button class="btn g" style="margin-top:16px" onclick="escolherDestino('pessoas')">Escolher mesa destino →</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+}
+function togPessoaTransf(id){
+  const i = pessoasTransf.indexOf(id);
+  if(i >= 0) pessoasTransf.splice(i, 1); else pessoasTransf.push(id);
+  $('tp_' + id).classList.toggle('on', pessoasTransf.includes(id));
+  $('tp_' + id).querySelector('.box').textContent = pessoasTransf.includes(id) ? '✓' : '';
+}
+async function transferirPessoas(dest){
+  if(!pessoasTransf.length){ toast('Selecione ao menos uma pessoa'); return; }
+  await trava(async () => {
+    const oRef = col('mesas').doc(String(mesaAtual)), dRef = col('mesas').doc(String(dest));
+    await db.runTransaction(async t => {
+      const o = await t.get(oRef), d = await t.get(dRef);
+      const om = o.data() || {};
+      const movP = (om.pessoas || []).filter(p => pessoasTransf.includes(p.id));
+      const ficP = (om.pessoas || []).filter(p => !pessoasTransf.includes(p.id));
+      const movI = (om.itens || []).filter(i => pessoasTransf.includes(i.pessoa));
+      const ficI = (om.itens || []).filter(i => !pessoasTransf.includes(i.pessoa));
+      const dm = (d.exists && d.data().status && d.data().status !== 'livre') ? d.data() : { status:'ocupada', garcom, garcomFoto, itens: [], pessoas: [], pagoAvulso: 0, numPessoas: 0, abertaEm: firebase.firestore.Timestamp.now() };
+      t.set(dRef, { ...dm, pessoas: (dm.pessoas || []).concat(movP), itens: (dm.itens || []).concat(movI), numPessoas: (dm.numPessoas || 0) + movP.length });
+      t.set(oRef, { ...om, pessoas: ficP, itens: ficI, numPessoas: Math.max(1, (om.numPessoas || 1) - movP.length) });
+    });
+    logAcao('transferencia_pessoas', { de: mesaAtual, para: dest, quantas: pessoasTransf.length });
+    fecharOv('ovExtra'); toast('Pessoas transferidas ✅'); renderMesaAberta();
+  });
+}
+function juntarUI(){
+  const n = (CFG && CFG.numMesas) || 20;
+  let ocup = [];
+  for(let i = 1; i <= n; i++){
+    const st = (MESAS[String(i)] || {}).status;
+    if(i !== mesaAtual && st && st !== 'livre') ocup.push(i);
+  }
+  if(!ocup.length){ toast('Nenhuma outra mesa ocupada'); return; }
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">Juntar qual mesa na ${mesaAtual}?</h3>
+    <div class="mesagrid" style="margin-top:14px">${ocup.map(i =>
+      `<div class="mesa ocupada" onclick="juntarMesa(${i})"><div class="n">${i}</div><div class="st">Ocupada</div></div>`).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+}
+async function juntarMesa(src){
+  await trava(async () => {
+    const sRef = col('mesas').doc(String(src)), dRef = col('mesas').doc(String(mesaAtual));
+    await db.runTransaction(async t => {
+      const s = await t.get(sRef), d = await t.get(dRef);
+      const sm = s.data() || {}, dm = d.data() || {};
+      t.set(dRef, { ...dm,
+        itens: (dm.itens || []).concat(sm.itens || []),
+        pessoas: (dm.pessoas || []).concat(sm.pessoas || []),
+        pagoAvulso: (dm.pagoAvulso || 0) + (sm.pagoAvulso || 0),
+        numPessoas: (dm.numPessoas || 1) + (sm.numPessoas || 1) });
+      t.set(sRef, { status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0 });
+    });
+    logAcao('juntar_mesas', { de: src, em: mesaAtual });
+    fecharOv('ovExtra'); toast('Mesa ' + src + ' juntada na ' + mesaAtual + ' 🔗');
+  });
 }
 
 /* ---------- cardápio ---------- */
@@ -557,37 +856,57 @@ function renderCardapio(gridId, chipsId){
     `<button class="chip ${c === catAtiva ? 'on' : ''}" onclick="setCat(${i},'${gridId}','${chipsId}')">${esc(c)}</button>`).join('');
   const lista = PRODUTOS.filter(p => catAtiva === 'Todos' || (p.categoria || 'Geral') === catAtiva);
   $(gridId).innerHTML = lista.length ? lista.map(p => `
-    <div class="prod" onclick="abrirProduto('${p.id}')">
+    <div class="prod ${p.esgotado ? 'esg' : ''}" onclick="abrirProduto('${p.id}')">
       ${p.foto ? `<img src="${esc(p.foto)}" loading="lazy" onerror="this.remove()">` : ''}
       <b>${esc(p.nome)}</b>
       ${p.descricao ? `<div class="d">${esc(p.descricao)}</div>` : ''}
       <div class="p">${fmt(p.preco)}</div>
       <div class="set">${esc(nomeSetor(p.setor))}</div>
     </div>`).join('')
-    : '<div class="empty" style="grid-column:1/-1"><span class="ic">📦</span>Nenhum produto cadastrado.<br>Cadastre em Configurações → Produtos.</div>';
+    : '<div class="empty" style="grid-column:1/-1"><span class="ic">📦</span>Nenhum produto cadastrado.<br>Configurações → Produtos.</div>';
 }
 function nomeSetor(id){
   const s = ((CFG && CFG.setores) || []).find(x => x.id === id);
   return s ? s.nome : (id || 'Sem setor');
 }
+function gruposDoProduto(p){
+  const ids = p.grupos || [];
+  return GRUPOS.filter(g => ids.includes(g.id));
+}
 
-/* ---------- modal produto ---------- */
-let prodSel = null, prodQtd = 1, prodModsSel = {};
+/* ---------- modal do produto (frações + adicionais + pessoa) ---------- */
+let prodSel = null, prodQtd = 1, selUnica = {}, selMulti = {}, fracao = 1, sabores = [], pessoaSel = '';
+function catFracionada(cat){ return ((CFG && CFG.categoriasFracao) || []).includes(cat || 'Geral'); }
 function abrirProduto(id){
-  prodSel = PRODUTOS.find(p => p.id === id); if(!prodSel) return;
-  prodQtd = 1; prodModsSel = {};
-  const grupos = prodSel.modificadores || [];
+  prodSel = PRODUTOS.find(p => p.id === id); if(!prodSel || prodSel.esgotado) return;
+  prodQtd = 1; selUnica = {}; selMulti = {}; fracao = 1; sabores = [prodSel.id]; pessoaSel = '';
+  const m = mesaAtual ? (MESAS[String(mesaAtual)] || {}) : {};
+  const pessoas = contexto === 'garcom' ? (m.pessoas || []) : [];
+  const legacy = prodSel.modificadores || [];
+  const grupos = gruposDoProduto(prodSel);
+  const fracOk = catFracionada(prodSel.categoria);
   $('ovProdutoBox').innerHTML = `
     <h3 style="font-size:20px">${esc(prodSel.nome)}</h3>
     <p style="color:var(--mut);font-size:13px;margin-top:4px">${fmt(prodSel.preco)} · ${esc(nomeSetor(prodSel.setor))}</p>
-    ${grupos.map((g, gi) => `
+    ${fracOk ? `<label>🍕 Sabores</label>
+      <div class="pills">
+        <button class="pill on" id="fr1" onclick="setFracao(1)">Inteira</button>
+        <button class="pill" id="fr2" onclick="setFracao(2)">2 sabores</button>
+        <button class="pill" id="fr3" onclick="setFracao(3)">3 sabores</button>
+      </div><div id="fracSel"></div><div id="fracPreco" style="font-family:'IBM Plex Mono',monospace;color:var(--amber);font-weight:700;font-size:13.5px;margin-top:8px"></div>` : ''}
+    ${grupos.map(g => `
+      <label>${esc(g.nome)}${g.tipo === 'multipla' ? ' <span style="text-transform:none;font-weight:400">(pode marcar várias)</span>' : ''}</label>
+      <div class="pills">${(g.opcoes || []).map((o, oi) =>
+        `<button class="pill" id="pg_${g.id}_${oi}" onclick="togGrupo('${g.id}',${oi})">${esc(o.nome)}${o.preco ? ' +' + fmt(o.preco) : ''}</button>`).join('')}</div>`).join('')}
+    ${legacy.map((g, gi) => `
       <label>${esc(g.nome)}</label>
       <div class="pills">${g.opcoes.map((o, oi) =>
-        `<button class="pill" id="pill_${gi}_${oi}" onclick="togMod(${gi},${oi})">${esc(o)}</button>`).join('')}</div>`).join('')}
+        `<button class="pill" id="pl_${gi}_${oi}" onclick="togLegacy(${gi},${oi})">${esc(o)}</button>`).join('')}</div>`).join('')}
+    ${pessoas.length ? `<label>Quem pediu?</label>
+      <div class="pills"><button class="pill on" id="pp_" onclick="setPessoa('')">🍽 Mesa (todos)</button>
+      ${pessoas.map(p => `<button class="pill" id="pp_${p.id}" onclick="setPessoa('${p.id}')">${esc(p.nome)}</button>`).join('')}</div>` : ''}
     <label>Quantidade</label>
-    <div class="qty">
-      <button onclick="mudarQtd(-1)">−</button><b id="qtdView">1</b><button onclick="mudarQtd(1)">＋</button>
-    </div>
+    <div class="qty"><button onclick="mudarQtd(-1)">−</button><b id="qtdView">1</b><button onclick="mudarQtd(1)">＋</button></div>
     <label>Setor de impressão deste item</label>
     <select id="prodSetorSel">${((CFG && CFG.setores) || []).map(s =>
       `<option value="${s.id}" ${s.id === prodSel.setor ? 'selected' : ''}>${esc(s.nome)}</option>`).join('')}</select>
@@ -597,28 +916,78 @@ function abrirProduto(id){
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovProduto')">Cancelar</button>`;
   abrirOv('ovProduto');
 }
-function togMod(gi, oi){
-  const g = prodSel.modificadores[gi];
-  prodModsSel[gi] = (prodModsSel[gi] === oi) ? null : oi;
-  g.opcoes.forEach((_, i) => $(`pill_${gi}_${i}`).classList.toggle('on', prodModsSel[gi] === i));
+function setPessoa(id){
+  pessoaSel = id;
+  document.querySelectorAll('[id^="pp_"]').forEach(el => el.classList.remove('on'));
+  $('pp_' + id).classList.add('on');
 }
-function mudarQtd(d){
-  prodQtd = Math.max(1, prodQtd + d);
-  $('qtdView').textContent = prodQtd;
-  $('prodTotBtn').textContent = fmt(prodSel.preco * prodQtd);
+function setFracao(n){
+  fracao = n; sabores = [prodSel.id];
+  [1,2,3].forEach(i => $('fr' + i).classList.toggle('on', i === n));
+  const outros = PRODUTOS.filter(p => (p.categoria || 'Geral') === (prodSel.categoria || 'Geral') && !p.esgotado);
+  $('fracSel').innerHTML = n === 1 ? '' : Array.from({ length: n - 1 }, (_, i) => `
+    <label>Sabor ${i + 2}</label>
+    <select onchange="sabores[${i + 1}]=this.value;calcPreco()">${outros.map(p =>
+      `<option value="${p.id}" ${i === 0 && p.id === prodSel.id ? '' : ''}>${esc(p.nome)} — ${fmt(p.preco)}</option>`).join('')}</select>`).join('');
+  if(n > 1){ for(let i = 1; i < n; i++) sabores[i] = outros[0] ? outros[0].id : prodSel.id; }
+  calcPreco();
 }
-function addCarrinho(){
-  const mods = [];
-  (prodSel.modificadores || []).forEach((g, gi) => {
-    if(prodModsSel[gi] != null) mods.push(g.opcoes[prodModsSel[gi]]);
+function precoFracao(){
+  const ps = sabores.map(id => (PRODUTOS.find(p => p.id === id) || prodSel).preco);
+  if(fracao === 1) return prodSel.preco;
+  return (CFG && CFG.fracRegra) === 'prop' ? round2(ps.reduce((a,b) => a + b, 0) / ps.length) : Math.max(...ps);
+}
+function extrasSel(){
+  let extras = 0, mods = [];
+  gruposDoProduto(prodSel).forEach(g => {
+    if(g.tipo === 'multipla'){
+      (selMulti[g.id] || []).forEach(oi => { const o = g.opcoes[oi]; mods.push(o.nome + (o.preco ? ' (+' + fmt(o.preco) + ')' : '')); extras += o.preco || 0; });
+    }else if(selUnica[g.id] != null){
+      const o = g.opcoes[selUnica[g.id]]; mods.push(o.nome + (o.preco ? ' (+' + fmt(o.preco) + ')' : '')); extras += o.preco || 0;
+    }
   });
+  (prodSel.modificadores || []).forEach((g, gi) => { if(selUnica['L' + gi] != null) mods.push(g.opcoes[selUnica['L' + gi]]); });
+  return { extras: round2(extras), mods };
+}
+function calcPreco(){
+  const { extras } = extrasSel();
+  const unit = round2(precoFracao() + extras);
+  $('prodTotBtn').textContent = fmt(unit * prodQtd);
+  if($('fracPreco')) $('fracPreco').textContent = fracao > 1 ? ('Preço da pizza: ' + fmt(precoFracao()) + ((CFG && CFG.fracRegra) === 'prop' ? ' (proporcional)' : ' (sabor mais caro)')) : '';
+}
+function togGrupo(gid, oi){
+  const g = GRUPOS.find(x => x.id === gid);
+  if(g.tipo === 'multipla'){
+    selMulti[gid] = selMulti[gid] || [];
+    const i = selMulti[gid].indexOf(oi);
+    if(i >= 0) selMulti[gid].splice(i, 1); else selMulti[gid].push(oi);
+    $(`pg_${gid}_${oi}`).classList.toggle('on', selMulti[gid].includes(oi));
+  }else{
+    selUnica[gid] = (selUnica[gid] === oi) ? null : oi;
+    (g.opcoes || []).forEach((_, i) => $(`pg_${gid}_${i}`).classList.toggle('on', selUnica[gid] === i));
+  }
+  calcPreco();
+}
+function togLegacy(gi, oi){
+  const g = prodSel.modificadores[gi];
+  selUnica['L' + gi] = (selUnica['L' + gi] === oi) ? null : oi;
+  g.opcoes.forEach((_, i) => $(`pl_${gi}_${i}`).classList.toggle('on', selUnica['L' + gi] === i));
+}
+function mudarQtd(d){ prodQtd = Math.max(1, prodQtd + d); $('qtdView').textContent = prodQtd; calcPreco(); }
+function addCarrinho(){
+  const { extras, mods } = extrasSel();
+  let nome = prodSel.nome;
+  if(fracao > 1){
+    const nomes = sabores.map(id => (PRODUTOS.find(p => p.id === id) || prodSel).nome.replace(/^Pizza\s*/i, ''));
+    nome = 'Pizza ' + nomes.map(n => '1/' + fracao + ' ' + n).join(' + ');
+  }
   carrinho.push({
-    nome: prodSel.nome, preco: prodSel.preco, qtd: prodQtd,
+    uid: uid(), nome, preco: round2(precoFracao() + extras), qtd: prodQtd,
     setor: $('prodSetorSel') ? $('prodSetorSel').value : (prodSel.setor || ''),
-    mods, obs: $('prodObs').value.trim()
+    mods, obs: $('prodObs').value.trim(), pessoa: pessoaSel, pago: false, valorPago: 0
   });
   fecharOv('ovProduto'); atualizarCartBar();
-  toast(`${prodQtd}× ${prodSel.nome} no carrinho`);
+  toast(prodQtd + '× ' + nome + ' no carrinho');
 }
 function atualizarCartBar(){
   const n = carrinho.reduce((a,x) => a + x.qtd, 0);
@@ -630,17 +999,22 @@ function atualizarCartBar(){
 }
 
 /* ---------- carrinho / envio ---------- */
+function nomePessoaMesa(pid){
+  const m = MESAS[String(mesaAtual)] || {};
+  const p = (m.pessoas || []).find(x => x.id === pid);
+  return p ? p.nome : '';
+}
 function abrirCarrinho(){
   $('ovCartBox').innerHTML = `
-    <h3 style="font-size:19px">${mesaAtual ? 'Mesa ' + mesaAtual : 'Venda balcão'} — revisar pedido</h3>
+    <h3 style="font-size:19px">${mesaAtual ? 'Mesa ' + mesaAtual : 'Venda balcão'} — revisar</h3>
     <div style="margin-top:10px">${carrinho.map((it, i) => `
       <div class="item"><div class="q">${it.qtd}×</div>
-        <div class="info"><b>${esc(it.nome)}</b>${itemMods(it)}<div class="mods">Setor: ${esc(nomeSetor(it.setor))}</div></div>
+        <div class="info"><b>${esc(it.nome)}</b>${itemMods(it)}<div class="mods">${it.pessoa ? '👤 ' + esc(nomePessoaMesa(it.pessoa)) + ' · ' : ''}Setor: ${esc(nomeSetor(it.setor))}</div></div>
         <div class="val">${fmt(it.preco * it.qtd)}</div>
         <button class="x" onclick="removerCarrinho(${i})">✕</button></div>`).join('')}</div>
     <div class="totline big"><span>Total</span><span>${fmt(carrinho.reduce((a,x)=>a+x.preco*x.qtd,0))}</span></div>
     ${contexto === 'balcao'
-      ? `<button class="btn g" style="margin-top:16px" onclick="fecharOv('ovCart');abrirCaixa(null)">💰 Cobrar agora</button>`
+      ? `<button class="btn g" style="margin-top:16px" onclick="fecharOv('ovCart');abrirCaixaBalcao()">💰 Cobrar agora</button>`
       : `<button class="btn g" style="margin-top:16px" onclick="enviarPedido()">📤 Enviar pedido</button>`}
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovCart')">Continuar adicionando</button>`;
   abrirOv('ovCart');
@@ -651,49 +1025,55 @@ function removerCarrinho(i){
 }
 async function enviarPedido(){
   if(!carrinho.length) return;
-  const itens = carrinho.slice(); carrinho = [];
-  fecharOv('ovCart'); atualizarCartBar();
-  try{
-    await col('pedidos').add({ mesa: mesaAtual, garcom, itens, tipo: 'pedido', impresso: false, criadoEm: TS() });
-    const ref = col('mesas').doc(String(mesaAtual));
-    await db.runTransaction(async t => {
-      const d = await t.get(ref);
-      const atual = d.exists ? (d.data().itens || []) : [];
-      t.set(ref, { status: 'ocupada', garcom, itens: atual.concat(itens), atualizadoEm: TS() }, { merge: true });
-    });
-    toast('Pedido enviado! 🖨️');
-    renderMesaAberta(); show('scMesa');
-  }catch(e){ console.error(e); carrinho = itens; atualizarCartBar(); toast('Falha ao enviar. Tente de novo.'); }
+  await trava(async () => {
+    const itens = carrinho.slice(); carrinho = [];
+    fecharOv('ovCart'); atualizarCartBar();
+    try{
+      await col('pedidos').add({ mesa: mesaAtual, garcom, itens, tipo: 'pedido', status: 'novo', impresso: false, entregue: false, criadoEm: TS() });
+      const ref = col('mesas').doc(String(mesaAtual));
+      await db.runTransaction(async t => {
+        const d = await t.get(ref);
+        const dm = d.exists ? d.data() : {};
+        t.set(ref, { ...dm, status: dm.status === 'conta' ? 'conta' : 'ocupada', garcom: dm.garcom || garcom, garcomFoto: dm.garcomFoto || garcomFoto,
+          itens: (dm.itens || []).concat(itens), abertaEm: dm.abertaEm || firebase.firestore.Timestamp.now(), numPessoas: dm.numPessoas || 1, pessoas: dm.pessoas || [], pagoAvulso: dm.pagoAvulso || 0 }, { merge: true });
+      });
+      toast('Pedido enviado! 🖨️');
+      renderMesaAberta(); show('scMesa');
+    }catch(e){ console.error(e); carrinho = itens; atualizarCartBar(); toast('Falha ao enviar. Tente de novo.'); }
+  });
 }
 async function pedirConta(){
-  const m = MESAS[String(mesaAtual)] || {}; const itens = m.itens || [];
-  if(!itens.length) return;
-  if(!confirm('Pedir a conta da mesa ' + mesaAtual + '? Ela será impressa no caixa.')) return;
+  const m = MESAS[String(mesaAtual)] || {};
+  if(!(m.itens || []).length) return;
+  if(!confirm('Pedir a conta da mesa ' + mesaAtual + '?')) return;
   await col('mesas').doc(String(mesaAtual)).set({ status: 'conta' }, { merge: true });
-  await col('pedidos').add({ mesa: mesaAtual, garcom, itens, tipo: 'conta', impresso: false, criadoEm: TS() });
+  await col('pedidos').add({ mesa: mesaAtual, garcom, itens: (m.itens || []).filter(i => !i.pago), pagoAvulso: m.pagoAvulso || 0, tipo: 'conta', status: 'novo', impresso: false, entregue: false, criadoEm: TS() });
   toast('Conta pedida 🧾');
 }
 
-/* ---------- computador ---------- */
+/* ---------- computador: monitor ---------- */
 function entrarComputador(){
-  compTab('ped');
-  escutarPedidos();
-  conectarImpressao(false);
-  renderMesas('mesaGridCaixa', true);
-  show('scComp');
+  compTab('ped'); escutarPedidos(); conectarImpressao(false);
+  renderMesas('mesaGridCaixa', true); show('scComp');
 }
 function compTab(t){
-  $('tabPed').classList.toggle('on', t === 'ped');
-  $('tabCaixa').classList.toggle('on', t === 'caixa');
+  [['Ped','ped'],['Caixa','caixa'],['Gav','gav'],['Rel','rel']].forEach(([b, k]) => {
+    $('tab' + b).classList.toggle('on', k === t);
+    $('comp' + b.replace('Caixa','Caixa')).style.display = '';
+  });
   $('compPed').style.display = t === 'ped' ? '' : 'none';
   $('compCaixa').style.display = t === 'caixa' ? '' : 'none';
+  $('compGav').style.display = t === 'gav' ? '' : 'none';
+  $('compRel').style.display = t === 'rel' ? '' : 'none';
   if(t === 'caixa') renderMesas('mesaGridCaixa', true);
+  if(t === 'gav') renderGaveta();
+  if(t === 'rel') renderRel('hoje');
 }
 let unsubPed = null;
 function escutarPedidos(){
   if(unsubPed) unsubPed();
   primeiraCarga = true;
-  unsubPed = col('pedidos').where('impresso', '==', false).onSnapshot(s => {
+  unsubPed = col('pedidos').where('entregue', '==', false).onSnapshot(s => {
     const docs = s.docs.slice().sort((a,b) => {
       const ta = a.data().criadoEm ? a.data().criadoEm.toMillis() : Date.now();
       const tb = b.data().criadoEm ? b.data().criadoEm.toMillis() : Date.now();
@@ -706,7 +1086,7 @@ function escutarPedidos(){
         pedidosVistos.add(d.id);
         if(!primeiraCarga){
           beep();
-          if(CFG && CFG.autoImprimir) imprimirPedido(d.id, d.data(), true);
+          if(CFG && CFG.autoImprimir && !d.data().impresso) imprimirPedido(d.id, d.data(), true);
         }
       }
     });
@@ -720,49 +1100,181 @@ function cupomHTML(id, p){
   const total = (p.itens || []).reduce((a,x) => a + x.preco * x.qtd, 0);
   window['_ped_' + id] = p;
   return `<div class="cupom">
-    <div style="text-align:center;margin-bottom:6px"><span class="tag">${conta ? '🧾 CONTA' : 'PEDIDO'}</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span class="tag">${conta ? '🧾 CONTA' : (p.status === 'pronto' ? '✅ PRONTO' : 'PEDIDO')}</span></div>
     <h4>${p.mesa ? 'MESA ' + p.mesa : 'BALCÃO'}</h4>
-    <div class="meta">${hora} · ${esc(p.garcom || '')}</div>
+    <div class="meta">${hora} · ${esc(p.garcom || '')}${p.cliente ? ' · 👤 ' + esc(p.cliente.nome) : ''}</div>
     <div class="sep"></div>
-    ${(p.itens || []).map(it => `<div class="li"><span>${it.qtd}x</span><span style="flex:1">${esc(it.nome)}</span>${conta ? `<span>${fmt(it.preco*it.qtd)}</span>` : ''}</div>${(it.mods && it.mods.length) || it.obs ? `<div class="li lm">${esc([...(it.mods||[]), it.obs].filter(Boolean).join(' · '))}</div>` : ''}`).join('')}
-    ${conta ? `<div class="sep"></div><div class="li"><span style="flex:1">TOTAL</span><span>${fmt(total)}</span></div>` : ''}
+    ${(p.itens || []).map(it => `<div class="li"><span>${it.qtd}x</span><span style="flex:1">${esc(it.nome)}</span>${conta ? `<span>${fmt(it.preco*it.qtd)}</span>` : ''}</div>${(it.mods && it.mods.length) || it.obs || it.pessoa ? `<div class="li lm">${esc([it.pessoa && p.mesa ? '👤 pessoa da mesa' : '', ...(it.mods||[]), it.obs].filter(Boolean).join(' · '))}</div>` : ''}`).join('')}
+    ${conta ? `<div class="sep"></div>${p.pagoAvulso ? `<div class="li"><span style="flex:1">Ja pago</span><span>-${fmt(p.pagoAvulso)}</span></div>` : ''}<div class="li"><span style="flex:1">TOTAL</span><span>${fmt(total - (p.pagoAvulso || 0))}</span></div>` : ''}
     <div class="acts">
-      <button class="btn o" onclick="imprimirPedido('${id}', window['_ped_${id}'], false)">🖨️ Imprimir</button>
-      <button class="btn g" onclick="marcarImpresso('${id}')">✓ OK</button>
+      ${!p.impresso ? `<button class="btn o" onclick="imprimirPedido('${id}', window['_ped_${id}'], false)">🖨️</button>` : ''}
+      ${!conta && p.impresso && p.status !== 'pronto' ? `<button class="btn" onclick="marcarPronto('${id}')">👨‍🍳 Pronto</button>` : ''}
+      ${!conta && p.status === 'pronto' ? `<button class="btn g" onclick="marcarEntregue('${id}')">✓ Entregue</button>` : ''}
+      ${!p.impresso ? `<button class="btn g" onclick="marcarImpresso('${id}')">✓ OK</button>` : (conta ? `<button class="btn g" onclick="marcarEntregue('${id}')">✓ OK</button>` : '')}
     </div></div>`;
 }
-async function marcarImpresso(id){ await col('pedidos').doc(id).update({ impresso: true }); }
+async function marcarImpresso(id){
+  const p = window['_ped_' + id] || {};
+  if(p.tipo === 'conta') await col('pedidos').doc(id).update({ impresso: true, entregue: true });
+  else await col('pedidos').doc(id).update({ impresso: true });
+}
+async function marcarPronto(id){ await col('pedidos').doc(id).update({ status: 'pronto', prontoEm: TS() }); }
+async function marcarEntregue(id){ await col('pedidos').doc(id).update({ entregue: true, status: 'entregue' }); }
+async function abrirReimpressao(){
+  const snap = await col('pedidos').orderBy('criadoEm', 'desc').limit(15).get();
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🕘 Reimprimir</h3>
+    <div style="margin-top:8px">${snap.docs.map(d => {
+      const p = d.data(); window['_ped_' + d.id] = p;
+      const hora = p.criadoEm ? p.criadoEm.toDate().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '';
+      return `<div class="pagrow"><b>${p.tipo === 'conta' ? '🧾' : '📄'} ${p.mesa ? 'Mesa ' + p.mesa : 'Balcão'}</b><span style="color:var(--mut);font-size:12px">${hora}</span>
+        <button class="btn o sm" onclick="imprimirPedido('${d.id}', window['_ped_${d.id}'], false)">🖨️ Imprimir</button></div>`;
+    }).join('') || '<div class="empty">Nada ainda</div>'}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
 
-/* ---------- caixa / pagamento ---------- */
-let cxMesa = null, cxPagamentos = [], cxTaxaOn = true, cxItens = [];
-function abrirCaixa(n){
-  cxMesa = n; cxPagamentos = [];
-  if(n === null){ cxItens = carrinho.slice(); }        // balcão
-  else{
-    const m = MESAS[String(n)] || {};
-    cxItens = (m.itens || []).slice();
-    if(!cxItens.length){ toast('Mesa ' + n + ' está livre'); return; }
-  }
-  cxTaxaOn = !!(CFG && CFG.taxa > 0 && n !== null);
-  renderCaixa(); abrirOv('ovCaixa');
+/* ---------- pagamento (4 modos + desconto) ---------- */
+let cxMesa = null, cxPagamentos = [], cxTaxaOn = true, cxBase = 0, cxDesc = 0, cxModo = 'tudo', cxSel = [], cxPessoa = null, cxPartes = 2, cxDescricao = '';
+function abrirCaixaMesa(n){
+  const m = MESAS[String(n)] || {};
+  if(!(m.itens || []).length && !(m.status && m.status !== 'livre')){ toast('Mesa ' + n + ' está livre'); return; }
+  cxMesa = n; cxModo = null; renderModoPagto();
 }
-function cxTotais(){
-  const sub = cxItens.reduce((a,x) => a + x.preco * x.qtd, 0);
-  const taxa = cxTaxaOn ? sub * ((CFG && CFG.taxa) || 0) / 100 : 0;
-  const pago = cxPagamentos.reduce((a,x) => a + x.valor, 0);
-  return { sub, taxa, total: sub + taxa, pago, resta: Math.max(0, sub + taxa - pago), troco: Math.max(0, pago - (sub + taxa)) };
+function abrirCaixaBalcao(){
+  if(!carrinho.length) return;
+  cxMesa = null; cxModo = 'balcao';
+  cxBase = round2(carrinho.reduce((a,x) => a + x.preco * x.qtd, 0));
+  cxDescricao = 'Venda balcão'; iniciarPagto(cxBase, false);
 }
-function renderCaixa(){
-  const t = cxTotais();
+function renderModoPagto(){
+  const m = MESAS[String(cxMesa)] || {};
+  const resta = itensRestanteTotal(m);
+  const pess = (m.pessoas || []).filter(p => !p.pagou);
   $('ovCaixaBox').innerHTML = `
-    <h3 style="font-size:19px">💰 ${cxMesa === null ? 'Venda balcão' : 'Fechar mesa ' + cxMesa}</h3>
-    <div style="margin-top:8px;max-height:26dvh;overflow-y:auto">${cxItens.map(it => `
-      <div class="item"><div class="q">${it.qtd}×</div><div class="info"><b>${esc(it.nome)}</b>${itemMods(it)}</div><div class="val">${fmt(it.preco*it.qtd)}</div></div>`).join('')}</div>
-    <div class="totline"><span>Subtotal</span><span>${fmt(t.sub)}</span></div>
-    ${(CFG && CFG.taxa > 0) ? `<div class="totline"><span>Taxa de serviço ${CFG.taxa}% <button class="btn o sm" style="display:inline-block;padding:4px 10px;margin-left:6px" onclick="cxTaxaOn=!cxTaxaOn;renderCaixa()">${cxTaxaOn ? 'remover' : 'incluir'}</button></span><span>${fmt(t.taxa)}</span></div>` : ''}
+    <h3 style="font-size:19px">💰 Mesa ${cxMesa} — receber</h3>
+    <div class="totline big" style="margin-top:6px"><span>Restante</span><span>${fmt(resta)}</span></div>
+    <div class="modosel">
+      <button onclick="modoTudo()"><span class="mi">💳</span>Fechar tudo</button>
+      <button ${pess.length ? '' : 'disabled'} onclick="modoPessoa()"><span class="mi">👤</span>Por pessoa</button>
+      <button onclick="modoItens()"><span class="mi">☑️</span>Escolher itens</button>
+      <button onclick="modoIgual()"><span class="mi">➗</span>Dividir igual</button>
+    </div>
+    <button class="btn o" onclick="fecharOv('ovCaixa')">Voltar</button>`;
+  abrirOv('ovCaixa');
+}
+function modoTudo(){
+  const m = MESAS[String(cxMesa)] || {};
+  cxModo = 'tudo'; cxBase = itensRestanteTotal(m); cxDescricao = 'Fechamento total';
+  iniciarPagto(cxBase, true);
+}
+function modoPessoa(){
+  const m = MESAS[String(cxMesa)] || {};
+  const pess = (m.pessoas || []).filter(p => !p.pagou);
+  const compart = (m.itens || []).filter(i => !i.pago && !i.pessoa);
+  const compartResta = compart.reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0);
+  $('ovCaixaBox').innerHTML = `
+    <h3 style="font-size:19px">👤 Quem vai pagar?</h3>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Itens da pessoa + a parte dela nos itens da mesa (${fmt(compartResta)} ÷ ${pess.length}).</p>
+    <div class="menuops">${pess.map(p => {
+      const próprios = (m.itens || []).filter(i => !i.pago && i.pessoa === p.id).reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0);
+      const valor = round2(próprios + compartResta / pess.length);
+      return `<button onclick="pagarPessoa('${p.id}', ${valor})"><span style="font-size:20px">👤</span><span style="flex:1">${esc(p.nome)}</span><b style="font-family:'IBM Plex Mono',monospace;color:var(--amber)">${fmt(valor)}</b></button>`;
+    }).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="renderModoPagto()">← Voltar</button>`;
+}
+function pagarPessoa(pid, valor){
+  cxModo = 'pessoa'; cxPessoa = pid; cxBase = valor;
+  const m = MESAS[String(cxMesa)] || {};
+  const p = (m.pessoas || []).find(x => x.id === pid);
+  cxDescricao = 'Pagamento de ' + (p ? p.nome : 'pessoa');
+  iniciarPagto(valor, true);
+}
+function modoItens(){
+  const m = MESAS[String(cxMesa)] || {};
+  cxSel = [];
+  const itens = (m.itens || []).filter(i => !i.pago);
+  $('ovCaixaBox').innerHTML = `
+    <h3 style="font-size:19px">☑️ Quais itens?</h3>
+    <div style="margin-top:8px;max-height:44dvh;overflow-y:auto">${itens.map(it => `
+      <div class="chk" id="ci_${it.uid}" onclick="togItemPagto('${it.uid}')"><div class="box"></div>
+        <div class="ci"><b>${it.qtd}× ${esc(it.nome)}</b>${it.pessoa ? `<div class="mods">👤 ${esc(nomePessoaMesa2(m, it.pessoa))}</div>` : ''}</div>
+        <span class="cv">${fmt(it.preco * it.qtd - (it.valorPago || 0))}</span></div>`).join('')}</div>
+    <div class="totline big"><span>Selecionado</span><span id="ciTot">R$ 0,00</span></div>
+    <button class="btn g" style="margin-top:14px" onclick="pagarItensSel()">Cobrar selecionados</button>
+    <button class="btn o" style="margin-top:10px" onclick="renderModoPagto()">← Voltar</button>`;
+}
+function nomePessoaMesa2(m, pid){ const p = (m.pessoas || []).find(x => x.id === pid); return p ? p.nome : ''; }
+function togItemPagto(iu){
+  const i = cxSel.indexOf(iu);
+  if(i >= 0) cxSel.splice(i, 1); else cxSel.push(iu);
+  const el = $('ci_' + iu);
+  el.classList.toggle('on', cxSel.includes(iu));
+  el.querySelector('.box').textContent = cxSel.includes(iu) ? '✓' : '';
+  const m = MESAS[String(cxMesa)] || {};
+  const tot = (m.itens || []).filter(x => cxSel.includes(x.uid)).reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0);
+  $('ciTot').textContent = fmt(round2(tot));
+}
+function pagarItensSel(){
+  if(!cxSel.length){ toast('Selecione ao menos um item'); return; }
+  const m = MESAS[String(cxMesa)] || {};
+  cxModo = 'itens';
+  cxBase = round2((m.itens || []).filter(x => cxSel.includes(x.uid)).reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0));
+  cxDescricao = cxSel.length + ' itens selecionados';
+  iniciarPagto(cxBase, true);
+}
+function modoIgual(){
+  const m = MESAS[String(cxMesa)] || {};
+  cxPartes = Math.max(2, m.numPessoas || 2);
+  const resta = itensRestanteTotal(m);
+  $('ovCaixaBox').innerHTML = `
+    <h3 style="font-size:19px">➗ Dividir igual</h3>
+    <div class="totline big" style="margin-top:6px"><span>Restante</span><span>${fmt(resta)}</span></div>
+    <label>Dividir por quantas pessoas?</label>
+    <div class="qty"><button onclick="mudarPartes(-1)">−</button><b id="partesView">${cxPartes}</b><button onclick="mudarPartes(1)">＋</button></div>
+    <div class="totline big"><span>Cada um paga</span><span id="porCabeca">${fmt(round2(resta / cxPartes))}</span></div>
+    <button class="btn g" style="margin-top:14px" onclick="pagarUmaParte()">Receber 1 parte agora</button>
+    <p style="color:var(--mut);font-size:12px;margin-top:10px;line-height:1.5">Recebe uma parte por vez — o restante da mesa vai diminuindo. A última parte fecha a mesa automaticamente.</p>
+    <button class="btn o" style="margin-top:10px" onclick="renderModoPagto()">← Voltar</button>`;
+}
+function mudarPartes(d){
+  cxPartes = Math.max(1, cxPartes + d);
+  $('partesView').textContent = cxPartes;
+  const resta = itensRestanteTotal(MESAS[String(cxMesa)] || {});
+  $('porCabeca').textContent = fmt(round2(resta / cxPartes));
+}
+function pagarUmaParte(){
+  const resta = itensRestanteTotal(MESAS[String(cxMesa)] || {});
+  cxModo = 'igual';
+  cxBase = cxPartes <= 1 ? resta : round2(resta / cxPartes);
+  cxDescricao = '1/' + cxPartes + ' da conta (dividir igual)';
+  iniciarPagto(cxBase, true);
+}
+
+/* ---------- tela final de pagamento ---------- */
+function iniciarPagto(base, taxaDefault){
+  cxPagamentos = []; cxDesc = 0;
+  cxTaxaOn = !!(CFG && CFG.taxa > 0 && taxaDefault);
+  renderPagto();
+  abrirOv('ovCaixa');
+}
+function pagtoTotais(){
+  const taxa = cxTaxaOn ? round2(cxBase * ((CFG && CFG.taxa) || 0) / 100) : 0;
+  const total = round2(cxBase + taxa - cxDesc);
+  const pago = round2(cxPagamentos.reduce((a,x) => a + x.valor, 0));
+  return { taxa, total, pago, resta: Math.max(0, round2(total - pago)), troco: Math.max(0, round2(pago - total)) };
+}
+function renderPagto(){
+  const t = pagtoTotais();
+  $('ovCaixaBox').innerHTML = `
+    <h3 style="font-size:19px">💳 ${esc(cxDescricao)}</h3>
+    <div class="totline" style="margin-top:8px"><span>Base</span><span>${fmt(cxBase)}</span></div>
+    ${(CFG && CFG.taxa > 0) ? `<div class="totline"><span>Taxa ${CFG.taxa}% <button class="btn o sm" style="display:inline-block;padding:4px 10px;margin-left:6px" onclick="cxTaxaOn=!cxTaxaOn;renderPagto()">${cxTaxaOn ? 'remover' : 'incluir'}</button></span><span>${fmt(t.taxa)}</span></div>` : ''}
+    ${cxDesc ? `<div class="totline" style="color:var(--green)"><span>Desconto</span><span>-${fmt(cxDesc)}</span></div>` : ''}
     <div class="totline big"><span>Total</span><span>${fmt(t.total)}</span></div>
+    <button class="btn o sm" style="margin-top:8px" onclick="darDesconto()">🏷️ Desconto (gerente)</button>
     <label>Pagamentos</label>
-    ${cxPagamentos.map((p, i) => `<div class="pagrow"><b>${esc(p.forma)}</b><span class="v">${fmt(p.valor)}</span><button class="x" style="color:var(--red);font-size:17px" onclick="cxPagamentos.splice(${i},1);renderCaixa()">✕</button></div>`).join('')}
+    ${cxPagamentos.map((p, i) => `<div class="pagrow"><b>${esc(p.forma)}</b><span class="v">${fmt(p.valor)}</span><button class="x" style="color:var(--red);font-size:17px" onclick="cxPagamentos.splice(${i},1);renderPagto()">✕</button></div>`).join('')}
     <div class="row" style="margin-top:6px">
       <select id="cxForma"><option>Dinheiro</option><option>PIX</option><option>Débito</option><option>Crédito</option><option>Voucher</option></select>
       <input id="cxValor" type="number" step="0.01" inputmode="decimal" placeholder="${t.resta.toFixed(2)}">
@@ -770,43 +1282,325 @@ function renderCaixa(){
     </div>
     <div class="totline" style="margin-top:10px"><span>Pago</span><span>${fmt(t.pago)}</span></div>
     <div class="totline" style="color:${t.resta > 0 ? 'var(--red)' : 'var(--green)'}"><span>${t.resta > 0 ? 'Falta' : 'Troco'}</span><span>${fmt(t.resta > 0 ? t.resta : t.troco)}</span></div>
-    <button class="btn g" style="margin-top:14px" ${t.resta > 0.009 ? 'disabled' : ''} onclick="finalizarVenda()">✓ Finalizar ${cxMesa === null ? 'venda' : 'e liberar mesa'}</button>
-    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovCaixa')">Voltar</button>`;
+    <button class="btn g" style="margin-top:14px" ${t.resta > 0.009 ? 'disabled' : ''} onclick="finalizarPagto()">✓ Confirmar pagamento</button>
+    <button class="btn o" style="margin-top:10px" onclick="${cxMesa === null ? "fecharOv('ovCaixa')" : 'renderModoPagto()'}">← Voltar</button>`;
+}
+function darDesconto(){
+  if(!senhaGerente()) return;
+  const v = prompt('Desconto — digite o valor em R$ (ex: 10) ou porcentagem (ex: 10%):');
+  if(!v) return;
+  let d = 0;
+  if(v.includes('%')) d = round2(cxBase * (parseFloat(v) || 0) / 100);
+  else d = round2(parseFloat(v.replace(',', '.')) || 0);
+  if(d <= 0 || d > cxBase + 1000){ toast('Valor inválido'); return; }
+  cxDesc = d;
+  logAcao('desconto', { mesa: cxMesa, valor: d, contexto: cxDescricao });
+  renderPagto();
 }
 function addPagamento(){
-  const t = cxTotais();
-  const v = parseFloat($('cxValor').value) || t.resta;
+  const t = pagtoTotais();
+  const v = parseFloat(($('cxValor').value || '').replace(',', '.')) || t.resta;
   if(v <= 0){ toast('Valor inválido'); return; }
-  cxPagamentos.push({ forma: $('cxForma').value, valor: Math.round(v * 100) / 100 });
-  renderCaixa();
+  cxPagamentos.push({ forma: $('cxForma').value, valor: round2(v) });
+  renderPagto();
 }
-async function finalizarVenda(){
-  const t = cxTotais();
-  try{
-    await col('vendas').add({
-      mesa: cxMesa, itens: cxItens, subtotal: t.sub, taxa: t.taxa, total: t.total,
-      pagamentos: cxPagamentos, troco: t.troco, garcom: cxMesa === null ? garcom || 'Balcão' : ((MESAS[String(cxMesa)] || {}).garcom || ''),
-      criadoEm: TS()
-    });
-    if(cxMesa === null){
-      // balcão: manda comanda para os setores
-      await col('pedidos').add({ mesa: null, garcom: garcom || 'Balcão', itens: cxItens, tipo: 'pedido', impresso: false, criadoEm: TS() });
-      carrinho = []; atualizarCartBar();
-    }else{
-      await col('mesas').doc(String(cxMesa)).set({ status: 'livre', itens: [], garcom: '' });
+async function finalizarPagto(){
+  await trava(async () => {
+    const t = pagtoTotais();
+    try{
+      const m = cxMesa !== null ? (MESAS[String(cxMesa)] || {}) : {};
+      await col('vendas').add({
+        mesa: cxMesa, tipo: cxModo, descricao: cxDescricao,
+        base: cxBase, taxa: t.taxa, desconto: cxDesc, total: t.total,
+        pagamentos: cxPagamentos, troco: t.troco,
+        garcom: cxMesa === null ? (garcom || 'Balcão') : (m.garcom || ''),
+        numPessoas: cxModo === 'tudo' ? (m.numPessoas || 1) : (cxModo === 'balcao' ? 1 : 0),
+        cliente: cxMesa === null && clienteSel ? { id: clienteSel.id, nome: clienteSel.nome, telefone: clienteSel.telefone || '' } : null,
+        caixaId: GAVETA ? GAVETA.id : null, criadoEm: TS()
+      });
+      if(cxMesa === null){
+        await col('pedidos').add({ mesa: null, garcom: garcom || 'Balcão', itens: carrinho, tipo: 'pedido', status: 'novo', impresso: false, entregue: false,
+          cliente: clienteSel ? { nome: clienteSel.nome, telefone: clienteSel.telefone || '', endereco: clienteSel.endereco || '' } : null, criadoEm: TS() });
+        carrinho = []; clienteSel = null; atualizarClienteBar(); atualizarCartBar();
+      }else{
+        await aplicarPagtoNaMesa(t);
+      }
+      fecharOv('ovCaixa'); toast('Pagamento registrado ✅');
+    }catch(e){ console.error(e); toast('Erro ao finalizar: ' + (e.code || e.message)); }
+  });
+}
+async function aplicarPagtoNaMesa(t){
+  const ref = col('mesas').doc(String(cxMesa));
+  await db.runTransaction(async tr => {
+    const d = await tr.get(ref);
+    const m = d.data() || {};
+    let itens = (m.itens || []).slice();
+    let pessoas = (m.pessoas || []).slice();
+    let pagoAvulso = m.pagoAvulso || 0;
+    if(cxModo === 'tudo'){
+      tr.set(ref, { status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0 });
+      return;
     }
-    fecharOv('ovCaixa'); toast('Venda registrada ✅');
-  }catch(e){ console.error(e); toast('Erro ao finalizar. Tente de novo.'); }
+    if(cxModo === 'itens'){
+      itens = itens.map(i => cxSel.includes(i.uid) ? { ...i, pago: true } : i);
+    }
+    if(cxModo === 'pessoa'){
+      const naoPagas = pessoas.filter(p => !p.pagou);
+      const nShare = naoPagas.length || 1;
+      itens = itens.map(i => {
+        if(i.pago) return i;
+        if(i.pessoa === cxPessoa) return { ...i, pago: true };
+        if(!i.pessoa){
+          const restaItem = i.preco * i.qtd - (i.valorPago || 0);
+          const share = nShare <= 1 ? restaItem : round2(restaItem / nShare);
+          const novoPago = round2((i.valorPago || 0) + share);
+          return novoPago >= i.preco * i.qtd - 0.009 ? { ...i, pago: true, valorPago: 0 } : { ...i, valorPago: novoPago };
+        }
+        return i;
+      });
+      pessoas = pessoas.map(p => p.id === cxPessoa ? { ...p, pagou: true } : p);
+    }
+    if(cxModo === 'igual'){
+      pagoAvulso = round2(pagoAvulso + cxBase);
+    }
+    const restante = round2(itens.filter(i => !i.pago).reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0) - pagoAvulso);
+    if(restante <= 0.009){
+      tr.set(ref, { status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0 });
+    }else{
+      tr.set(ref, { ...m, itens, pessoas, pagoAvulso });
+    }
+  });
 }
 
-/* ---------- balcão ---------- */
+/* ---------- balcão + clientes ---------- */
 function entrarBalcao(){
   contexto = 'balcao'; mesaAtual = null; carrinho = []; catAtiva = 'Todos';
-  renderCardapio('prodGridB','catChipsB'); atualizarCartBar(); show('scBalcao');
+  renderCardapio('prodGridB','catChipsB'); atualizarCartBar(); atualizarClienteBar(); show('scBalcao');
+}
+function atualizarClienteBar(){
+  $('balcaoCliente').textContent = clienteSel ? ('👤 ' + clienteSel.nome + (clienteSel.telefone ? ' · ' + clienteSel.telefone : '')) : 'Sem cliente vinculado';
+}
+async function abrirClientes(){
+  const snap = await col('clientes').orderBy('nome').limit(300).get();
+  CLIENTES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderClientes('');
+  abrirOv('ovExtra');
+}
+function renderClientes(filtro){
+  const f = filtro.toLowerCase();
+  const lista = CLIENTES.filter(c => !f || c.nome.toLowerCase().includes(f) || (c.telefone || '').includes(f)).slice(0, 30);
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">👤 Cliente (telefone / retirada)</h3>
+    <label>Buscar por nome ou telefone</label>
+    <input id="cliBusca" value="${esc(filtro)}" oninput="renderClientes(this.value)" placeholder="ex: João ou 19 9…">
+    ${clienteSel ? `<button class="btn r sm" style="margin-top:10px" onclick="clienteSel=null;atualizarClienteBar();fecharOv('ovExtra');toast('Cliente removido da venda')">✕ Remover cliente da venda</button>` : ''}
+    <div class="menuops">${lista.map(c =>
+      `<button onclick="selecionarCliente('${c.id}')"><span style="font-size:18px">👤</span><span style="flex:1">${esc(c.nome)}<div style="font-size:11.5px;color:var(--mut);font-weight:400">${esc(c.telefone || '')}${c.endereco ? ' · ' + esc(c.endereco) : ''}</div></span></button>`).join('')}</div>
+    <button class="btn" style="margin-top:12px" onclick="novoCliente()">＋ Cadastrar novo cliente</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  const inp = $('cliBusca');
+  if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+}
+function selecionarCliente(id){
+  clienteSel = CLIENTES.find(c => c.id === id) || null;
+  atualizarClienteBar(); fecharOv('ovExtra');
+  toast('Cliente vinculado: ' + (clienteSel ? clienteSel.nome : ''));
+}
+function novoCliente(){
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">＋ Novo cliente</h3>
+    <label>Nome</label><input id="ncNome">
+    <label>Telefone</label><input id="ncTel" inputmode="tel">
+    <label>Endereço (opcional)</label><input id="ncEnd">
+    <label>Observação (opcional)</label><input id="ncObs">
+    <button class="btn g" style="margin-top:16px" onclick="salvarCliente()">Salvar e vincular</button>
+    <button class="btn o" style="margin-top:10px" onclick="abrirClientes()">← Voltar</button>`;
+}
+async function salvarCliente(){
+  const nome = $('ncNome').value.trim();
+  if(!nome){ toast('Digite o nome'); return; }
+  const dados = { nome, telefone: $('ncTel').value.trim(), endereco: $('ncEnd').value.trim(), obs: $('ncObs').value.trim(), criadoEm: TS() };
+  const ref = await col('clientes').add(dados);
+  clienteSel = { id: ref.id, ...dados };
+  atualizarClienteBar(); fecharOv('ovExtra'); toast('Cliente cadastrado e vinculado ✅');
 }
 
-/* ---------- impressão (QZ Tray + fallback) ---------- */
-let qzOn = false, listaImpressoras = [];
+/* ---------- gaveta (abertura / sangria / fechamento) ---------- */
+function renderGaveta(){
+  if(!GAVETA){
+    $('compGav').innerHTML = `
+      <div class="empty"><span class="ic">💵</span>Nenhum caixa aberto.</div>
+      <button class="btn g" onclick="abrirGaveta()">🔓 Abrir caixa</button>
+      <button class="btn o" style="margin-top:10px" onclick="historicoGavetas()">🗂 Histórico de caixas</button>`;
+    return;
+  }
+  const movs = GAVETA.movimentos || [];
+  const sang = movs.filter(x => x.tipo === 'sangria').reduce((a,x) => a + x.valor, 0);
+  const refo = movs.filter(x => x.tipo === 'reforco').reduce((a,x) => a + x.valor, 0);
+  const hora = GAVETA.abertoEm && GAVETA.abertoEm.toDate ? GAVETA.abertoEm.toDate().toLocaleString('pt-BR') : '';
+  $('compGav').innerHTML = `
+    <div class="gav"><div><b>🟢 Caixa aberto</b><div style="font-size:12px;color:var(--mut);margin-top:3px">${hora} · por ${esc(GAVETA.abertoPor || '')}</div></div>
+      <div style="text-align:right"><div style="font-size:11px;color:var(--mut)">Fundo de troco</div><b style="font-family:'IBM Plex Mono',monospace;color:var(--amber)">${fmt(GAVETA.fundo)}</b></div></div>
+    <div class="repgrid">
+      <div class="repcard"><div class="rl">Sangrias</div><div class="rv" style="color:var(--red)">-${fmt(sang)}</div></div>
+      <div class="repcard"><div class="rl">Reforços</div><div class="rv" style="color:var(--green)">+${fmt(refo)}</div></div>
+    </div>
+    ${movs.length ? movs.map(x => `<div class="pagrow"><b>${x.tipo === 'sangria' ? '📤 Sangria' : '📥 Reforço'}</b><span style="flex:1;font-size:12px;color:var(--mut)">${esc(x.motivo || '')} · ${esc(x.por || '')}</span><span class="v">${fmt(x.valor)}</span></div>`).join('') : ''}
+    <div class="row" style="margin-top:12px">
+      <button class="btn o" onclick="movGaveta('sangria')">📤 Sangria</button>
+      <button class="btn o" onclick="movGaveta('reforco')">📥 Reforço</button>
+    </div>
+    <button class="btn r" style="margin-top:10px" onclick="fecharGavetaUI()">🔒 Fechar caixa (conferência)</button>`;
+}
+async function abrirGaveta(){
+  const v = prompt('Fundo de troco inicial (R$):', '100');
+  if(v === null) return;
+  const quem = prompt('Quem está abrindo o caixa?', garcom || '');
+  await col('caixas').add({ status: 'aberto', fundo: round2(parseFloat(v.replace(',', '.')) || 0), abertoPor: quem || '', movimentos: [], abertoEm: TS() });
+  logAcao('abertura_caixa', { fundo: v });
+  toast('Caixa aberto 🔓');
+}
+async function movGaveta(tipo){
+  if(!senhaGerente()) return;
+  const v = parseFloat((prompt((tipo === 'sangria' ? 'Valor da sangria' : 'Valor do reforço') + ' (R$):') || '').replace(',', '.'));
+  if(!v || v <= 0){ toast('Valor inválido'); return; }
+  const motivo = prompt('Motivo:') || '';
+  await col('caixas').doc(GAVETA.id).update({
+    movimentos: firebase.firestore.FieldValue.arrayUnion({ tipo, valor: round2(v), motivo, por: garcom || 'Caixa', em: firebase.firestore.Timestamp.now() })
+  });
+  logAcao(tipo, { valor: v, motivo });
+  toast((tipo === 'sangria' ? 'Sangria' : 'Reforço') + ' registrado');
+}
+async function esperadoGaveta(){
+  const snap = await col('vendas').where('criadoEm', '>=', GAVETA.abertoEm).get();
+  const porForma = { 'Dinheiro': 0, 'PIX': 0, 'Débito': 0, 'Crédito': 0, 'Voucher': 0 };
+  let trocoTot = 0;
+  snap.docs.forEach(d => {
+    const v = d.data();
+    (v.pagamentos || []).forEach(p => { porForma[p.forma] = (porForma[p.forma] || 0) + p.valor; });
+    trocoTot += v.troco || 0;
+  });
+  const movs = GAVETA.movimentos || [];
+  const sang = movs.filter(x => x.tipo === 'sangria').reduce((a,x) => a + x.valor, 0);
+  const refo = movs.filter(x => x.tipo === 'reforco').reduce((a,x) => a + x.valor, 0);
+  porForma['Dinheiro'] = round2((porForma['Dinheiro'] || 0) - trocoTot + (GAVETA.fundo || 0) + refo - sang);
+  Object.keys(porForma).forEach(k => porForma[k] = round2(porForma[k]));
+  return porForma;
+}
+async function fecharGavetaUI(){
+  const espera = await esperadoGaveta();
+  const formas = Object.keys(espera);
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🔒 Fechamento — conferência</h3>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Conte a gaveta e as maquininhas e preencha o que foi <b>contado</b>. O sistema compara com o esperado.</p>
+    ${formas.map((f, i) => `
+      <label>${f} — esperado ${fmt(espera[f])}</label>
+      <input id="ct_${i}" type="number" step="0.01" inputmode="decimal" placeholder="${espera[f].toFixed(2)}">`).join('')}
+    <button class="btn g" style="margin-top:16px" onclick='confirmarFechamento(${JSON.stringify(espera)})'>Conferir e fechar</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+async function confirmarFechamento(espera){
+  const formas = Object.keys(espera);
+  const contado = {}, difs = [];
+  formas.forEach((f, i) => {
+    contado[f] = round2(parseFloat(($('ct_' + i).value || '').replace(',', '.')) || espera[f]);
+    const d = round2(contado[f] - espera[f]);
+    if(Math.abs(d) >= 0.01) difs.push(f + ': ' + (d > 0 ? 'sobra ' : 'falta ') + fmt(Math.abs(d)));
+  });
+  const divergencia = round2(formas.reduce((a, f) => a + (contado[f] - espera[f]), 0));
+  if(!confirm((difs.length ? '⚠️ Divergências:\n' + difs.join('\n') : '✅ Sem divergências.') + '\n\nFechar o caixa?')) return;
+  const quem = prompt('Quem está fechando?', garcom || '') || '';
+  await col('caixas').doc(GAVETA.id).update({ status: 'fechado', fechadoEm: TS(), fechadoPor: quem, esperado: espera, contado, divergencia });
+  logAcao('fechamento_caixa', { divergencia });
+  fecharOv('ovExtra'); toast('Caixa fechado 🔒 ' + (divergencia ? 'Divergência: ' + fmt(divergencia) : 'Bateu certinho!'));
+}
+async function historicoGavetas(){
+  const snap = await col('caixas').orderBy('abertoEm', 'desc').limit(15).get();
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🗂 Histórico de caixas</h3>
+    <div style="margin-top:8px">${snap.docs.map(d => {
+      const c = d.data();
+      const ab = c.abertoEm && c.abertoEm.toDate ? c.abertoEm.toDate().toLocaleDateString('pt-BR') : '';
+      const div = c.divergencia || 0;
+      return `<div class="pagrow"><b>${ab}</b><span style="flex:1;font-size:12px;color:var(--mut)">${esc(c.abertoPor || '')} → ${esc(c.fechadoPor || (c.status === 'aberto' ? 'ABERTO' : ''))}</span>
+        <span class="badge ${Math.abs(div) < 0.01 ? 'g' : 'r'}">${c.status === 'aberto' ? 'aberto' : (Math.abs(div) < 0.01 ? 'ok' : fmt(div))}</span></div>`;
+    }).join('') || '<div class="empty">Nenhum caixa ainda</div>'}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
+
+/* ---------- relatórios ---------- */
+let relVendas = [];
+function iniPeriodo(p){
+  const d = new Date(); d.setHours(0,0,0,0);
+  if(p === 'ontem') d.setDate(d.getDate() - 1);
+  if(p === '7dias') d.setDate(d.getDate() - 6);
+  return firebase.firestore.Timestamp.fromDate(d);
+}
+async function renderRel(periodo){
+  $('compRel').innerHTML = '<div class="empty">Carregando…</div>';
+  let q = col('vendas').where('criadoEm', '>=', iniPeriodo(periodo)).orderBy('criadoEm', 'desc');
+  const snap = await q.get();
+  let vendas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  if(periodo === 'ontem'){
+    const fim = new Date(); fim.setHours(0,0,0,0);
+    vendas = vendas.filter(v => v.criadoEm && v.criadoEm.toMillis() < fim.getTime());
+  }
+  relVendas = vendas;
+  const tot = vendas.reduce((a,v) => a + (v.total || 0), 0);
+  const nPess = vendas.reduce((a,v) => a + (v.numPessoas || 0), 0);
+  const porForma = {}, porGarcom = {}, porItem = {};
+  vendas.forEach(v => {
+    (v.pagamentos || []).forEach(p => porForma[p.forma] = round2((porForma[p.forma] || 0) + p.valor));
+    if(v.garcom) porGarcom[v.garcom] = round2((porGarcom[v.garcom] || 0) + (v.total || 0));
+  });
+  // itens vendidos: das vendas 'tudo'/'balcao' não guardamos itens; usar pedidos do período
+  const psnap = await col('pedidos').where('criadoEm', '>=', iniPeriodo(periodo)).get();
+  psnap.docs.forEach(d => {
+    const p = d.data();
+    if(p.tipo !== 'pedido') return;
+    (p.itens || []).forEach(it => porItem[it.nome] = (porItem[it.nome] || 0) + it.qtd);
+  });
+  const topItens = Object.entries(porItem).sort((a,b) => b[1] - a[1]).slice(0, 10);
+  const maxItem = topItens.length ? topItens[0][1] : 1;
+  const btn = (k, lbl) => `<button class="btn o sm" onclick="renderRel('${k}')">${lbl}</button>`;
+  $('compRel').innerHTML = `
+    <div class="row" style="margin-bottom:14px">${btn('hoje','Hoje')}${btn('ontem','Ontem')}${btn('7dias','7 dias')}
+      <button class="btn sm" onclick="exportCSV()">⬇️ CSV</button></div>
+    <div class="repgrid">
+      <div class="repcard"><div class="rl">Faturamento</div><div class="rv">${fmt(tot)}</div></div>
+      <div class="repcard"><div class="rl">Vendas</div><div class="rv">${vendas.length}</div></div>
+      <div class="repcard"><div class="rl">Ticket médio / venda</div><div class="rv">${fmt(vendas.length ? tot / vendas.length : 0)}</div></div>
+      <div class="repcard"><div class="rl">Ticket médio / pessoa</div><div class="rv">${nPess ? fmt(tot / nPess) : '—'}</div></div>
+    </div>
+    <div class="card"><b style="font-size:14px">💳 Por forma de pagamento</b>
+      ${Object.entries(porForma).sort((a,b) => b[1] - a[1]).map(([f, v]) => `<div class="repbar"><span style="min-width:70px">${esc(f)}</span><div class="rb"><i style="width:${tot ? Math.round(v/tot*100) : 0}%"></i></div><span class="rn">${fmt(v)}</span></div>`).join('') || '<div class="empty" style="padding:16px">Sem vendas</div>'}</div>
+    <div class="card"><b style="font-size:14px">🏆 Itens mais vendidos</b>
+      ${topItens.map(([n, q]) => `<div class="repbar"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n)}</span><div class="rb" style="max-width:34%"><i style="width:${Math.round(q/maxItem*100)}%"></i></div><span class="rn">${q}x</span></div>`).join('') || '<div class="empty" style="padding:16px">Sem pedidos</div>'}</div>
+    <div class="card"><b style="font-size:14px">🧑‍🍳 Por garçom</b>
+      ${Object.entries(porGarcom).sort((a,b) => b[1] - a[1]).map(([g, v]) => `<div class="repbar"><span style="min-width:70px">${esc(g)}</span><div class="rb"><i style="width:${tot ? Math.round(v/tot*100) : 0}%"></i></div><span class="rn">${fmt(v)}</span></div>`).join('') || '<div class="empty" style="padding:16px">—</div>'}</div>
+    <div class="card"><b style="font-size:14px">🧾 Vendas do período</b>
+      ${vendas.slice(0, 40).map(v => {
+        const h = v.criadoEm && v.criadoEm.toDate ? v.criadoEm.toDate().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+        return `<div class="pagrow"><b>${v.mesa ? 'Mesa ' + v.mesa : 'Balcão'}</b><span style="flex:1;font-size:12px;color:var(--mut)">${h} · ${esc(v.descricao || '')}${v.desconto ? ' · 🏷️-' + fmt(v.desconto) : ''}</span><span class="v">${fmt(v.total)}</span></div>`;
+      }).join('') || '<div class="empty" style="padding:16px">Sem vendas</div>'}</div>`;
+}
+function exportCSV(){
+  const linhas = [['Data','Mesa','Descricao','Base','Taxa','Desconto','Total','Pagamentos','Garcom']];
+  relVendas.forEach(v => {
+    const h = v.criadoEm && v.criadoEm.toDate ? v.criadoEm.toDate().toLocaleString('pt-BR') : '';
+    linhas.push([h, v.mesa || 'Balcao', (v.descricao || '').replace(/;/g, ','), (v.base || 0).toFixed(2), (v.taxa || 0).toFixed(2), (v.desconto || 0).toFixed(2), (v.total || 0).toFixed(2), (v.pagamentos || []).map(p => p.forma + ' ' + p.valor.toFixed(2)).join(' + '), v.garcom || '']);
+  });
+  const csv = '\ufeff' + linhas.map(l => l.join(';')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'vendas-pdvja.csv'; a.click();
+  toast('CSV exportado ⬇️');
+}
+
+/* ---------- impressão (fila + QZ + fallback) ---------- */
+let qzOn = false, listaImpressoras = [], filaPrint = Promise.resolve();
 async function conectarImpressao(avisar){
   if(!window.qz){ setQzStatus(false); return false; }
   try{
@@ -826,100 +1620,103 @@ async function conectarImpressao(avisar){
 }
 function setQzStatus(ok){
   const el = $('qzStatus');
-  if(el) el.innerHTML = ok ? '🟢 QZ Tray conectado — impressão automática' : '🟡 Sem QZ Tray — impressão pela janela do navegador';
+  if(el) el.innerHTML = ok ? '🟢 QZ Tray conectado — impressão automática' : '🟡 Sem QZ Tray — janela do navegador';
 }
 function impressoraDoSetor(setorId){
   const s = ((CFG && CFG.setores) || []).find(x => x.id === setorId);
   return (s && s.impressora) || '';
 }
 const semAcento = (s) => String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-function linhaEsq(dir, esq){ // valor à direita, texto à esquerda, 42 col
-  const a = semAcento(dir), b = semAcento(esq);
+function linhaEsq(a2, b2){
+  const a = semAcento(a2), b = semAcento(b2);
   const espaco = Math.max(1, 42 - a.length - b.length);
   return a + ' '.repeat(espaco) + b;
 }
 function escposPedido(p, itensSetor, nomeSet){
   const E = '\x1b', G = '\x1d';
-  let s = E + '@' + E + 'a' + '\x01';                       // init + centro
+  let s = E + '@' + E + 'a' + '\x01';
   s += G + '!' + '\x11' + semAcento(p.mesa ? 'MESA ' + p.mesa : 'BALCAO') + '\n' + G + '!' + '\x00';
   s += semAcento((nomeSet ? '[' + nomeSet + '] ' : '') + new Date().toLocaleString('pt-BR')) + '\n';
   s += semAcento('Garcom: ' + (p.garcom || '-')) + '\n';
+  if(p.cliente) s += semAcento('Cliente: ' + p.cliente.nome + (p.cliente.telefone ? ' ' + p.cliente.telefone : '')) + '\n' + (p.cliente.endereco ? semAcento(p.cliente.endereco) + '\n' : '');
   s += E + 'a' + '\x00' + '-'.repeat(42) + '\n';
   itensSetor.forEach(it => {
     s += E + 'E' + '\x01' + G + '!' + '\x01' + semAcento(it.qtd + 'x ' + it.nome) + '\n' + G + '!' + '\x00' + E + 'E' + '\x00';
     const m = [...(it.mods || [])]; if(it.obs) m.push('Obs: ' + it.obs);
     if(m.length) s += semAcento('   > ' + m.join(' / ')) + '\n';
   });
-  s += '-'.repeat(42) + '\n\n\n\n' + G + 'V' + '\x41' + '\x03';   // corte
+  s += '-'.repeat(42) + '\n\n\n\n' + G + 'V' + '\x41' + '\x03';
   return s;
 }
 function escposConta(p){
   const E = '\x1b', G = '\x1d';
-  const sub = (p.itens || []).reduce((a,x) => a + x.preco * x.qtd, 0);
-  const taxa = (CFG && CFG.taxa) ? sub * CFG.taxa / 100 : 0;
+  const sub = (p.itens || []).reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0) - (p.pagoAvulso || 0);
+  const taxa = (CFG && CFG.taxa) ? round2(sub * CFG.taxa / 100) : 0;
   let s = E + '@' + E + 'a' + '\x01';
   s += E + 'E' + '\x01' + semAcento((CFG && CFG.nome) || 'PDV Ja') + '\n' + E + 'E' + '\x00';
   s += G + '!' + '\x11' + semAcento('CONTA MESA ' + p.mesa) + '\n' + G + '!' + '\x00';
   s += semAcento(new Date().toLocaleString('pt-BR')) + '\n' + E + 'a' + '\x00' + '-'.repeat(42) + '\n';
   (p.itens || []).forEach(it => { s += linhaEsq(it.qtd + 'x ' + it.nome, fmt(it.preco * it.qtd)) + '\n'; });
   s += '-'.repeat(42) + '\n';
+  if(p.pagoAvulso) s += linhaEsq('Ja pago', '-' + fmt(p.pagoAvulso)) + '\n';
   s += linhaEsq('Subtotal', fmt(sub)) + '\n';
   if(taxa) s += linhaEsq('Taxa servico ' + CFG.taxa + '% (opcional)', fmt(taxa)) + '\n';
-  s += E + 'E' + '\x01' + linhaEsq('TOTAL', fmt(sub + taxa)) + '\n' + E + 'E' + '\x00';
-  s += '\n' + E + 'a' + '\x01' + semAcento('Obrigado pela preferencia!') + '\n';
-  s += '\n\n\n' + G + 'V' + '\x41' + '\x03';
+  s += E + 'E' + '\x01' + linhaEsq('TOTAL', fmt(round2(sub + taxa))) + '\n' + E + 'E' + '\x00';
+  s += '\n' + E + 'a' + '\x01' + semAcento('Obrigado pela preferencia!') + '\n\n\n\n' + G + 'V' + '\x41' + '\x03';
   return s;
 }
 async function printRaw(impressora, dados){
   const cfg = qz.configs.create(impressora);
   await qz.print(cfg, [{ type: 'raw', format: 'command', flavor: 'plain', data: dados }]);
 }
-async function imprimirPedido(id, p, auto){
+function imprimirPedido(id, p, auto){
   if(!p) return;
-  try{
-    if(p.tipo === 'conta'){
-      const imp = (CFG && CFG.impConta) || '';
-      if(qzOn && imp){ await printRaw(imp, escposConta(p)); }
-      else{ fallbackPrint(htmlConta(p)); }
-    }else{
-      // agrupa itens por setor
-      const grupos = {};
-      (p.itens || []).forEach(it => { const k = it.setor || '_'; (grupos[k] = grupos[k] || []).push(it); });
-      let algumFallback = false;
-      for(const k of Object.keys(grupos)){
-        const imp = impressoraDoSetor(k);
-        if(qzOn && imp){ await printRaw(imp, escposPedido(p, grupos[k], nomeSetor(k))); }
-        else algumFallback = true;
+  filaPrint = filaPrint.then(async () => {
+    try{
+      if(p.tipo === 'conta'){
+        const imp = (CFG && CFG.impConta) || '';
+        if(qzOn && imp) await printRaw(imp, escposConta(p));
+        else fallbackPrint(htmlConta(p));
+      }else{
+        const grupos = {};
+        (p.itens || []).forEach(it => { const k = it.setor || '_'; (grupos[k] = grupos[k] || []).push(it); });
+        let algumFallback = false;
+        for(const k of Object.keys(grupos)){
+          const imp = impressoraDoSetor(k);
+          if(qzOn && imp) await printRaw(imp, escposPedido(p, grupos[k], nomeSetor(k)));
+          else algumFallback = true;
+        }
+        if(algumFallback) fallbackPrint(htmlPedido(p));
       }
-      if(algumFallback) fallbackPrint(htmlPedido(p));
-    }
-    await marcarImpresso(id);
-    if(!auto) toast('Impresso ✅');
-  }catch(e){ console.error(e); toast('Falha na impressão: ' + (e.message || e)); }
+      await marcarImpresso(id);
+      if(!auto) toast('Impresso ✅');
+    }catch(e){ console.error(e); toast('Falha na impressão: ' + (e.message || e)); }
+  });
+  return filaPrint;
 }
 function htmlPedido(p){
   return `<h3>${esc(p.mesa ? 'MESA ' + p.mesa : 'BALCÃO')}</h3>
-    <div class="c">${new Date().toLocaleString('pt-BR')} · ${esc(p.garcom || '')}</div><div class="sep"></div>
+    <div class="c">${new Date().toLocaleString('pt-BR')} · ${esc(p.garcom || '')}</div>
+    ${p.cliente ? `<div class="c">Cliente: ${esc(p.cliente.nome)} ${esc(p.cliente.telefone || '')}<br>${esc(p.cliente.endereco || '')}</div>` : ''}<div class="sep"></div>
     ${(p.itens || []).map(it => `<div class="li"><span>${it.qtd}x ${esc(it.nome)}</span><span>${esc(nomeSetor(it.setor))}</span></div>${(it.mods && it.mods.length) || it.obs ? `<div class="lm">${esc([...(it.mods||[]), it.obs].filter(Boolean).join(' / '))}</div>` : ''}`).join('')}
     <div class="sep"></div>`;
 }
 function htmlConta(p){
-  const sub = (p.itens || []).reduce((a,x) => a + x.preco * x.qtd, 0);
-  const taxa = (CFG && CFG.taxa) ? sub * CFG.taxa / 100 : 0;
+  const sub = (p.itens || []).reduce((a,x) => a + x.preco * x.qtd - (x.valorPago || 0), 0) - (p.pagoAvulso || 0);
+  const taxa = (CFG && CFG.taxa) ? round2(sub * CFG.taxa / 100) : 0;
   return `<h3>${esc((CFG && CFG.nome) || '')}</h3><div class="c big">CONTA — MESA ${p.mesa}</div>
     <div class="c">${new Date().toLocaleString('pt-BR')}</div><div class="sep"></div>
     ${(p.itens || []).map(it => `<div class="li"><span>${it.qtd}x ${esc(it.nome)}</span><span>${fmt(it.preco*it.qtd)}</span></div>`).join('')}
-    <div class="sep"></div><div class="li"><span>Subtotal</span><span>${fmt(sub)}</span></div>
+    <div class="sep"></div>${p.pagoAvulso ? `<div class="li"><span>Já pago</span><span>-${fmt(p.pagoAvulso)}</span></div>` : ''}
+    <div class="li"><span>Subtotal</span><span>${fmt(sub)}</span></div>
     ${taxa ? `<div class="li"><span>Taxa serviço ${CFG.taxa}% (opcional)</span><span>${fmt(taxa)}</span></div>` : ''}
-    <div class="li big"><span>TOTAL</span><span>${fmt(sub + taxa)}</span></div>
+    <div class="li big"><span>TOTAL</span><span>${fmt(round2(sub + taxa))}</span></div>
     <div class="c" style="margin-top:8px">Obrigado pela preferência!</div>`;
 }
 function fallbackPrint(html){
   $('printArea').innerHTML = html;
-  setTimeout(() => window.print(), 60);
+  return new Promise(res => setTimeout(() => { window.print(); res(); }, 80));
 }
-
-/* ---------- som ---------- */
 function beep(){
   if(CFG && CFG.som === false) return;
   try{
@@ -935,6 +1732,45 @@ function beep(){
   }catch(e){}
 }
 
+/* ---------- upload de foto (Supabase, opcional) ---------- */
+function redimensionar(file){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 600, r = Math.min(1, max / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * r); cv.height = Math.round(img.height * r);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      cv.toBlob(b => b ? res(b) : rej(new Error('erro')), 'image/jpeg', .82);
+    };
+    img.onerror = rej;
+    img.src = URL.createObjectURL(file);
+  });
+}
+async function uploadFoto(file){
+  if(!SUPA_URL || !SUPA_KEY) throw new Error('Supabase não configurado — use o campo de URL da foto');
+  const blob = await redimensionar(file);
+  const nome = REST + '/' + uid() + '.jpg';
+  const r = await fetch(SUPA_URL + '/storage/v1/object/pdv/' + nome, {
+    method: 'POST',
+    headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'image/jpeg' },
+    body: blob
+  });
+  if(!r.ok) throw new Error('Falha no upload (' + r.status + '). O bucket "pdv" existe e é público?');
+  return SUPA_URL + '/storage/v1/object/public/pdv/' + nome;
+}
+async function escolherFoto(inputEl, destInputId, prevId){
+  const f = inputEl.files && inputEl.files[0];
+  if(!f) return;
+  toast('Enviando foto…');
+  try{
+    const url = await uploadFoto(f);
+    $(destInputId).value = url;
+    if($(prevId)) $(prevId).src = url, $(prevId).style.display = '';
+    toast('Foto enviada 📸');
+  }catch(e){ toast(e.message); }
+}
+
 /* ---------- configurações ---------- */
 function abrirConfig(){
   if(adminOk){ entrarConfig(); return; }
@@ -946,11 +1782,14 @@ function checarSenha(){
 }
 function entrarConfig(){ preencherConfig(); cfgTab('prod'); show('scConfig'); }
 function cfgTab(t){
-  ['prod','set','geral'].forEach(x => {
-    $('tab' + (x === 'prod' ? 'Prod' : x === 'set' ? 'Set' : 'Geral')).classList.toggle('on', x === t);
-    $('cfg' + (x === 'prod' ? 'Prod' : x === 'set' ? 'Set' : 'Geral')).style.display = x === t ? '' : 'none';
+  const map = { prod:'Prod', grp:'Grp', eqp:'Eqp', set:'Set', geral:'Geral' };
+  Object.keys(map).forEach(k => {
+    $('tab' + map[k]).classList.toggle('on', k === t);
+    $('cfg' + map[k]).style.display = k === t ? '' : 'none';
   });
   if(t === 'prod') renderProdLista();
+  if(t === 'grp') renderGrupos();
+  if(t === 'eqp') renderEquipe();
   if(t === 'set') renderSetores();
 }
 function preencherConfig(){
@@ -959,10 +1798,24 @@ function preencherConfig(){
   $('cfgModo').value = CFG.modo || 'restaurante';
   $('cfgMesas').value = CFG.numMesas || 20;
   $('cfgTaxa').value = CFG.taxa != null ? CFG.taxa : 10;
+  $('cfgFracRegra').value = CFG.fracRegra || 'cara';
   $('togAuto').classList.toggle('on', CFG.autoImprimir !== false);
   $('togSom').classList.toggle('on', CFG.som !== false);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
-  renderSetores();
+  renderFracPills(); renderSetores();
+}
+function renderFracPills(){
+  const cats = categorias().slice(1);
+  const sel = (CFG && CFG.categoriasFracao) || [];
+  $('fracPills').innerHTML = cats.length ? cats.map((c, i) =>
+    `<button class="pill ${sel.includes(c) ? 'on' : ''}" onclick="togFrac(${i})">${esc(c)}</button>`).join('')
+    : '<span style="color:var(--mut);font-size:12.5px">Cadastre produtos primeiro</span>';
+}
+async function togFrac(i){
+  const c = categorias().slice(1)[i];
+  let sel = ((CFG && CFG.categoriasFracao) || []).slice();
+  if(sel.includes(c)) sel = sel.filter(x => x !== c); else sel.push(c);
+  await rcol().update({ categoriasFracao: sel });
 }
 async function salvarCampo(campo, valor){ await rcol().update({ [campo]: valor }); toast('Salvo ✅'); }
 async function togCampo(campo, el){
@@ -973,11 +1826,14 @@ async function togCampo(campo, el){
 async function trocarSenha(){
   const v = $('cfgSenha').value.trim();
   if(!v){ toast('Digite a nova senha'); return; }
-  await rcol().update({ senha: v }); $('cfgSenha').value = ''; toast('Senha alterada 🔒');
+  await rcol().update({ senha: v }); $('cfgSenha').value = ''; toast('Senha do admin alterada 🔒');
 }
-function copiarLink(){
-  navigator.clipboard.writeText($('cfgLink').value).then(() => toast('Link copiado 📋'));
+async function trocarSenhaGer(){
+  const v = $('cfgSenhaGer').value.trim();
+  if(!v){ toast('Digite a nova senha'); return; }
+  await rcol().update({ senhaGerente: v }); $('cfgSenhaGer').value = ''; toast('Senha do gerente alterada 🔑');
 }
+function copiarLink(){ navigator.clipboard.writeText($('cfgLink').value).then(() => toast('Link copiado 📋')); }
 
 /* setores */
 function renderSetores(){
@@ -990,7 +1846,7 @@ function renderSetores(){
       ${selImpressora(s.impressora, `edSetor(${i},'impressora',this.value)`)}
     </div>`).join('');
   const sel = $('cfgImpConta');
-  if(sel){ sel.innerHTML = '<option value="">— janela do navegador —</option>' + opcoesImpressora((CFG && CFG.impConta) || ''); }
+  if(sel) sel.innerHTML = '<option value="">— janela do navegador —</option>' + opcoesImpressora((CFG && CFG.impConta) || '');
 }
 function opcoesImpressora(atual){
   const nomes = [...new Set([...(listaImpressoras || []), ...(atual ? [atual] : [])])];
@@ -1010,8 +1866,7 @@ async function novoSetor(){
   const nome = prompt('Nome do novo setor (ex: Copa, Chapa, Sobremesas):');
   if(!nome) return;
   const id = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'') || ('setor' + Date.now());
-  const sets = ((CFG && CFG.setores) || []).concat([{ id, nome, impressora: '' }]);
-  await rcol().update({ setores: sets });
+  await rcol().update({ setores: ((CFG && CFG.setores) || []).concat([{ id, nome, impressora: '' }]) });
 }
 async function delSetor(i){
   if(!confirm('Remover este setor?')) return;
@@ -1025,15 +1880,23 @@ function renderProdLista(){
   PRODUTOS.forEach(p => { const c = p.categoria || 'Geral'; (porCat[c] = porCat[c] || []).push(p); });
   $('prodLista').innerHTML = Object.keys(porCat).sort().map(c => `
     <label>${esc(c)}</label>
-    ${porCat[c].map(p => `<div class="pagrow" style="cursor:pointer" onclick="editarProduto('${p.id}')">
-      <b>${esc(p.nome)}</b><span class="badge a">${esc(nomeSetor(p.setor))}</span><span class="v">${fmt(p.preco)}</span></div>`).join('')}`).join('')
+    ${porCat[c].map(p => `<div class="pagrow">
+      <span style="cursor:pointer;flex:1;display:flex;align-items:center;gap:8px" onclick="editarProduto('${p.id}')">${p.foto ? `<img class="avatar sm" src="${esc(p.foto)}" style="border-radius:8px">` : ''}<b>${esc(p.nome)}</b></span>
+      <button class="badge ${p.esgotado ? 'r' : 'g'}" onclick="togEsgotado('${p.id}')">${p.esgotado ? 'esgotado' : 'ativo'}</button>
+      <span class="v" style="cursor:pointer" onclick="editarProduto('${p.id}')">${fmt(p.preco)}</span></div>`).join('')}`).join('')
     || '<div class="empty"><span class="ic">📦</span>Nenhum produto ainda.</div>';
 }
-let edId = null, edMods = [];
+async function togEsgotado(id){
+  const p = PRODUTOS.find(x => x.id === id); if(!p) return;
+  await col('produtos').doc(id).update({ esgotado: !p.esgotado });
+  toast(p.nome + (p.esgotado ? ' voltou ao cardápio ✅' : ' marcado como ESGOTADO'));
+}
+let edId = null, edMods = [], edGrupos = [];
 function editarProduto(id){
   edId = id;
   const p = id ? PRODUTOS.find(x => x.id === id) : null;
   edMods = p ? JSON.parse(JSON.stringify(p.modificadores || [])) : [];
+  edGrupos = p ? (p.grupos || []).slice() : [];
   $('ovEditProdBox').innerHTML = `
     <h3 style="font-size:19px">${id ? 'Editar produto' : 'Novo produto'}</h3>
     <label>Nome</label><input id="epNome" value="${p ? esc(p.nome) : ''}">
@@ -1044,41 +1907,55 @@ function editarProduto(id){
     <label>Setor de impressão</label>
     <select id="epSetor">${((CFG && CFG.setores) || []).map(s => `<option value="${s.id}" ${p && p.setor === s.id ? 'selected' : ''}>${esc(s.nome)}</option>`).join('')}</select>
     <label>Descrição (opcional)</label><input id="epDesc" value="${p ? esc(p.descricao || '') : ''}">
-    <label>Foto — URL (opcional)</label><input id="epFoto" value="${p ? esc(p.foto || '') : ''}" placeholder="https://…">
-    <label>Perguntas / modificadores</label>
+    <label>Foto</label>
+    <div class="row"><input id="epFoto" value="${p ? esc(p.foto || '') : ''}" placeholder="URL da foto ou envie →">
+      <button class="btn sm" style="flex:0 0 auto" onclick="$('epFile').click()">📸</button></div>
+    <input type="file" id="epFile" accept="image/*" style="display:none" onchange="escolherFoto(this,'epFoto','epPrev')">
+    <img id="epPrev" class="fotoprev" src="${p && p.foto ? esc(p.foto) : ''}" style="${p && p.foto ? '' : 'display:none'}" onerror="this.style.display='none'">
+    <label>Grupos de adicionais (biblioteca)</label>
+    ${GRUPOS.length ? `<div class="pills" id="epGrps">${GRUPOS.map(g =>
+      `<button class="pill ${edGrupos.includes(g.id) ? 'on' : ''}" onclick="togProdGrupo('${g.id}', this)">${esc(g.nome)}</button>`).join('')}</div>`
+      : '<p style="color:var(--mut);font-size:12.5px">Crie grupos na aba Adicionais para reutilizar em vários produtos.</p>'}
+    <label>Perguntas exclusivas deste produto</label>
     <div id="epMods"></div>
-    <button class="btn o sm" onclick="addMod()">＋ Nova pergunta</button>
+    <button class="btn o sm" onclick="addMod()">＋ Nova pergunta exclusiva</button>
     <button class="btn g" style="margin-top:18px" onclick="salvarProduto()">Salvar produto</button>
     ${id ? `<button class="btn r" style="margin-top:10px" onclick="excluirProduto()">🗑️ Excluir produto</button>` : ''}
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovEditProd')">Cancelar</button>`;
   renderMods(); abrirOv('ovEditProd');
 }
+function togProdGrupo(gid, el){
+  const i = edGrupos.indexOf(gid);
+  if(i >= 0) edGrupos.splice(i, 1); else edGrupos.push(gid);
+  el.classList.toggle('on', edGrupos.includes(gid));
+}
 function renderMods(){
   $('epMods').innerHTML = edMods.map((g, i) => `
     <div class="card" style="padding:12px">
       <div class="row" style="align-items:flex-end">
-        <div><label style="margin-top:0">Pergunta</label><input value="${esc(g.nome)}" placeholder="ex: Gelo?" onchange="edMods[${i}].nome=this.value"></div>
+        <div><label style="margin-top:0">Pergunta</label><input value="${esc(g.nome)}" placeholder="ex: Ponto da carne?" onchange="edMods[${i}].nome=this.value"></div>
         <button class="iconb" style="flex:0 0 42px" onclick="edMods.splice(${i},1);renderMods()">🗑️</button>
       </div>
       <label>Opções (separadas por vírgula)</label>
-      <input value="${esc(g.opcoes.join(', '))}" placeholder="ex: Com gelo, Sem gelo" onchange="edMods[${i}].opcoes=this.value.split(',').map(s=>s.trim()).filter(Boolean)">
+      <input value="${esc(g.opcoes.join(', '))}" placeholder="ex: Mal passada, Ao ponto" onchange="edMods[${i}].opcoes=this.value.split(',').map(s=>s.trim()).filter(Boolean)">
     </div>`).join('');
 }
 function addMod(){ edMods.push({ nome: '', opcoes: [] }); renderMods(); }
 async function salvarProduto(){
   const nome = $('epNome').value.trim();
-  const preco = parseFloat($('epPreco').value);
+  const preco = parseFloat(($('epPreco').value || '').replace(',', '.'));
   if(!nome || isNaN(preco)){ toast('Preencha nome e preço'); return; }
   const dados = {
-    nome, preco: Math.round(preco * 100) / 100,
+    nome, preco: round2(preco),
     categoria: $('epCat').value.trim() || 'Geral',
     setor: $('epSetor').value,
     descricao: $('epDesc').value.trim(),
     foto: $('epFoto').value.trim(),
+    grupos: edGrupos,
     modificadores: edMods.filter(g => g.nome && g.opcoes.length)
   };
   if(edId) await col('produtos').doc(edId).update(dados);
-  else await col('produtos').add({ ...dados, criadoEm: TS() });
+  else await col('produtos').add({ ...dados, esgotado: false, criadoEm: TS() });
   fecharOv('ovEditProd'); toast('Produto salvo ✅');
 }
 async function excluirProduto(){
@@ -1087,7 +1964,120 @@ async function excluirProduto(){
   fecharOv('ovEditProd'); toast('Produto excluído');
 }
 
+/* grupos de adicionais (biblioteca) */
+function renderGrupos(){
+  $('grpLista').innerHTML = GRUPOS.map(g => `
+    <div class="pagrow" style="cursor:pointer" onclick="editarGrupo('${g.id}')">
+      <b>${esc(g.nome)}</b>
+      <span class="badge a">${g.tipo === 'multipla' ? 'várias escolhas' : 'escolha única'}</span>
+      <span style="font-size:12px;color:var(--mut)">${(g.opcoes || []).length} opções</span></div>`).join('')
+    || '<div class="empty"><span class="ic">🧩</span>Nenhum grupo ainda.</div>';
+}
+let grpId = null, grpOps = [];
+function editarGrupo(id){
+  grpId = id;
+  const g = id ? GRUPOS.find(x => x.id === id) : null;
+  grpOps = g ? JSON.parse(JSON.stringify(g.opcoes || [])) : [];
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">${id ? 'Editar grupo' : 'Novo grupo de adicionais'}</h3>
+    <label>Pergunta / nome do grupo</label><input id="egNome" value="${g ? esc(g.nome) : ''}" placeholder="ex: Gelo? · Adicionais?">
+    <label>Tipo de escolha</label>
+    <select id="egTipo"><option value="unica" ${g && g.tipo === 'unica' ? 'selected' : ''}>Escolha única (uma opção)</option><option value="multipla" ${g && g.tipo === 'multipla' ? 'selected' : ''}>Múltipla (pode marcar várias)</option></select>
+    <label>Opções</label>
+    <div id="egOps"></div>
+    <button class="btn o sm" onclick="addGrpOp()">＋ Opção</button>
+    <button class="btn g" style="margin-top:16px" onclick="salvarGrupo()">Salvar grupo</button>
+    ${id ? `<button class="btn o" style="margin-top:10px" onclick="aplicarGrupoCategoria('${id}')">📌 Aplicar a uma categoria inteira</button>
+    <button class="btn r" style="margin-top:10px" onclick="excluirGrupo()">🗑️ Excluir grupo</button>` : ''}
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  renderGrpOps(); abrirOv('ovExtra');
+}
+function renderGrpOps(){
+  $('egOps').innerHTML = grpOps.map((o, i) => `
+    <div class="row" style="margin-bottom:8px">
+      <input value="${esc(o.nome)}" placeholder="ex: Com gelo" onchange="grpOps[${i}].nome=this.value">
+      <input type="number" step="0.01" inputmode="decimal" value="${o.preco || ''}" placeholder="+ R$ (opcional)" onchange="grpOps[${i}].preco=round2(parseFloat(this.value)||0)" style="flex:0 0 34%">
+      <button class="iconb" style="flex:0 0 42px" onclick="grpOps.splice(${i},1);renderGrpOps()">🗑️</button>
+    </div>`).join('');
+}
+function addGrpOp(){ grpOps.push({ nome: '', preco: 0 }); renderGrpOps(); }
+async function salvarGrupo(){
+  const nome = $('egNome').value.trim();
+  const ops = grpOps.filter(o => o.nome && o.nome.trim()).map(o => ({ nome: o.nome.trim(), preco: round2(o.preco || 0) }));
+  if(!nome || !ops.length){ toast('Preencha o nome e ao menos uma opção'); return; }
+  const dados = { nome, tipo: $('egTipo').value, opcoes: ops };
+  if(grpId) await col('grupos').doc(grpId).update(dados);
+  else await col('grupos').add({ ...dados, criadoEm: TS() });
+  fecharOv('ovExtra'); toast('Grupo salvo ✅');
+}
+async function excluirGrupo(){
+  if(!confirm('Excluir este grupo? Ele some de todos os produtos vinculados.')) return;
+  await col('grupos').doc(grpId).delete();
+  const batch = db.batch();
+  PRODUTOS.filter(p => (p.grupos || []).includes(grpId)).forEach(p =>
+    batch.update(col('produtos').doc(p.id), { grupos: p.grupos.filter(x => x !== grpId) }));
+  await batch.commit();
+  fecharOv('ovExtra'); toast('Grupo excluído');
+}
+function aplicarGrupoCategoria(gid){
+  const cats = categorias().slice(1);
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">📌 Aplicar a qual categoria?</h3>
+    <div class="menuops">${cats.map((c, i) =>
+      `<button onclick="confirmarAplicarGrupo('${gid}',${i})"><span style="font-size:18px">📂</span><span>${esc(c)}</span></button>`).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+}
+async function confirmarAplicarGrupo(gid, ci){
+  const cat = categorias().slice(1)[ci];
+  const alvos = PRODUTOS.filter(p => (p.categoria || 'Geral') === cat && !(p.grupos || []).includes(gid));
+  if(!alvos.length){ toast('Todos os produtos dessa categoria já têm esse grupo'); return; }
+  const batch = db.batch();
+  alvos.forEach(p => batch.update(col('produtos').doc(p.id), { grupos: (p.grupos || []).concat([gid]) }));
+  await batch.commit();
+  fecharOv('ovExtra'); toast('Grupo aplicado a ' + alvos.length + ' produtos de ' + cat + ' 📌');
+}
 
+/* equipe */
+function renderEquipe(){
+  const nomeF = { garcom: '🧑‍🍳 Garçom', caixa: '💰 Caixa', gerente: '⭐ Gerente' };
+  $('eqpLista').innerHTML = EQUIPE.map(f => `
+    <div class="pagrow" style="cursor:pointer" onclick="editarFunc('${f.id}')">
+      ${avatarHTML(f.nome, f.foto)}<b style="flex:1">${esc(f.nome)}</b>
+      <span class="badge a">${nomeF[f.funcao] || f.funcao}</span></div>`).join('')
+    || '<div class="empty"><span class="ic">👥</span>Ninguém cadastrado ainda.</div>';
+}
+let funcId = null;
+function editarFunc(id){
+  funcId = id;
+  const f = id ? EQUIPE.find(x => x.id === id) : null;
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">${id ? 'Editar funcionário' : 'Novo funcionário'}</h3>
+    <label>Nome</label><input id="efNome" value="${f ? esc(f.nome) : ''}">
+    <label>Função</label>
+    <select id="efFuncao"><option value="garcom" ${f && f.funcao === 'garcom' ? 'selected' : ''}>Garçom</option><option value="caixa" ${f && f.funcao === 'caixa' ? 'selected' : ''}>Caixa</option><option value="gerente" ${f && f.funcao === 'gerente' ? 'selected' : ''}>Gerente</option></select>
+    <label>Foto</label>
+    <div class="row"><input id="efFoto" value="${f ? esc(f.foto || '') : ''}" placeholder="URL da foto ou envie →">
+      <button class="btn sm" style="flex:0 0 auto" onclick="$('efFile').click()">📸</button></div>
+    <input type="file" id="efFile" accept="image/*" style="display:none" onchange="escolherFoto(this,'efFoto','efPrev')">
+    <img id="efPrev" class="fotoprev" style="border-radius:50%;${f && f.foto ? '' : 'display:none'}" src="${f && f.foto ? esc(f.foto) : ''}" onerror="this.style.display='none'">
+    <button class="btn g" style="margin-top:16px" onclick="salvarFunc()">Salvar</button>
+    ${id ? `<button class="btn r" style="margin-top:10px" onclick="excluirFunc()">🗑️ Remover</button>` : ''}
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+async function salvarFunc(){
+  const nome = $('efNome').value.trim();
+  if(!nome){ toast('Digite o nome'); return; }
+  const dados = { nome, funcao: $('efFuncao').value, foto: $('efFoto').value.trim() };
+  if(funcId) await col('equipe').doc(funcId).update(dados);
+  else await col('equipe').add({ ...dados, criadoEm: TS() });
+  fecharOv('ovExtra'); toast('Funcionário salvo ✅');
+}
+async function excluirFunc(){
+  if(!confirm('Remover este funcionário?')) return;
+  await col('equipe').doc(funcId).delete();
+  fecharOv('ovExtra'); toast('Removido');
+}
 /* ---------- templates prontos ---------- */
 const M = (nome, opcoes) => ({ nome, opcoes });
 const P = (nome, preco, categoria, setor, descricao, modificadores) => ({ nome, preco, categoria, setor, descricao: descricao || '', foto: '', modificadores: modificadores || [] });
@@ -1282,6 +2272,7 @@ async function excluirBackup(id){
   await col('modelos').doc(id).delete(); abrirBackup();
 }
 
+
 /* ---------- PWA ---------- */
 (function(){
   const manifest = {
@@ -1300,8 +2291,6 @@ function instalarApp(){
   if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; }
   else toast('No iPhone: Compartilhar → Adicionar à Tela de Início');
 }
-
-/* enter para entrar */
 document.addEventListener('keydown', e => {
   if(e.key === 'Enter' && $('scEntrada').classList.contains('on')) entrarRest();
 });
