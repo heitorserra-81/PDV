@@ -224,8 +224,11 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.agrupada{opacity:.5;border-style:dashed}
 .mesa.agrupada::before,.mesa.agrupada::after{display:none}
 .mesagrid{row-gap:20px}
-.mesa{transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .2s}
+.mesa{transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .2s;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .mesa.segurando{transform:scale(1.08) translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.45);z-index:5}
+.mesa.arrastando{opacity:.2}
+.mesa.drop-alvo{border-color:var(--green) !important;box-shadow:0 0 0 5px rgba(47,191,113,.28)}
+.mesa-clone{border-radius:18px;pointer-events:none;transform:scale(1.1) rotate(-2deg);box-shadow:0 22px 44px rgba(0,0,0,.5);transition:none}
 .catorder{display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
 .catorder b{flex:1;font-size:14px}
 .catorder .ordbtns{display:flex;gap:4px}
@@ -288,7 +291,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <!-- ============ GARÇOM: MESAS ============ -->
 <div class="screen" id="scMesas">
   <div class="top"><button class="iconb" onclick="show('scHome')">←</button><div style="flex:1"><h2>Mesas</h2><div class="sub" id="garcomNomeTop"></div></div><button class="iconb" onclick="trocarGarcom()">👤</button></div>
-  <div class="wrap"><div class="mesagrid" id="mesaGrid"></div></div>
+  <div class="wrap"><p style="color:var(--mut);font-size:12px;margin-bottom:2px">🪑 Segure e arraste uma mesa em cima de outra para agrupar</p><div class="mesagrid" id="mesaGrid"></div></div>
 </div>
 
 <div class="screen" id="scBloq">
@@ -458,8 +461,8 @@ const firebaseConfig = {
 /* Fotos (opcional): cole a URL e a anon key do seu Supabase (mesmo do
    KonectaRH) e crie um bucket PÚBLICO chamado "pdv". Sem isso, as fotos
    funcionam por URL manual normalmente. */
-const SUPA_URL = "";   // ex: https://xxxx.supabase.co
-const SUPA_KEY = "";
+const SUPA_URL = "https://prizqulyuqkhuwbjrckv.supabase.co";
+const SUPA_KEY = "sb_publishable_ldNovdxDU9W5SIE1GXM1rw_g2rmuWtb";
 /* ================================================================ */
 
 firebase.initializeApp(firebaseConfig);
@@ -660,28 +663,157 @@ function segurarMesa(el){
   clearTimeout(el._segT);
   el._segT = setTimeout(() => el.classList.remove('segurando'), 260);
 }
+function ordemExibicaoMesas(n){
+  const placed = new Set(), order = [];
+  for(let i = 1; i <= n; i++){
+    if(placed.has(i)) continue;
+    const m = MESAS[String(i)] || {};
+    if(m.status === 'agrupada') continue; // sai da posição fixa; entra junto do "host" abaixo
+    order.push(i); placed.add(i);
+    (m.grupoCom || []).forEach(g => { if(!placed.has(g)){ order.push(g); placed.add(g); } });
+  }
+  return order;
+}
 function renderMesas(elId, modoCaixa){
   const n = (CFG && CFG.numMesas) || 20;
+  const before = flipCapturar(elId);
   let html = '';
-  for(let i = 1; i <= n; i++){
+  ordemExibicaoMesas(n).forEach(i => {
     const m = MESAS[String(i)] || {};
     const st = m.status || 'livre';
     const resta = itensRestanteTotal(m);
+    const dragAttrs = (!modoCaixa && st !== 'agrupada') ? `onpointerdown="iniciarDragMesa(event,${i})"` : `onpointerdown="segurarMesa(this)"`;
     if(st === 'agrupada'){
-      html += `<div class="mesa agrupada" onpointerdown="segurarMesa(this)" onclick="${modoCaixa ? `abrirCaixaMesa(${m.agrupadaEm})` : `abrirMesa(${m.agrupadaEm})`}">
-        <div class="n">${i}</div><div class="st">🔗 c/ mesa ${m.agrupadaEm}</div></div>`;
-      continue;
+      html += `<div class="mesa agrupada unida" data-mesa="${i}" ${dragAttrs} onclick="${modoCaixa ? `abrirCaixaMesa(${m.agrupadaEm})` : `abrirMesa(${m.agrupadaEm})`}">
+        <div class="n">${i}</div><div class="st">🔗 c/ ${m.agrupadaEm}</div></div>`;
+      return;
     }
     const stTxt = st === 'livre' ? 'Livre' : (st === 'conta' ? 'Pediu conta' : 'Ocupada');
-    html += `<div class="mesa ${st}" onpointerdown="segurarMesa(this)" onclick="${modoCaixa ? `abrirCaixaMesa(${i})` : `abrirMesa(${i})`}">
+    html += `<div class="mesa ${st}" data-mesa="${i}" ${dragAttrs} onclick="${modoCaixa ? `abrirCaixaMesa(${i})` : `abrirMesa(${i})`}">
       ${st !== 'livre' && m.numPessoas ? `<div class="pess">👥${m.numPessoas}</div>` : ''}
       ${st !== 'livre' && (m.garcomFoto || m.garcom) ? `<div class="gpic">${avatarHTML(m.garcom, m.garcomFoto, 'sm')}</div>` : ''}
       <div class="n">${i}</div><div class="st">${stTxt}</div>
       ${resta > 0 ? `<div class="tot">${fmt(resta)}</div>` : ''}
       ${st !== 'livre' ? `<div class="tempo">${minsAberta(m)}</div>` : ''}
       ${(m.grupoCom || []).length ? `<div class="tempo">🪑 +${m.grupoCom.length} mesa(s)</div>` : ''}</div>`;
-  }
+  });
   $(elId).innerHTML = html;
+  flipAnimar(elId, before);
+}
+
+/* ---------- FLIP: mesas deslizam suavemente quando a grade reordena ---------- */
+function flipCapturar(elId){
+  const map = {};
+  document.querySelectorAll('#' + elId + ' .mesa[data-mesa]').forEach(el => {
+    map[el.dataset.mesa] = el.getBoundingClientRect();
+  });
+  return map;
+}
+function flipAnimar(elId, before){
+  document.querySelectorAll('#' + elId + ' .mesa[data-mesa]').forEach(el => {
+    const antes = before[el.dataset.mesa];
+    if(!antes) return;
+    const depois = el.getBoundingClientRect();
+    const dx = antes.left - depois.left, dy = antes.top - depois.top;
+    if(!dx && !dy) return;
+    el.style.transition = 'none';
+    el.style.transform = `translate(${dx}px,${dy}px)`;
+    requestAnimationFrame(() => {
+      el.style.transition = 'transform .32s cubic-bezier(.2,.8,.3,1)';
+      el.style.transform = '';
+    });
+  });
+}
+
+/* ---------- arrastar mesa com o dedo pra agrupar ---------- */
+let dragState = null;
+function iniciarDragMesa(ev, i){
+  const m = MESAS[String(i)] || {};
+  if(m.status === 'agrupada') return;
+  const el = ev.currentTarget;
+  dragState = { i, el, startX: ev.clientX, startY: ev.clientY, longPress: false, cloneEl: null, pid: ev.pointerId };
+  dragState.timer = setTimeout(() => iniciarArrasteVisual(ev), 220);
+}
+function iniciarArrasteVisual(ev){
+  if(!dragState) return;
+  dragState.longPress = true;
+  const el = dragState.el;
+  const r = el.getBoundingClientRect();
+  const clone = el.cloneNode(true);
+  clone.className = 'mesa mesa-clone';
+  clone.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;margin:0;z-index:999;pointer-events:none`;
+  document.body.appendChild(clone);
+  dragState.cloneEl = clone;
+  dragState.offX = ev.clientX - r.left; dragState.offY = ev.clientY - r.top;
+  el.classList.add('arrastando');
+  requestAnimationFrame(() => clone.classList.add('dragging'));
+}
+function moverDragMesa(ev){
+  if(!dragState) return;
+  const dx = ev.clientX - dragState.startX, dy = ev.clientY - dragState.startY;
+  if(!dragState.longPress){
+    if(Math.hypot(dx, dy) > 14){ clearTimeout(dragState.timer); dragState = null; }
+    return;
+  }
+  ev.preventDefault();
+  const clone = dragState.cloneEl;
+  clone.style.left = (ev.clientX - dragState.offX) + 'px';
+  clone.style.top = (ev.clientY - dragState.offY) + 'px';
+  clone.style.display = 'none';
+  const under = document.elementFromPoint(ev.clientX, ev.clientY);
+  clone.style.display = '';
+  document.querySelectorAll('.mesa.drop-alvo').forEach(x => x.classList.remove('drop-alvo'));
+  const alvo = under && under.closest && under.closest('.mesa[data-mesa]');
+  if(alvo && alvo !== dragState.el && alvo.dataset.mesa != dragState.i) alvo.classList.add('drop-alvo');
+}
+function soltarDragMesa(ev){
+  if(!dragState) return;
+  clearTimeout(dragState.timer);
+  if(!dragState.longPress){ dragState = null; return; }
+  const clone = dragState.cloneEl;
+  dragState.el.classList.remove('arrastando');
+  document.querySelectorAll('.mesa.drop-alvo').forEach(x => x.classList.remove('drop-alvo'));
+  clone.style.display = 'none';
+  const under = document.elementFromPoint(ev.clientX, ev.clientY);
+  clone.style.display = '';
+  const alvoEl = under && under.closest && under.closest('.mesa[data-mesa]');
+  const src = dragState.i;
+  if(alvoEl && alvoEl.dataset.mesa != src){
+    const dest = parseInt(alvoEl.dataset.mesa);
+    const destM = MESAS[String(dest)] || {};
+    if(destM.status !== 'agrupada'){
+      const r = alvoEl.getBoundingClientRect();
+      clone.style.transition = 'all .2s cubic-bezier(.2,.8,.3,1)';
+      clone.style.left = r.left + 'px'; clone.style.top = r.top + 'px';
+      clone.style.transform = 'scale(.94)'; clone.style.opacity = '.7';
+      setTimeout(() => { clone.remove(); agruparMesaDrag(src, dest); }, 190);
+      dragState = null; return;
+    }
+  }
+  clone.remove(); dragState = null;
+}
+document.addEventListener('pointermove', moverDragMesa);
+document.addEventListener('pointerup', soltarDragMesa);
+document.addEventListener('pointercancel', () => { if(dragState){ if(dragState.cloneEl) dragState.cloneEl.remove(); if(dragState.el) dragState.el.classList.remove('arrastando'); dragState = null; } });
+async function agruparMesaDrag(src, dest){
+  await trava(async () => {
+    const sRef = col('mesas').doc(String(src)), dRef = col('mesas').doc(String(dest));
+    await db.runTransaction(async t => {
+      const s = await t.get(sRef), d = await t.get(dRef);
+      const sm = s.data() || {}, dm = d.data() || {};
+      t.set(dRef, { ...dm,
+        status: dm.status || 'ocupada', garcom: dm.garcom || garcom, garcomFoto: dm.garcomFoto || garcomFoto,
+        abertaEm: dm.abertaEm || firebase.firestore.Timestamp.now(),
+        itens: (dm.itens || []).concat(sm.itens || []),
+        pessoas: (dm.pessoas || []).concat(sm.pessoas || []),
+        pagoAvulso: (dm.pagoAvulso || 0) + (sm.pagoAvulso || 0),
+        numPessoas: (dm.numPessoas || 1) + (sm.numPessoas || 0),
+        grupoCom: (dm.grupoCom || []).concat([src]) });
+      t.set(sRef, { status: 'agrupada', agrupadaEm: dest });
+    });
+    logAcao('agrupar_mesas', { mesa: dest, agrupou: src });
+    toast('Mesa ' + src + ' agrupada na ' + dest + ' 🪑');
+  });
 }
 function abrirMesa(n){
   const m0 = MESAS[String(n)] || {};
@@ -773,7 +905,6 @@ function mesaMenu(){
     <h3 style="font-size:19px">Mesa ${mesaAtual} — ações</h3>
     <div class="menuops">
       <button onclick="fecharOv('ovExtra');renderMesaAberta();show('scMesa')"><span style="font-size:20px">🧾</span><span>Ver comanda da mesa</span></button>
-      <button onclick="agruparUI()"><span style="font-size:20px">🪑</span><span>Agrupar outra mesa nesta</span></button>
       ${(m.grupoCom || []).length ? `<button onclick="desagrupar()"><span style="font-size:20px">↔️</span><span>Separar mesas agrupadas (${m.grupoCom.length})</span></button>` : ''}
       <button onclick="escolherDestino('mesa')"><span style="font-size:20px">🔀</span><span>Transferir mesa inteira</span></button>
       ${(m.pessoas || []).length ? `<button onclick="transferirPessoasUI()"><span style="font-size:20px">👥</span><span>Transferir só algumas pessoas</span></button>` : ''}
@@ -2476,6 +2607,20 @@ function copiarPromptFoto(){
   navigator.clipboard.writeText(p).then(() => toast('Prompt copiado 🎨 Cole na IA de imagens e depois envie a foto aqui'));
 }
 
+function aplicarTema(){
+  const t = localStorage.getItem('pdv_tema') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  const btn = document.getElementById('btnTema');
+  if(btn) btn.textContent = t === 'light' ? '☀️' : '🌙';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', t === 'light' ? '#F5F1E8' : '#141210');
+}
+function alternarTema(){
+  const atual = localStorage.getItem('pdv_tema') || 'dark';
+  localStorage.setItem('pdv_tema', atual === 'light' ? 'dark' : 'light');
+  aplicarTema();
+}
+aplicarTema();
 boot();
 </script>
 </body>
