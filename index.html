@@ -406,6 +406,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
         <button class="btn o sm" style="flex:1" onclick="abrirImportIA()">🤖 Importar IA</button>
         <button class="btn o sm" style="flex:1" onclick="abrirBackup()">💾 Backup</button>
       </div>
+      <button class="btn o sm" style="margin-top:8px;width:100%" onclick="abrirSetorCategoria()">🖨️ Definir impressora para uma categoria inteira</button>
       <div id="prodLista" style="margin-top:16px"></div>
     </div>
     <div id="cfgGrp" style="display:none">
@@ -966,7 +967,14 @@ function renderMesaAberta(){
 }
 function itemMods(it){
   const l = [...(it.mods || [])]; if(it.obs) l.push('Obs: ' + it.obs);
-  return l.length ? `<div class="mods">${esc(l.join(' · '))}</div>` : '';
+  let extra = l.length ? `<div class="mods">${esc(l.join(' · '))}</div>` : '';
+  if(it.pedidoEm){
+    const min = Math.floor((Date.now() - it.pedidoEm) / 60000);
+    const tempoTxt = min < 1 ? 'agora mesmo' : (min < 60 ? 'há ' + min + 'min' : 'há ' + Math.floor(min/60) + 'h' + String(min%60).padStart(2,'0'));
+    const hora = new Date(it.pedidoEm).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    extra += `<div class="mods" style="opacity:.8">🕐 ${hora} · ${tempoTxt}${it.pedidoPor ? ' · pedido por ' + esc(it.pedidoPor) : ''}</div>`;
+  }
+  return extra;
 }
 async function addPessoa(){
   const m = MESAS[String(mesaAtual)] || {};
@@ -1396,7 +1404,8 @@ function removerCarrinho(i){
 async function enviarPedido(){
   if(!carrinho.length) return;
   await trava(async () => {
-    const itens = carrinho.slice(); carrinho = [];
+    const agora = Date.now();
+    const itens = carrinho.map(it => ({ ...it, pedidoEm: agora, pedidoPor: garcom })); carrinho = [];
     fecharOv('ovCart'); atualizarCartBar();
     try{
       await col('pedidos').add({ mesa: mesaAtual, garcom, itens, tipo: 'pedido', status: 'novo', impresso: false, entregue: false, criadoEm: TS() });
@@ -2402,9 +2411,27 @@ function renderSetores(){
       <button class="iconb" style="flex:0 0 42px" onclick="delSetor(${i})">🗑️</button></div>
       <label>Impressora deste setor</label>
       ${selImpressora(s.impressora, `edSetor(${i},'impressora',this.value)`)}
+      <button class="btn o sm" style="margin-top:8px" onclick="imprimirTeste(${i})">🖨️ Testar impressão deste setor</button>
     </div>`).join('');
   const sel = $('cfgImpConta');
   if(sel) sel.innerHTML = '<option value="">— janela do navegador —</option>' + opcoesImpressora((CFG && CFG.impConta) || '');
+}
+async function imprimirTeste(i){
+  const s = ((CFG && CFG.setores) || [])[i]; if(!s) return;
+  const texto = 'TESTE — ' + s.nome + '\n' + new Date().toLocaleString('pt-BR') + '\nSe saiu aqui, esta é a impressora certa\npara o setor "' + s.nome + '" 🎉';
+  if(qzOn && s.impressora){
+    try{
+      const E = '\x1b', G = '\x1d';
+      let d = E + '@' + E + 'a' + '\x01' + E + 'E' + '\x01' + semAcento('TESTE DE IMPRESSAO') + '\n' + E + 'E' + '\x00';
+      d += semAcento(s.nome) + '\n' + semAcento(new Date().toLocaleString('pt-BR')) + '\n' + '-'.repeat(42) + '\n';
+      d += semAcento('Se este cupom saiu aqui, esta e a') + '\n' + semAcento('impressora certa para o setor "' + s.nome + '"') + '\n\n\n\n' + G + 'V' + '\x41' + '\x03';
+      await printRaw(s.impressora, d);
+      toast('Teste enviado 🖨️');
+    }catch(e){ toast('Falha no teste: ' + (e.message || e)); }
+  }else{
+    $('printArea').innerHTML = `<h3>TESTE — ${esc(s.nome)}</h3><div class="c">${esc(new Date().toLocaleString('pt-BR'))}</div><div class="sep"></div><div class="c">${esc(texto)}</div>`;
+    setTimeout(() => window.print(), 60);
+  }
 }
 function opcoesImpressora(atual){
   const nomes = [...new Set([...(listaImpressoras || []), ...(atual ? [atual] : [])])];
@@ -2594,6 +2621,33 @@ async function confirmarAplicarGrupo(gid, ci){
   alvos.forEach(p => batch.update(col('produtos').doc(p.id), { grupos: (p.grupos || []).concat([gid]) }));
   await batch.commit();
   fecharOv('ovExtra'); toast('Grupo aplicado a ' + alvos.length + ' produtos de ' + cat + ' 📌');
+}
+function abrirSetorCategoria(){
+  const cats = categorias().slice(1);
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🖨️ Qual categoria?</h3>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:4px">Escolha a categoria e depois pra qual setor/impressora ela toda vai imprimir.</p>
+    <div class="menuops">${cats.map((c, i) =>
+      `<button onclick="escolherSetorParaCategoria(${i})"><span style="font-size:18px">📂</span><span>${esc(c)}</span></button>`).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+function escolherSetorParaCategoria(ci){
+  const cat = categorias().slice(1)[ci];
+  const sets = (CFG && CFG.setores) || [];
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🖨️ "${esc(cat)}" vai para qual setor?</h3>
+    <div class="menuops">${sets.map(s =>
+      `<button onclick="confirmarSetorCategoria('${esc(cat)}','${s.id}')"><span style="font-size:18px">🖨️</span><span>${esc(s.nome)}</span></button>`).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="abrirSetorCategoria()">← Voltar</button>`;
+}
+async function confirmarSetorCategoria(cat, setorId){
+  const alvos = PRODUTOS.filter(p => (p.categoria || 'Geral') === cat);
+  if(!alvos.length){ toast('Nenhum produto nessa categoria'); return; }
+  const batch = db.batch();
+  alvos.forEach(p => batch.update(col('produtos').doc(p.id), { setor: setorId }));
+  await batch.commit();
+  fecharOv('ovExtra'); toast(alvos.length + ' produtos de "' + cat + '" agora imprimem em ' + nomeSetor(setorId) + ' 🖨️');
 }
 
 /* equipe */
