@@ -20,7 +20,8 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{background:var(--bg);color:var(--ink);font-family:'Sora',system-ui,sans-serif;font-size:15px;overscroll-behavior:none}
+body{background:var(--bg);color:var(--ink);font-family:'Sora',system-ui,sans-serif;font-size:15px;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,select,.cupom{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 h1,h2,h3{font-weight:800;letter-spacing:-.02em}
 button{font-family:inherit;border:none;cursor:pointer;color:inherit;background:none}
 input,select,textarea{font-family:inherit;font-size:15px;width:100%;background:var(--surf);border:1.5px solid var(--line);border-radius:12px;color:var(--ink);padding:12px 14px;outline:none;transition:border-color .2s, box-shadow .2s}
@@ -77,7 +78,9 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 /* ====== cardápio ====== */
 .cats{display:flex;gap:8px;overflow-x:auto;padding:12px 0;scrollbar-width:none;position:sticky;top:69px;background:var(--bg);z-index:30}
 .cats::-webkit-scrollbar{display:none}
-.chip{flex:0 0 auto;padding:9px 16px;border-radius:99px;background:var(--card);border:1.5px solid var(--line);font-size:13.5px;font-weight:700;color:var(--mut);transition:all .2s}
+.chip{flex:0 0 auto;padding:9px 16px;border-radius:99px;background:var(--card);border:1.5px solid var(--line);font-size:13.5px;font-weight:700;color:var(--mut);transition:all .2s;touch-action:manipulation}
+.chip.arrastando{opacity:.2}
+.chip.drop-alvo{border-color:var(--amber) !important;box-shadow:0 0 0 4px rgba(232,163,61,.28)}
 .chip.on{background:var(--amber);color:#181410;border-color:var(--amber)}
 .prodgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .prod{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;transition:transform .12s, border-color .2s;display:flex;flex-direction:column;gap:6px}
@@ -229,6 +232,12 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.arrastando{opacity:.2}
 .mesa.drop-alvo{border-color:var(--green) !important;box-shadow:0 0 0 5px rgba(47,191,113,.28)}
 .mesa-clone{border-radius:18px;pointer-events:none;transform:scale(1.1) rotate(-2deg);box-shadow:0 22px 44px rgba(0,0,0,.5);transition:none}
+.mesa.grupo{aspect-ratio:auto;min-height:96px;padding:12px 10px}
+.grupo-nums{display:flex;align-items:center;gap:6px}
+.grupo-nums .gn{font-size:20px;font-weight:800;background:rgba(0,0,0,.18);border-radius:10px;padding:2px 9px}
+.grupo-nums .gl{width:16px;height:2px;background:var(--amber);opacity:.7}
+.mesa.paga{border-color:var(--blue);background:linear-gradient(160deg,#1c2a38,var(--card))}
+.mesa.paga .st{color:var(--blue)}
 .catorder{display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
 .catorder b{flex:1;font-size:14px}
 .catorder .ordbtns{display:flex;gap:4px}
@@ -274,6 +283,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <div class="screen" id="scHome">
   <div class="top">
     <div class="brand"><div class="logo">PJ</div><div><h2 id="homeNome">—</h2><div class="sub" id="homeCod"></div></div></div>
+    <button class="iconb" onclick="alternarTema()" title="Alternar tema" id="btnTema">🌙</button>
     <button class="iconb" onclick="sairRest()" title="Trocar estabelecimento">⏻</button>
   </div>
   <div class="wrap">
@@ -397,15 +407,34 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <button class="btn o" onclick="novoSetor()">＋ Novo setor</button>
       <label>Impressora da conta / recibo</label>
       <select id="cfgImpConta" onchange="salvarCampo('impConta', this.value)"><option value="">— janela do navegador —</option></select>
+      <div class="card" style="margin-top:14px"><b style="font-size:14px">📏 Ajustes do cupom</b>
+        <label>Tamanho da fonte do texto</label>
+        <select id="cfgFonteTexto" onchange="salvarCampo('fonteTexto', this.value)">
+          <option value="pequena">Pequena</option><option value="normal">Normal</option><option value="grande">Grande</option></select>
+        <label>Tamanho da fonte do preço</label>
+        <select id="cfgFontePreco" onchange="salvarCampo('fontePreco', this.value)">
+          <option value="normal">Normal</option><option value="grande">Grande</option><option value="extra">Extra grande</option></select>
+        <label>Avanço de papel antes do corte</label>
+        <select id="cfgAvancoPapel" onchange="salvarCampo('avancoPapel', parseInt(this.value))">
+          <option value="2">Curto</option><option value="4">Médio</option><option value="6">Padrão</option><option value="9">Longo (evita cortar texto)</option></select>
+        <p style="color:var(--mut);font-size:12px;margin-top:6px">Se o cupom está cortando a parte de baixo, escolha "Longo".</p>
+      </div>
     </div>
     <div id="cfgGeral" style="display:none">
       <label>Nome do estabelecimento</label><input id="cfgNome" onchange="salvarCampo('nome', this.value)">
       <label>Modo de operação</label>
       <select id="cfgModo" onchange="salvarCampo('modo', this.value)"><option value="restaurante">Restaurante (mesas)</option><option value="loja">Loja / Balcão</option><option value="ambos">Ambos</option></select>
       <label>Número de mesas</label><input id="cfgMesas" type="number" min="1" max="200" onchange="salvarCampo('numMesas', parseInt(this.value)||20)">
-      <label>Taxa de serviço (%)</label><input id="cfgTaxa" type="number" min="0" max="30" onchange="salvarCampo('taxa', parseFloat(this.value)||0)">
+      <label>Taxa de serviço (%)</label>
+      <div class="pills" style="margin-bottom:8px">
+        <button class="pill" onclick="setTaxaRapida(10)">10%</button>
+        <button class="pill" onclick="setTaxaRapida(15)">15%</button>
+        <button class="pill" onclick="setTaxaRapida(20)">20%</button>
+      </div>
+      <input id="cfgTaxa" type="number" min="0" max="30" onchange="salvarCampo('taxa', parseFloat(this.value)||0)">
       <div class="sw"><div><b>Impressão automática</b><small>Imprimir pedidos assim que chegam</small></div><div class="tog" id="togAuto" onclick="togCampo('autoImprimir', this)"></div></div>
       <div class="sw"><div><b>Alerta sonoro</b><small>Som quando chega pedido novo</small></div><div class="tog" id="togSom" onclick="togCampo('som', this)"></div></div>
+      <div class="sw"><div><b>Baixa da mesa só pelo computador</b><small>Garçom só marca "paga"; o caixa é quem libera a mesa</small></div><div class="tog" id="togBaixa" onclick="togCampo('baixaSoComputador', this)"></div></div>
       <label>📋 Ordem das categorias no cardápio</label>
       <div id="catOrdList"></div>
       <p style="color:var(--mut);font-size:12px;margin:-6px 0 4px">Vale para o cardápio do garçom e do balcão.</p>
@@ -479,6 +508,7 @@ const gParam = new URLSearchParams(location.search).get('g') || '';
 let adminOk = false, mesaAtual = null, carrinho = [], catAtiva = 'Todos', contexto = 'garcom';
 let pedidosVistos = new Set(), primeiraCarga = true, deferredPrompt = null, clienteSel = null;
 let ocupado = false; // trava anti toque-duplo
+let modoAtual = 'garcom'; // 'garcom' | 'computador' — controla quem pode dar baixa na mesa
 
 const rcol = () => db.collection('pdv_restaurantes').doc(REST);
 const col = (c) => rcol().collection(c);
@@ -601,6 +631,7 @@ function sairRest(){ pararListeners(); REST=''; localStorage.removeItem('pdv_res
 function entrarGarcom(){
   if(!garcom || (!garcomId && EQUIPE.some(f => f.funcao === 'garcom'))){ abrirNome(); return; }
   if(garcomId && !garcomHabilitado()){ mostrarBloqueio(); return; }
+  modoAtual = 'garcom';
   $('garcomNomeTop').textContent = garcom;
   renderMesas('mesaGrid', false); escutarProntos(); show('scMesas');
 }
@@ -664,13 +695,11 @@ function segurarMesa(el){
   el._segT = setTimeout(() => el.classList.remove('segurando'), 260);
 }
 function ordemExibicaoMesas(n){
-  const placed = new Set(), order = [];
+  const order = [];
   for(let i = 1; i <= n; i++){
-    if(placed.has(i)) continue;
     const m = MESAS[String(i)] || {};
-    if(m.status === 'agrupada') continue; // sai da posição fixa; entra junto do "host" abaixo
-    order.push(i); placed.add(i);
-    (m.grupoCom || []).forEach(g => { if(!placed.has(g)){ order.push(g); placed.add(g); } });
+    if(m.status === 'agrupada') continue; // absorvida visualmente no card do "host"
+    order.push(i);
   }
   return order;
 }
@@ -682,20 +711,19 @@ function renderMesas(elId, modoCaixa){
     const m = MESAS[String(i)] || {};
     const st = m.status || 'livre';
     const resta = itensRestanteTotal(m);
-    const dragAttrs = (!modoCaixa && st !== 'agrupada') ? `onpointerdown="iniciarDragMesa(event,${i})"` : `onpointerdown="segurarMesa(this)"`;
-    if(st === 'agrupada'){
-      html += `<div class="mesa agrupada unida" data-mesa="${i}" ${dragAttrs} onclick="${modoCaixa ? `abrirCaixaMesa(${m.agrupadaEm})` : `abrirMesa(${m.agrupadaEm})`}">
-        <div class="n">${i}</div><div class="st">🔗 c/ ${m.agrupadaEm}</div></div>`;
-      return;
-    }
-    const stTxt = st === 'livre' ? 'Livre' : (st === 'conta' ? 'Pediu conta' : 'Ocupada');
-    html += `<div class="mesa ${st}" data-mesa="${i}" ${dragAttrs} onclick="${modoCaixa ? `abrirCaixaMesa(${i})` : `abrirMesa(${i})`}">
+    const dragAttrs = !modoCaixa ? `onpointerdown="iniciarDragMesa(event,${i})"` : `onpointerdown="segurarMesa(this)"`;
+    const grupo = m.grupoCom || [];
+    const stTxt = st === 'livre' ? 'Livre' : (st === 'conta' ? 'Pediu conta' : (st === 'paga' ? 'Pago · aguardando baixa' : 'Ocupada'));
+    const todos = [i, ...grupo];
+    const numsHTML = grupo.length
+      ? `<div class="grupo-nums">${todos.map((num, idx) => `<span class="gn">${num}</span>${idx < todos.length - 1 ? '<span class="gl"></span>' : ''}`).join('')}</div>`
+      : `<div class="n">${i}</div>`;
+    html += `<div class="mesa ${st} ${grupo.length ? 'grupo' : ''}" data-mesa="${i}" ${grupo.length ? `style="grid-column:span ${Math.min(todos.length, 4)}"` : ''} ${dragAttrs} onclick="${modoCaixa ? `abrirCaixaMesa(${i})` : `abrirMesa(${i})`}">
       ${st !== 'livre' && m.numPessoas ? `<div class="pess">👥${m.numPessoas}</div>` : ''}
       ${st !== 'livre' && (m.garcomFoto || m.garcom) ? `<div class="gpic">${avatarHTML(m.garcom, m.garcomFoto, 'sm')}</div>` : ''}
-      <div class="n">${i}</div><div class="st">${stTxt}</div>
+      ${numsHTML}<div class="st">${stTxt}</div>
       ${resta > 0 ? `<div class="tot">${fmt(resta)}</div>` : ''}
-      ${st !== 'livre' ? `<div class="tempo">${minsAberta(m)}</div>` : ''}
-      ${(m.grupoCom || []).length ? `<div class="tempo">🪑 +${m.grupoCom.length} mesa(s)</div>` : ''}</div>`;
+      ${st !== 'livre' ? `<div class="tempo">${minsAberta(m)}</div>` : ''}</div>`;
   });
   $(elId).innerHTML = html;
   flipAnimar(elId, before);
@@ -756,19 +784,35 @@ function moverDragMesa(ev){
     return;
   }
   ev.preventDefault();
+  dragState.lastX = ev.clientX; dragState.lastY = ev.clientY;
+  posicionarClone();
+  autoScrollBorda(ev.clientY);
+}
+function posicionarClone(){
+  if(!dragState) return;
   const clone = dragState.cloneEl;
-  clone.style.left = (ev.clientX - dragState.offX) + 'px';
-  clone.style.top = (ev.clientY - dragState.offY) + 'px';
+  clone.style.left = (dragState.lastX - dragState.offX) + 'px';
+  clone.style.top = (dragState.lastY - dragState.offY) + 'px';
   clone.style.display = 'none';
-  const under = document.elementFromPoint(ev.clientX, ev.clientY);
+  const under = document.elementFromPoint(dragState.lastX, dragState.lastY);
   clone.style.display = '';
   document.querySelectorAll('.mesa.drop-alvo').forEach(x => x.classList.remove('drop-alvo'));
   const alvo = under && under.closest && under.closest('.mesa[data-mesa]');
   if(alvo && alvo !== dragState.el && alvo.dataset.mesa != dragState.i) alvo.classList.add('drop-alvo');
 }
+function autoScrollBorda(y){
+  const margem = 90, veloc = 14;
+  clearInterval(window._scrollDragT);
+  if(y < margem){
+    window._scrollDragT = setInterval(() => { window.scrollBy(0, -veloc); posicionarClone(); }, 16);
+  }else if(y > window.innerHeight - margem){
+    window._scrollDragT = setInterval(() => { window.scrollBy(0, veloc); posicionarClone(); }, 16);
+  }
+}
 function soltarDragMesa(ev){
   if(!dragState) return;
   clearTimeout(dragState.timer);
+  clearInterval(window._scrollDragT);
   if(!dragState.longPress){ dragState = null; return; }
   const clone = dragState.cloneEl;
   dragState.el.classList.remove('arrastando');
@@ -901,6 +945,15 @@ async function cancelarItem(itemUid){
 /* ---------- menu ⋯ da mesa (transferir / juntar) ---------- */
 function mesaMenu(){
   const m = MESAS[String(mesaAtual)] || {};
+  const doisPassos = !!(CFG && CFG.baixaSoComputador);
+  const souGarcom = modoAtual !== 'computador';
+  let botaoPagamento;
+  if(doisPassos && souGarcom){
+    if(m.status === 'paga') botaoPagamento = `<button disabled style="opacity:.5"><span style="font-size:20px">🔵</span><span>Já pago — aguardando o caixa dar baixa</span></button>`;
+    else botaoPagamento = `<button onclick="marcarMesaPaga()"><span style="font-size:20px">💳</span><span>Marcar como paga (levei a maquininha)</span></button>`;
+  }else{
+    botaoPagamento = `<button onclick="fecharOv('ovExtra');abrirCaixaMesa(${mesaAtual})"><span style="font-size:20px">💰</span><span>Receber pagamento${m.status === 'paga' ? ' e dar baixa' : ''}</span></button>`;
+  }
   $('ovExtraBox').innerHTML = `
     <h3 style="font-size:19px">Mesa ${mesaAtual} — ações</h3>
     <div class="menuops">
@@ -909,7 +962,7 @@ function mesaMenu(){
       <button onclick="escolherDestino('mesa')"><span style="font-size:20px">🔀</span><span>Transferir mesa inteira</span></button>
       ${(m.pessoas || []).length ? `<button onclick="transferirPessoasUI()"><span style="font-size:20px">👥</span><span>Transferir só algumas pessoas</span></button>` : ''}
       <button onclick="juntarUI()"><span style="font-size:20px">🔗</span><span>Juntar outra mesa nesta</span></button>
-      <button onclick="fecharOv('ovExtra');abrirCaixaMesa(${mesaAtual})"><span style="font-size:20px">💰</span><span>Receber pagamento</span></button>
+      ${botaoPagamento}
     </div>
     <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
   abrirOv('ovExtra');
@@ -1038,10 +1091,21 @@ function categorias(){
   });
   return ['Todos', ...set];
 }
-function setCat(i, gridId, chipsId){ catAtiva = categorias()[i]; renderCardapio(gridId, chipsId); }
+function ordemPessoalKey(){ return 'pdv_cat_ordem_' + REST; }
+function categoriasChips(){
+  const base = categorias();
+  let pessoal;
+  try{ pessoal = JSON.parse(localStorage.getItem(ordemPessoalKey()) || 'null'); }catch(e){ pessoal = null; }
+  if(!pessoal || !pessoal.length) return base;
+  const resto = base.slice(1).filter(c => !pessoal.includes(c));
+  const validos = pessoal.filter(c => base.includes(c));
+  return ['Todos', ...validos, ...resto];
+}
+function setCat(i, gridId, chipsId){ catAtiva = categoriasChips()[i]; renderCardapio(gridId, chipsId); }
 function renderCardapio(gridId, chipsId){
-  $(chipsId).innerHTML = categorias().map((c, i) =>
-    `<button class="chip ${c === catAtiva ? 'on' : ''}" onclick="setCat(${i},'${gridId}','${chipsId}')">${esc(c)}</button>`).join('');
+  const cats = categoriasChips();
+  $(chipsId).innerHTML = cats.map((c, i) =>
+    `<button class="chip ${c === catAtiva ? 'on' : ''}" data-cat="${esc(c)}" ${i === 0 ? '' : `onpointerdown="iniciarDragCat(event,'${esc(c)}','${gridId}','${chipsId}')"`} onclick="setCat(${i},'${gridId}','${chipsId}')">${esc(c)}</button>`).join('');
   const lista = PRODUTOS.filter(p => catAtiva === 'Todos' || (p.categoria || 'Geral') === catAtiva);
   $(gridId).innerHTML = lista.length ? lista.map(p => `
     <div class="prod ${p.esgotado ? 'esg' : ''}" onclick="abrirProduto('${p.id}')">
@@ -1053,6 +1117,73 @@ function renderCardapio(gridId, chipsId){
     </div>`).join('')
     : '<div class="empty" style="grid-column:1/-1"><span class="ic">📦</span>Nenhum produto cadastrado.<br>Configurações → Produtos.</div>';
 }
+/* ---------- garçom arrasta categoria pra reordenar (só no aparelho dele) ---------- */
+let dragCatState = null;
+function iniciarDragCat(ev, cat, gridId, chipsId){
+  const el = ev.currentTarget;
+  dragCatState = { cat, el, gridId, chipsId, startX: ev.clientX, startY: ev.clientY, longPress: false, cloneEl: null };
+  dragCatState.timer = setTimeout(() => iniciarArrasteCatVisual(ev), 220);
+}
+function iniciarArrasteCatVisual(ev){
+  if(!dragCatState) return;
+  dragCatState.longPress = true;
+  const el = dragCatState.el;
+  const r = el.getBoundingClientRect();
+  const clone = el.cloneNode(true);
+  clone.className = 'chip mesa-clone';
+  clone.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;margin:0;z-index:999;pointer-events:none;border-radius:99px`;
+  document.body.appendChild(clone);
+  dragCatState.cloneEl = clone;
+  dragCatState.offX = ev.clientX - r.left; dragCatState.offY = ev.clientY - r.top;
+  el.classList.add('arrastando');
+  requestAnimationFrame(() => clone.classList.add('dragging'));
+}
+function moverDragCat(ev){
+  if(!dragCatState) return;
+  const dx = ev.clientX - dragCatState.startX, dy = ev.clientY - dragCatState.startY;
+  if(!dragCatState.longPress){
+    if(Math.hypot(dx, dy) > 14){ clearTimeout(dragCatState.timer); dragCatState = null; }
+    return;
+  }
+  ev.preventDefault();
+  const clone = dragCatState.cloneEl;
+  clone.style.left = (ev.clientX - dragCatState.offX) + 'px';
+  clone.style.top = (ev.clientY - dragCatState.offY) + 'px';
+  clone.style.display = 'none';
+  const under = document.elementFromPoint(ev.clientX, ev.clientY);
+  clone.style.display = '';
+  document.querySelectorAll('.chip.drop-alvo').forEach(x => x.classList.remove('drop-alvo'));
+  const alvo = under && under.closest && under.closest('.chip[data-cat]');
+  if(alvo && alvo !== dragCatState.el && alvo.dataset.cat !== dragCatState.cat && alvo.dataset.cat !== 'Todos') alvo.classList.add('drop-alvo');
+}
+function soltarDragCat(ev){
+  if(!dragCatState) return;
+  clearTimeout(dragCatState.timer);
+  if(!dragCatState.longPress){ dragCatState = null; return; }
+  const clone = dragCatState.cloneEl;
+  dragCatState.el.classList.remove('arrastando');
+  document.querySelectorAll('.chip.drop-alvo').forEach(x => x.classList.remove('drop-alvo'));
+  clone.style.display = 'none';
+  const under = document.elementFromPoint(ev.clientX, ev.clientY);
+  clone.style.display = '';
+  const alvoEl = under && under.closest && under.closest('.chip[data-cat]');
+  const { cat, gridId, chipsId } = dragCatState;
+  clone.remove();
+  if(alvoEl && alvoEl.dataset.cat !== cat && alvoEl.dataset.cat !== 'Todos'){
+    let ordem = categoriasChips().slice(1);
+    const from = ordem.indexOf(cat), to = ordem.indexOf(alvoEl.dataset.cat);
+    if(from !== -1 && to !== -1){
+      ordem.splice(from, 1); ordem.splice(to, 0, cat);
+      localStorage.setItem(ordemPessoalKey(), JSON.stringify(ordem));
+      toast('Ordem salva no seu aparelho 📱');
+      renderCardapio(gridId, chipsId);
+    }
+  }
+  dragCatState = null;
+}
+document.addEventListener('pointermove', moverDragCat);
+document.addEventListener('pointerup', soltarDragCat);
+document.addEventListener('pointercancel', () => { if(dragCatState){ if(dragCatState.cloneEl) dragCatState.cloneEl.remove(); if(dragCatState.el) dragCatState.el.classList.remove('arrastando'); dragCatState = null; } });
 function nomeSetor(id){
   const s = ((CFG && CFG.setores) || []).find(x => x.id === id);
   return s ? s.nome : (id || 'Sem setor');
@@ -1095,9 +1226,6 @@ function abrirProduto(id){
       ${pessoas.map(p => `<button class="pill" id="pp_${p.id}" onclick="setPessoa('${p.id}')">${esc(p.nome)}</button>`).join('')}</div>` : ''}
     <label>Quantidade</label>
     <div class="qty"><button onclick="mudarQtd(-1)">−</button><b id="qtdView">1</b><button onclick="mudarQtd(1)">＋</button></div>
-    <label>Setor de impressão deste item</label>
-    <select id="prodSetorSel">${((CFG && CFG.setores) || []).map(s =>
-      `<option value="${s.id}" ${s.id === prodSel.setor ? 'selected' : ''}>${esc(s.nome)}</option>`).join('')}</select>
     <label>Observação (opcional)</label>
     <input id="prodObs" placeholder="ex: sem cebola, bem gelada…">
     <button class="btn g" style="margin-top:18px" onclick="addCarrinho()">Adicionar · <span id="prodTotBtn">${fmt(prodSel.preco)}</span></button>
@@ -1171,7 +1299,7 @@ function addCarrinho(){
   }
   carrinho.push({
     uid: uid(), nome, preco: round2(precoFracao() + extras), qtd: prodQtd,
-    setor: $('prodSetorSel') ? $('prodSetorSel').value : (prodSel.setor || ''),
+    setor: prodSel.setor || '',
     mods, obs: $('prodObs').value.trim(), pessoa: pessoaSel, pago: false, valorPago: 0
   });
   fecharOv('ovProduto'); atualizarCartBar();
@@ -1238,9 +1366,16 @@ async function pedirConta(){
   await col('pedidos').add({ mesa: mesaAtual, garcom, itens: (m.itens || []).filter(i => !i.pago), pagoAvulso: m.pagoAvulso || 0, tipo: 'conta', status: 'novo', impresso: false, entregue: false, criadoEm: TS() });
   toast('Conta pedida 🧾');
 }
+async function marcarMesaPaga(){
+  if(!confirm('Confirma que já cobrou a mesa ' + mesaAtual + ' na maquininha? Ela fica azul até o caixa dar a baixa no computador.')) return;
+  await col('mesas').doc(String(mesaAtual)).set({ status: 'paga' }, { merge: true });
+  logAcao('mesa_marcada_paga', { mesa: mesaAtual });
+  fecharOv('ovExtra'); toast('Mesa marcada como paga 💳 — aguardando baixa no caixa');
+}
 
 /* ---------- computador: monitor ---------- */
 function entrarComputador(){
+  modoAtual = 'computador';
   compTab('ped'); escutarPedidos(); conectarImpressao(false);
   renderMesas('mesaGridCaixa', true); show('scComp');
 }
@@ -1833,6 +1968,20 @@ function linhaEsq(a2, b2){
   const espaco = Math.max(1, 42 - a.length - b.length);
   return a + ' '.repeat(espaco) + b;
 }
+function tamTexto(){
+  const t = (CFG && CFG.fonteTexto) || 'normal';
+  if(t === 'pequena') return '\x1bM\x01' + '\x1d!\x00';
+  if(t === 'grande') return '\x1bM\x00' + '\x1d!\x01';
+  return '\x1bM\x00' + '\x1d!\x00';
+}
+function tamPreco(){
+  const t = (CFG && CFG.fontePreco) || 'normal';
+  if(t === 'extra') return '\x1d!\x11';
+  if(t === 'grande') return '\x1d!\x01';
+  return '\x1d!\x00';
+}
+function resetTam(){ return '\x1bM\x00' + '\x1d!\x00'; }
+function avancoPapel(){ return '\n'.repeat((CFG && CFG.avancoPapel != null) ? CFG.avancoPapel : 6); }
 function escposPedido(p, itensSetor, nomeSet){
   const E = '\x1b', G = '\x1d';
   let s = E + '@' + E + 'a' + '\x01';
@@ -1840,13 +1989,13 @@ function escposPedido(p, itensSetor, nomeSet){
   s += semAcento((nomeSet ? '[' + nomeSet + '] ' : '') + new Date().toLocaleString('pt-BR')) + '\n';
   s += semAcento('Garcom: ' + (p.garcom || '-')) + '\n';
   if(p.cliente) s += semAcento('Cliente: ' + p.cliente.nome + (p.cliente.telefone ? ' ' + p.cliente.telefone : '')) + '\n' + (p.cliente.endereco ? semAcento(p.cliente.endereco) + '\n' : '');
-  s += E + 'a' + '\x00' + '-'.repeat(42) + '\n';
+  s += E + 'a' + '\x00' + '-'.repeat(42) + '\n' + tamTexto();
   itensSetor.forEach(it => {
     s += E + 'E' + '\x01' + G + '!' + '\x01' + semAcento(it.qtd + 'x ' + it.nome) + '\n' + G + '!' + '\x00' + E + 'E' + '\x00';
     const m = [...(it.mods || [])]; if(it.obs) m.push('Obs: ' + it.obs);
     if(m.length) s += semAcento('   > ' + m.join(' / ')) + '\n';
   });
-  s += '-'.repeat(42) + '\n\n\n\n' + G + 'V' + '\x41' + '\x03';
+  s += resetTam() + '-'.repeat(42) + '\n' + avancoPapel() + G + 'V' + '\x41' + '\x03';
   return s;
 }
 function escposConta(p){
@@ -1856,14 +2005,14 @@ function escposConta(p){
   let s = E + '@' + E + 'a' + '\x01';
   s += E + 'E' + '\x01' + semAcento((CFG && CFG.nome) || 'PDV Ja') + '\n' + E + 'E' + '\x00';
   s += G + '!' + '\x11' + semAcento('CONTA MESA ' + p.mesa) + '\n' + G + '!' + '\x00';
-  s += semAcento(new Date().toLocaleString('pt-BR')) + '\n' + E + 'a' + '\x00' + '-'.repeat(42) + '\n';
+  s += semAcento(new Date().toLocaleString('pt-BR')) + '\n' + E + 'a' + '\x00' + '-'.repeat(42) + '\n' + tamTexto();
   (p.itens || []).forEach(it => { s += linhaEsq(it.qtd + 'x ' + it.nome, fmt(it.preco * it.qtd)) + '\n'; });
-  s += '-'.repeat(42) + '\n';
+  s += resetTam() + '-'.repeat(42) + '\n';
   if(p.pagoAvulso) s += linhaEsq('Ja pago', '-' + fmt(p.pagoAvulso)) + '\n';
   s += linhaEsq('Subtotal', fmt(sub)) + '\n';
   if(taxa) s += linhaEsq('Taxa servico ' + CFG.taxa + '% (opcional)', fmt(taxa)) + '\n';
-  s += E + 'E' + '\x01' + linhaEsq('TOTAL', fmt(round2(sub + taxa))) + '\n' + E + 'E' + '\x00';
-  s += '\n' + E + 'a' + '\x01' + semAcento('Obrigado pela preferencia!') + '\n\n\n\n' + G + 'V' + '\x41' + '\x03';
+  s += tamPreco() + E + 'E' + '\x01' + linhaEsq('TOTAL', fmt(round2(sub + taxa))) + '\n' + resetTam() + E + 'E' + '\x00';
+  s += '\n' + E + 'a' + '\x01' + semAcento('Obrigado pela preferencia!') + '\n' + avancoPapel() + G + 'V' + '\x41' + '\x03';
   return s;
 }
 async function printRaw(impressora, dados){
@@ -2000,10 +2149,19 @@ function preencherConfig(){
   $('cfgMesas').value = CFG.numMesas || 20;
   $('cfgTaxa').value = CFG.taxa != null ? CFG.taxa : 10;
   $('cfgFracRegra').value = CFG.fracRegra || 'cara';
+  $('cfgFonteTexto').value = CFG.fonteTexto || 'normal';
+  $('cfgFontePreco').value = CFG.fontePreco || 'normal';
+  $('cfgAvancoPapel').value = CFG.avancoPapel != null ? CFG.avancoPapel : 6;
   $('togAuto').classList.toggle('on', CFG.autoImprimir !== false);
   $('togSom').classList.toggle('on', CFG.som !== false);
+  $('togBaixa').classList.toggle('on', !!CFG.baixaSoComputador);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
   renderFracPills(); renderSetores(); renderCatOrd();
+}
+async function setTaxaRapida(v){
+  $('cfgTaxa').value = v;
+  await rcol().update({ taxa: v });
+  toast('Taxa de serviço: ' + v + '%');
 }
 function renderFracPills(){
   const cats = categorias().slice(1);
