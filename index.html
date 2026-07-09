@@ -236,7 +236,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.agrupada{opacity:.5;border-style:dashed}
 .mesa.agrupada::before,.mesa.agrupada::after{display:none}
 .mesagrid{row-gap:20px}
-.mesa{transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .2s;user-select:none;-webkit-user-select:none;touch-action:pan-y}
+.mesa{transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .2s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:pan-y}
 .mesa.segurando{transform:scale(1.08) translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.45);z-index:5}
 .mesa.arrastando{opacity:.2}
 .mesa.drop-alvo{border-color:var(--green) !important;box-shadow:0 0 0 5px rgba(47,191,113,.28)}
@@ -310,7 +310,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <!-- ============ GARÇOM: MESAS ============ -->
 <div class="screen" id="scMesas">
   <div class="top"><button class="iconb" onclick="show('scHome')">←</button><div style="flex:1"><h2>Mesas</h2><div class="sub" id="garcomNomeTop"></div></div><button class="iconb" onclick="trocarGarcom()">👤</button></div>
-  <div class="wrap"><p style="color:var(--mut);font-size:12px;margin-bottom:2px">🪑 Segure e arraste uma mesa em cima de outra para agrupar</p><div class="mesagrid" id="mesaGrid"></div></div>
+  <div class="wrap"><div id="pracaChips"></div><p style="color:var(--mut);font-size:12px;margin-bottom:2px">🪑 Segure e arraste uma mesa em cima de outra para agrupar</p><div class="mesagrid" id="mesaGrid"></div></div>
 </div>
 
 <div class="screen" id="scBloq">
@@ -396,6 +396,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <button id="tabGrp" onclick="cfgTab('grp')">Adicionais</button>
       <button id="tabEqp" onclick="cfgTab('eqp')">Equipe</button>
       <button id="tabSet" onclick="cfgTab('set')">Setores</button>
+      <button id="tabPraca" onclick="cfgTab('praca')">Praças</button>
       <button id="tabGeral" onclick="cfgTab('geral')">Geral</button>
     </div>
     <div id="cfgProd">
@@ -438,6 +439,11 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
           <option value="2">Curto</option><option value="4">Médio</option><option value="6">Padrão</option><option value="9">Longo (evita cortar texto)</option></select>
         <p style="color:var(--mut);font-size:12px;margin-top:6px">Se o cupom está cortando a parte de baixo, escolha "Longo".</p>
       </div>
+    </div>
+    <div id="cfgPraca" style="display:none">
+      <p style="color:var(--mut);font-size:13px;line-height:1.55;margin-bottom:12px">Divida as mesas em praças/áreas (ex: Salão, Varanda, VIP). O garçom pode filtrar sua tela de mesas por praça.</p>
+      <button class="btn" onclick="editarPraca(null)">＋ Nova praça</button>
+      <div id="pracaLista" style="margin-top:16px"></div>
     </div>
     <div id="cfgGeral" style="display:none">
       <label>Nome do estabelecimento</label><input id="cfgNome" onchange="salvarCampo('nome', this.value)">
@@ -733,7 +739,10 @@ function renderMesas(elId, modoCaixa){
   const n = (CFG && CFG.numMesas) || 20;
   const before = flipCapturar(elId);
   let html = '';
+  const filtro = (elId === 'mesaGrid') ? mesasDaPracaFiltro() : null;
+  if(elId === 'mesaGrid') renderPracaChips();
   ordemExibicaoMesas(n).forEach(i => {
+    if(filtro && !filtro.includes(i)) return;
     const m = MESAS[String(i)] || {};
     const st = m.status || 'livre';
     const resta = itensRestanteTotal(m);
@@ -987,8 +996,11 @@ function mesaMenu(){
   const souGarcom = modoAtual !== 'computador';
   const meuPerfil = garcomId ? EQUIPE.find(f => f.id === garcomId) : null;
   const semPermissao = souGarcom && meuPerfil && meuPerfil.podeFecharConta === false;
+  const vazia = !(m.itens || []).length;
   let botaoPagamento;
-  if(doisPassos && souGarcom){
+  if(vazia){
+    botaoPagamento = `<button onclick="fecharMesaVazia(${mesaAtual})"><span style="font-size:20px">🗑️</span><span>Fechar mesa vazia (nenhum pedido lançado)</span></button>`;
+  }else if(doisPassos && souGarcom){
     if(m.status === 'paga') botaoPagamento = `<button disabled style="opacity:.5"><span style="font-size:20px">🔵</span><span>Já pago — aguardando o caixa dar baixa</span></button>`;
     else botaoPagamento = `<button onclick="marcarMesaPaga()"><span style="font-size:20px">💳</span><span>Marcar como paga (levei a maquininha)</span></button>`;
   }else if(semPermissao){
@@ -1003,7 +1015,7 @@ function mesaMenu(){
       ${(m.grupoCom || []).length ? `<button onclick="desagrupar()"><span style="font-size:20px">↔️</span><span>Separar mesas agrupadas (${m.grupoCom.length})</span></button>` : ''}
       <button onclick="escolherDestino('mesa')"><span style="font-size:20px">🔀</span><span>Transferir mesa inteira</span></button>
       ${(m.pessoas || []).length ? `<button onclick="transferirPessoasUI()"><span style="font-size:20px">👥</span><span>Transferir só algumas pessoas</span></button>` : ''}
-      <button onclick="juntarUI()"><span style="font-size:20px">🔗</span><span>Juntar outra mesa nesta</span></button>
+      ${!vazia ? `<button onclick="juntarUI()"><span style="font-size:20px">🔗</span><span>Juntar outra mesa nesta</span></button>` : ''}
       ${botaoPagamento}
     </div>
     <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
@@ -1419,6 +1431,20 @@ function tentarFecharComSenha(n){
   logAcao('fechamento_liberado_por_senha', { mesa: n, garcom });
   fecharOv('ovExtra'); abrirCaixaMesa(n);
 }
+async function fecharMesaVazia(n){
+  const m = MESAS[String(n)] || {};
+  if((m.itens || []).length){ toast('Essa mesa já tem pedido — use Receber pagamento'); return; }
+  if(!confirm('Fechar a mesa ' + n + ' sem nenhum pedido lançado? (foi aberta sem querer)')) return;
+  const grupo = m.grupoCom || [];
+  await col('mesas').doc(String(n)).set({ status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0, grupoCom: [] });
+  if(grupo.length){
+    const b = db.batch();
+    grupo.forEach(g => b.set(col('mesas').doc(String(g)), { status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0 }));
+    await b.commit();
+  }
+  logAcao('mesa_vazia_fechada', { mesa: n });
+  fecharOv('ovExtra'); toast('Mesa ' + n + ' liberada ✅');
+}
 
 /* ---------- computador: monitor ---------- */
 function entrarComputador(){
@@ -1643,7 +1669,8 @@ function renderPagto(){
     ${(CFG && CFG.taxa > 0) ? `<div class="totline"><span>Taxa ${CFG.taxa}% <button class="btn o sm" style="display:inline-block;padding:4px 10px;margin-left:6px" onclick="cxTaxaOn=!cxTaxaOn;renderPagto()">${cxTaxaOn ? 'remover' : 'incluir'}</button></span><span>${fmt(t.taxa)}</span></div>` : ''}
     ${cxDesc ? `<div class="totline" style="color:var(--green)"><span>Desconto</span><span>-${fmt(cxDesc)}</span></div>` : ''}
     <div class="totline big"><span>Total</span><span>${fmt(t.total)}</span></div>
-    <button class="btn o sm" style="margin-top:8px" onclick="darDesconto()">🏷️ Desconto (gerente)</button>
+    ${t.total > 0.009 ? `<button class="btn o sm" style="margin-top:8px" onclick="darDesconto()">🏷️ Desconto (gerente)</button>` : ''}
+    ${t.total <= 0.009 ? `<p style="color:var(--mut);font-size:12.5px;margin-top:10px">Não há valor a cobrar. Toque em Confirmar para liberar a mesa — não precisa lançar nenhum pagamento.</p>` : `
     <label>Pagamentos</label>
     ${cxPagamentos.map((p, i) => `<div class="pagrow"><b>${esc(p.forma)}</b><span class="v">${fmt(p.valor)}</span><button class="x" style="color:var(--red);font-size:17px" onclick="cxPagamentos.splice(${i},1);renderPagto()">✕</button></div>`).join('')}
     <div class="row" style="margin-top:6px">
@@ -1652,8 +1679,8 @@ function renderPagto(){
       <button class="btn sm" onclick="addPagamento()">＋</button>
     </div>
     <div class="totline" style="margin-top:10px"><span>Pago</span><span>${fmt(t.pago)}</span></div>
-    <div class="totline" style="color:${t.resta > 0 ? 'var(--red)' : 'var(--green)'}"><span>${t.resta > 0 ? 'Falta' : 'Troco'}</span><span>${fmt(t.resta > 0 ? t.resta : t.troco)}</span></div>
-    <button class="btn g" style="margin-top:14px" ${t.resta > 0.009 ? 'disabled' : ''} onclick="finalizarPagto()">✓ Confirmar pagamento</button>
+    <div class="totline" style="color:${t.resta > 0 ? 'var(--red)' : 'var(--green)'}"><span>${t.resta > 0 ? 'Falta' : 'Troco'}</span><span>${fmt(t.resta > 0 ? t.resta : t.troco)}</span></div>`}
+    <button class="btn g" style="margin-top:14px" ${t.resta > 0.009 ? 'disabled' : ''} onclick="finalizarPagto()">✓ Confirmar${t.total <= 0.009 ? ' e liberar mesa' : ' pagamento'}</button>
     <button class="btn o" style="margin-top:10px" onclick="${cxMesa === null ? "fecharOv('ovCaixa')" : 'renderModoPagto()'}">← Voltar</button>`;
 }
 function darDesconto(){
@@ -1688,6 +1715,7 @@ async function finalizarPagto(){
         pagamentos: cxPagamentos, troco: t.troco,
         garcom: cxMesa === null ? (garcom || 'Balcão') : (m.garcom || ''),
         numPessoas: cxModo === 'tudo' ? (m.numPessoas || 1) : (cxModo === 'balcao' ? 1 : 0),
+        duracaoMin: (cxModo === 'tudo' && m.abertaEm) ? Math.round((Date.now() - m.abertaEm.toMillis()) / 60000) : null,
         cliente: cxMesa === null && clienteSel ? { id: clienteSel.id, nome: clienteSel.nome, telefone: clienteSel.telefone || '' } : null,
         caixaId: GAVETA ? GAVETA.id : null, criadoEm: TS()
       });
@@ -1917,7 +1945,7 @@ async function historicoGavetas(){
 }
 
 /* ---------- relatórios ---------- */
-let relVendas = [];
+let relVendas = [], relPeriodo = 'hoje';
 function iniPeriodo(p){
   const d = new Date(); d.setHours(0,0,0,0);
   if(p === 'ontem') d.setDate(d.getDate() - 1);
@@ -1925,6 +1953,7 @@ function iniPeriodo(p){
   return firebase.firestore.Timestamp.fromDate(d);
 }
 async function renderRel(periodo){
+  relPeriodo = periodo;
   $('compRel').innerHTML = '<div class="empty">Carregando…</div>';
   let q = col('vendas').where('criadoEm', '>=', iniPeriodo(periodo)).orderBy('criadoEm', 'desc');
   const snap = await q.get();
@@ -1936,11 +1965,16 @@ async function renderRel(periodo){
   relVendas = vendas;
   const tot = vendas.reduce((a,v) => a + (v.total || 0), 0);
   const nPess = vendas.reduce((a,v) => a + (v.numPessoas || 0), 0);
-  const porForma = {}, porGarcom = {}, porItem = {};
+  const porForma = {}, porGarcom = {}, porItem = {}, porMesa = {};
+  let somaDuracao = 0, nDuracao = 0;
   vendas.forEach(v => {
     (v.pagamentos || []).forEach(p => porForma[p.forma] = round2((porForma[p.forma] || 0) + p.valor));
     if(v.garcom) porGarcom[v.garcom] = round2((porGarcom[v.garcom] || 0) + (v.total || 0));
+    if(v.mesa != null) porMesa[v.mesa] = (porMesa[v.mesa] || 0) + 1;
+    if(v.duracaoMin != null){ somaDuracao += v.duracaoMin; nDuracao++; }
   });
+  const duracaoMedia = nDuracao ? Math.round(somaDuracao / nDuracao) : null;
+  const fmtMin = (min) => min == null ? '—' : (min < 60 ? min + 'min' : Math.floor(min/60) + 'h' + String(min%60).padStart(2,'0'));
   // itens vendidos: das vendas 'tudo'/'balcao' não guardamos itens; usar pedidos do período
   const psnap = await col('pedidos').where('criadoEm', '>=', iniPeriodo(periodo)).get();
   psnap.docs.forEach(d => {
@@ -1950,6 +1984,8 @@ async function renderRel(periodo){
   });
   const topItens = Object.entries(porItem).sort((a,b) => b[1] - a[1]).slice(0, 10);
   const maxItem = topItens.length ? topItens[0][1] : 1;
+  const topMesas = Object.entries(porMesa).sort((a,b) => b[1] - a[1]).slice(0, 6);
+  const maxMesa = topMesas.length ? topMesas[0][1] : 1;
   const btn = (k, lbl) => `<button class="btn o sm" onclick="renderRel('${k}')">${lbl}</button>`;
   $('compRel').innerHTML = `
     <div class="row" style="margin-bottom:14px">${btn('hoje','Hoje')}${btn('ontem','Ontem')}${btn('7dias','7 dias')}
@@ -1959,18 +1995,46 @@ async function renderRel(periodo){
       <div class="repcard"><div class="rl">Vendas</div><div class="rv">${vendas.length}</div></div>
       <div class="repcard"><div class="rl">Ticket médio / venda</div><div class="rv">${fmt(vendas.length ? tot / vendas.length : 0)}</div></div>
       <div class="repcard"><div class="rl">Ticket médio / pessoa</div><div class="rv">${nPess ? fmt(tot / nPess) : '—'}</div></div>
+      <div class="repcard"><div class="rl">⏱ Tempo médio de mesa</div><div class="rv" style="font-size:19px">${fmtMin(duracaoMedia)}</div></div>
     </div>
     <div class="card"><b style="font-size:14px">💳 Por forma de pagamento</b>
       ${Object.entries(porForma).sort((a,b) => b[1] - a[1]).map(([f, v]) => `<div class="repbar"><span style="min-width:70px">${esc(f)}</span><div class="rb"><i style="width:${tot ? Math.round(v/tot*100) : 0}%"></i></div><span class="rn">${fmt(v)}</span></div>`).join('') || '<div class="empty" style="padding:16px">Sem vendas</div>'}</div>
     <div class="card"><b style="font-size:14px">🏆 Itens mais vendidos</b>
       ${topItens.map(([n, q]) => `<div class="repbar"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n)}</span><div class="rb" style="max-width:34%"><i style="width:${Math.round(q/maxItem*100)}%"></i></div><span class="rn">${q}x</span></div>`).join('') || '<div class="empty" style="padding:16px">Sem pedidos</div>'}</div>
-    <div class="card"><b style="font-size:14px">🧑‍🍳 Por garçom</b>
-      ${Object.entries(porGarcom).sort((a,b) => b[1] - a[1]).map(([g, v]) => `<div class="repbar"><span style="min-width:70px">${esc(g)}</span><div class="rb"><i style="width:${tot ? Math.round(v/tot*100) : 0}%"></i></div><span class="rn">${fmt(v)}</span></div>`).join('') || '<div class="empty" style="padding:16px">—</div>'}</div>
+    <div class="card"><b style="font-size:14px">🪑 Mesas mais usadas</b>
+      ${topMesas.map(([n, q]) => `<div class="repbar"><span style="min-width:60px">Mesa ${n}</span><div class="rb"><i style="width:${Math.round(q/maxMesa*100)}%"></i></div><span class="rn">${q}x</span></div>`).join('') || '<div class="empty" style="padding:16px">Sem dados</div>'}</div>
+    <div class="card"><b style="font-size:14px">🧑‍🍳 Por garçom <span style="font-weight:400;color:var(--mut);font-size:11.5px">· toque para ver detalhes</span></b>
+      ${Object.entries(porGarcom).sort((a,b) => b[1] - a[1]).map(([g, v]) => `<div class="repbar" style="cursor:pointer" onclick="abrirDetalheGarcom('${esc(g)}')"><span style="min-width:70px">${esc(g)}</span><div class="rb"><i style="width:${tot ? Math.round(v/tot*100) : 0}%"></i></div><span class="rn">${fmt(v)}</span></div>`).join('') || '<div class="empty" style="padding:16px">—</div>'}</div>
     <div class="card"><b style="font-size:14px">🧾 Vendas do período</b>
       ${vendas.slice(0, 40).map(v => {
         const h = v.criadoEm && v.criadoEm.toDate ? v.criadoEm.toDate().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
         return `<div class="pagrow"><b>${v.mesa ? 'Mesa ' + v.mesa : 'Balcão'}</b><span style="flex:1;font-size:12px;color:var(--mut)">${h} · ${esc(v.descricao || '')}${v.desconto ? ' · 🏷️-' + fmt(v.desconto) : ''}</span><span class="v">${fmt(v.total)}</span></div>`;
       }).join('') || '<div class="empty" style="padding:16px">Sem vendas</div>'}</div>`;
+}
+function abrirDetalheGarcom(nome){
+  const vendasDele = relVendas.filter(v => v.garcom === nome);
+  const tot = vendasDele.reduce((a,v) => a + (v.total || 0), 0);
+  const porMesa = {};
+  vendasDele.forEach(v => { if(v.mesa != null) porMesa[v.mesa] = (porMesa[v.mesa] || 0) + 1; });
+  const rankMesas = Object.entries(porMesa).sort((a,b) => b[1] - a[1]).slice(0, 8);
+  const maxM = rankMesas.length ? rankMesas[0][1] : 1;
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🧑‍🍳 ${esc(nome)}</h3>
+    <div class="repgrid" style="margin-top:10px">
+      <div class="repcard"><div class="rl">Total vendido</div><div class="rv">${fmt(tot)}</div></div>
+      <div class="repcard"><div class="rl">Nº de vendas</div><div class="rv">${vendasDele.length}</div></div>
+      <div class="repcard"><div class="rl">Ticket médio</div><div class="rv">${fmt(vendasDele.length ? tot / vendasDele.length : 0)}</div></div>
+      <div class="repcard"><div class="rl">Mesas atendidas</div><div class="rv">${Object.keys(porMesa).length}</div></div>
+    </div>
+    <label>Mesas que mais atendeu</label>
+    ${rankMesas.map(([n, q]) => `<div class="repbar"><span style="min-width:60px">Mesa ${n}</span><div class="rb"><i style="width:${Math.round(q/maxM*100)}%"></i></div><span class="rn">${q}x</span></div>`).join('') || '<p style="color:var(--mut);font-size:13px">Sem mesas registradas</p>'}
+    <label>Últimas vendas</label>
+    <div style="max-height:26dvh;overflow-y:auto">${vendasDele.slice(0, 20).map(v => {
+      const h = v.criadoEm && v.criadoEm.toDate ? v.criadoEm.toDate().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      return `<div class="pagrow"><b>${v.mesa ? 'Mesa ' + v.mesa : 'Balcão'}</b><span style="flex:1;font-size:12px;color:var(--mut)">${h}</span><span class="v">${fmt(v.total)}</span></div>`;
+    }).join('') || ''}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
 }
 function exportCSV(){
   const linhas = [['Data','Mesa','Descricao','Base','Taxa','Desconto','Total','Pagamentos','Garcom']];
@@ -2182,7 +2246,7 @@ function checarSenha(){
 }
 function entrarConfig(){ preencherConfig(); cfgTab('prod'); show('scConfig'); }
 function cfgTab(t){
-  const map = { prod:'Prod', grp:'Grp', eqp:'Eqp', set:'Set', geral:'Geral' };
+  const map = { prod:'Prod', grp:'Grp', eqp:'Eqp', set:'Set', praca:'Praca', geral:'Geral' };
   Object.keys(map).forEach(k => {
     $('tab' + map[k]).classList.toggle('on', k === t);
     $('cfg' + map[k]).style.display = k === t ? '' : 'none';
@@ -2191,6 +2255,7 @@ function cfgTab(t){
   if(t === 'grp') renderGrupos();
   if(t === 'eqp') renderEquipe();
   if(t === 'set') renderSetores();
+  if(t === 'praca') renderPracas();
 }
 function preencherConfig(){
   if(!CFG) return;
@@ -2263,6 +2328,72 @@ async function trocarSenhaGer(){
 function copiarLink(){ navigator.clipboard.writeText($('cfgLink').value).then(() => toast('Link copiado 📋')); }
 
 /* setores */
+/* praças (áreas de mesas) */
+function renderPracas(){
+  const pracas = (CFG && CFG.pracas) || [];
+  $('pracaLista').innerHTML = pracas.map((p, i) => `
+    <div class="pagrow" style="cursor:pointer" onclick="editarPraca(${i})">
+      <b style="flex:1">${esc(p.nome)}</b><span class="badge a">${(p.mesas || []).length} mesas</span></div>`).join('')
+    || '<div class="empty"><span class="ic">📍</span>Nenhuma praça criada ainda.<br>Sem praças, todas as mesas aparecem juntas pra todo mundo.</div>';
+}
+let pracaIdx = null, pracaMesasSel = [];
+function editarPraca(i){
+  pracaIdx = i;
+  const p = i != null ? (CFG.pracas || [])[i] : null;
+  pracaMesasSel = p ? (p.mesas || []).slice() : [];
+  const n = (CFG && CFG.numMesas) || 20;
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">${p ? 'Editar praça' : 'Nova praça'}</h3>
+    <label>Nome da praça</label><input id="epzNome" value="${p ? esc(p.nome) : ''}" placeholder="ex: Varanda, Salão VIP">
+    <label>Quais mesas pertencem a ela?</label>
+    <div class="pills" id="epzMesas">${Array.from({ length: n }, (_, k) => k + 1).map(num =>
+      `<button class="pill ${pracaMesasSel.includes(num) ? 'on' : ''}" onclick="togMesaPraca(${num}, this)">${num}</button>`).join('')}</div>
+    <button class="btn g" style="margin-top:16px" onclick="salvarPraca()">Salvar praça</button>
+    ${p ? `<button class="btn r" style="margin-top:10px" onclick="excluirPraca()">🗑️ Excluir praça</button>` : ''}
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+function togMesaPraca(num, el){
+  const i = pracaMesasSel.indexOf(num);
+  if(i >= 0) pracaMesasSel.splice(i, 1); else pracaMesasSel.push(num);
+  el.classList.toggle('on', pracaMesasSel.includes(num));
+}
+async function salvarPraca(){
+  const nome = $('epzNome').value.trim();
+  if(!nome){ toast('Digite o nome da praça'); return; }
+  const pracas = ((CFG && CFG.pracas) || []).slice();
+  const dados = { nome, mesas: pracaMesasSel.slice() };
+  if(pracaIdx != null) pracas[pracaIdx] = dados; else pracas.push(dados);
+  await rcol().update({ pracas });
+  fecharOv('ovExtra'); toast('Praça salva ✅');
+}
+async function excluirPraca(){
+  if(!confirm('Excluir esta praça?')) return;
+  const pracas = ((CFG && CFG.pracas) || []).slice();
+  pracas.splice(pracaIdx, 1);
+  await rcol().update({ pracas });
+  fecharOv('ovExtra'); toast('Praça excluída');
+}
+/* filtro de praça na tela do garçom */
+function pracaFiltroKey(){ return 'pdv_praca_' + REST; }
+function pracaFiltroAtual(){ return localStorage.getItem(pracaFiltroKey()) || ''; }
+function setPracaFiltro(nome){ localStorage.setItem(pracaFiltroKey(), nome); renderPracaChips(); renderMesas('mesaGrid', false); }
+function renderPracaChips(){
+  const el = $('pracaChips'); if(!el) return;
+  const pracas = (CFG && CFG.pracas) || [];
+  if(!pracas.length){ el.innerHTML = ''; return; }
+  const atual = pracaFiltroAtual();
+  el.innerHTML = `<div class="cats" style="padding:6px 0">
+    <button class="chip ${!atual ? 'on' : ''}" onclick="setPracaFiltro('')">Todas as mesas</button>
+    ${pracas.map(p => `<button class="chip ${atual === p.nome ? 'on' : ''}" onclick="setPracaFiltro('${esc(p.nome)}')">${esc(p.nome)}</button>`).join('')}
+  </div>`;
+}
+function mesasDaPracaFiltro(){
+  const atual = pracaFiltroAtual();
+  if(!atual) return null;
+  const p = ((CFG && CFG.pracas) || []).find(x => x.nome === atual);
+  return p ? p.mesas : null;
+}
 function renderSetores(){
   const sets = (CFG && CFG.setores) || [];
   $('setLista').innerHTML = sets.map((s, i) => `
