@@ -16,7 +16,7 @@
   --amber:#E8A33D; --amber2:#f5bd63; --green:#2FBF71; --red:#E0554D; --blue:#4FA3E0;
   --ink:#F4EFE7; --mut:#9c9184;
   --paper:#FBF6EC; --paperInk:#2a2620;
-  --tintAmber:#2e2519; --tintBlue:#1c2a38;
+  --tintAmber:#2e2519; --tintBlue:#1c2a38; --topbg:rgba(20,18,16,.92);
   --r:16px;
 }
 [data-theme="light"]{
@@ -24,7 +24,7 @@
   --amber:#C9822A; --amber2:#E0A550; --green:#1E9B5C; --red:#D14840; --blue:#2E7DBF;
   --ink:#211D18; --mut:#7A7263;
   --paper:#FFFFFF; --paperInk:#2a2620;
-  --tintAmber:#F3E2C4; --tintBlue:#D9E6F2;
+  --tintAmber:#F3E2C4; --tintBlue:#D9E6F2; --topbg:rgba(245,241,232,.92);
 }
 body,.mesa,.prod,.card,.chip,.pill,.tog,.rolecard{transition:background-color .25s, border-color .25s, color .25s}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -55,7 +55,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .iconb:active{transform:scale(.9)}
 
 /* ====== topo ====== */
-.top{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(20,18,16,.92);backdrop-filter:blur(10px);position:sticky;top:0;z-index:40;border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--topbg);backdrop-filter:blur(10px);position:sticky;top:0;z-index:40;border-bottom:1px solid var(--line)}
 .top h2{font-size:17px;flex:1}
 .top .sub{font-size:11.5px;color:var(--mut);font-weight:600}
 .brand{display:flex;align-items:center;gap:10px}
@@ -158,7 +158,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .badge.r{background:rgba(224,85,77,.18);color:var(--red)}
 .empty{text-align:center;color:var(--mut);padding:50px 20px;font-size:14px;line-height:1.6}
 .empty .ic{font-size:42px;display:block;margin-bottom:12px}
-.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#181410;font-weight:700;font-size:14px;padding:13px 22px;border-radius:99px;z-index:200;opacity:0;pointer-events:none;transition:all .3s;box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:#1c1a17;color:#F4EFE7;font-weight:700;font-size:14px;padding:13px 22px;border-radius:99px;z-index:200;opacity:0;pointer-events:none;transition:all .3s;box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:90vw;text-align:center;border:1px solid rgba(255,255,255,.08)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .credit{text-align:center;font-size:12px;color:#2FBF71;font-weight:700;padding:20px 0 10px}
 .pagrow{display:flex;gap:8px;align-items:center;background:var(--surf);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
@@ -468,19 +468,35 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <button class="btn o" onclick="novoSetor()">＋ Novo setor</button>
       <label>Impressora da conta / recibo</label>
       <select id="cfgImpConta" onchange="salvarCampo('impConta', this.value)"><option value="">— janela do navegador —</option></select>
-      <div class="card" style="margin-top:14px"><b style="font-size:14px">📏 Ajustes do cupom</b>
+      <div class="card" style="margin-top:14px">
+        <b style="font-size:14px">🧾 Configuração do papel térmico</b>
+        <p style="color:var(--mut);font-size:12px;margin-top:4px">É uma impressora térmica (imprime com calor, sem tinta) — igual as de padaria/açougue. Configura aqui a largura do rolo e onde ela corta.</p>
+        <label>Largura do rolo de papel</label>
+        <div class="papersel">
+          <button class="papercard" id="papel58" onclick="setLarguraPapel('58')"><span class="papericon" style="width:34px">🧻</span><b>58mm</b><small>rolo estreito</small></button>
+          <button class="papercard" id="papel80" onclick="setLarguraPapel('80')"><span class="papericon" style="width:48px">🧻</span><b>80mm</b><small>rolo padrão (mais comum)</small></button>
+        </div>
         <label>Tamanho da fonte do texto</label>
         <select id="cfgFonteTexto" onchange="salvarCampo('fonteTexto', this.value)">
           <option value="pequena">Pequena</option><option value="normal">Normal</option><option value="grande">Grande</option></select>
         <label>Tamanho da fonte do preço</label>
         <select id="cfgFontePreco" onchange="salvarCampo('fontePreco', this.value)">
           <option value="normal">Normal</option><option value="grande">Grande</option><option value="extra">Extra grande</option></select>
-        <label>Avanço de papel antes do corte</label>
-        <select id="cfgAvancoPapel" onchange="salvarCampo('avancoPapel', parseInt(this.value))">
-          <option value="2">Curto</option><option value="4">Médio</option><option value="6">Padrão</option><option value="9">Longo (evita cortar texto)</option></select>
-        <p style="color:var(--mut);font-size:12px;margin-top:6px">Se o cupom está cortando a parte de baixo, escolha "Longo".</p>
+        <label>✂️ Quanto avança o papel antes de cortar</label>
+        <div class="qty" style="justify-content:flex-start;gap:14px">
+          <button onclick="mudarAvanco(-1)">−</button><b id="avancoView">6</b><button onclick="mudarAvanco(1)">＋</button>
+          <span style="color:var(--mut);font-size:12.5px">linhas em branco</span>
+        </div>
+        <p style="color:var(--mut);font-size:12px;margin-top:8px" id="avancoDica">Se o cupom está cortando em cima do texto (falta papel), <b>aumenta</b> esse número. Se está sobrando muito papel em branco embaixo, <b>diminui</b>.</p>
       </div>
     </div>
+    <style>
+      .papersel{display:flex;gap:10px;margin-bottom:4px}
+      .papercard{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:14px;background:var(--surf);border:1.5px solid var(--line)}
+      .papercard.on{border-color:var(--amber);background:linear-gradient(160deg,var(--tintAmber),var(--surf))}
+      .papericon{font-size:28px;display:block}
+      .papercard small{color:var(--mut);font-size:11px}
+    </style>
     <div id="cfgPraca" style="display:none">
       <p style="color:var(--mut);font-size:13px;line-height:1.55;margin-bottom:12px">Divida as mesas em praças/áreas (ex: Salão, Varanda, VIP). O garçom pode filtrar sua tela de mesas por praça.</p>
       <button class="btn" onclick="editarPraca(null)">＋ Nova praça</button>
@@ -1814,6 +1830,7 @@ async function finalizarPagto(){
     const t = pagtoTotais();
     try{
       const m = cxMesa !== null ? (MESAS[String(cxMesa)] || {}) : {};
+      const itensComprovante = cxMesa === null ? carrinho.slice() : calcularItensComprovante(m);
       await col('vendas').add({
         mesa: cxMesa, tipo: cxModo, descricao: cxDescricao,
         base: cxBase, taxa: t.taxa, desconto: cxDesc, total: t.total,
@@ -1831,27 +1848,32 @@ async function finalizarPagto(){
       }else{
         await aplicarPagtoNaMesa(t);
       }
-      imprimirComprovante(t);
+      imprimirComprovante(t, itensComprovante);
       fecharOv('ovCaixa'); toast('Pagamento registrado ✅');
     }catch(e){ console.error(e); toast('Erro ao finalizar: ' + (e.code || e.message)); }
   });
 }
-function imprimirComprovante(t){
+function calcularItensComprovante(m){
+  const itens = (m.itens || []).filter(i => !i.pago);
+  if(cxModo === 'itens') return itens.filter(i => cxSel.includes(i.uid));
+  return itens;
+}
+function imprimirComprovante(t, itens){
   const imp = (CFG && CFG.impConta) || '';
   if(qzOn && imp){
-    printRaw(imp, escposComprovante(t)).catch(e => console.error(e));
+    printRaw(imp, escposComprovante(t, itens)).catch(e => console.error(e));
   }else{
-    fallbackPrint(htmlComprovante(t));
+    fallbackPrint(htmlComprovante(t, itens));
   }
 }
-function escposComprovante(t){
+function escposComprovante(t, itens){
   const E = '\x1b', G = '\x1d';
   let s = E + '@' + E + 'a' + '\x01';
   s += E + 'E' + '\x01' + semAcento((CFG && CFG.nome) || 'PDV Já') + '\n' + E + 'E' + '\x00';
   s += semAcento(cxMesa != null ? 'MESA ' + cxMesa : 'BALCÃO') + '\n';
-  s += semAcento(new Date().toLocaleString('pt-BR')) + '\n' + E + 'a' + '\x00' + '-'.repeat(42) + '\n' + tamTexto();
-  cxItensComprovante().forEach(it => { s += linhaEsq(it.qtd + 'x ' + it.nome, fmt(it.preco * it.qtd)) + '\n'; });
-  s += resetTam() + '-'.repeat(42) + '\n';
+  s += semAcento(new Date().toLocaleString('pt-BR')) + '\n' + E + 'a' + '\x00' + '-'.repeat(colWidth()) + '\n' + tamTexto();
+  (itens || []).forEach(it => { s += linhaEsq(it.qtd + 'x ' + it.nome, fmt(it.preco * it.qtd)) + '\n'; });
+  s += resetTam() + '-'.repeat(colWidth()) + '\n';
   s += linhaEsq('Base', fmt(cxBase)) + '\n';
   if(t.taxa) s += linhaEsq('Taxa de servico', fmt(t.taxa)) + '\n';
   if(cxDesc) s += linhaEsq('Desconto', '-' + fmt(cxDesc)) + '\n';
@@ -1862,10 +1884,10 @@ function escposComprovante(t){
   s += semAcento('Obrigado pela preferencia!') + '\n' + avancoPapel() + G + 'V' + '\x41' + '\x03';
   return s;
 }
-function htmlComprovante(t){
+function htmlComprovante(t, itens){
   return `<h3>${esc((CFG && CFG.nome) || '')}</h3><div class="c">${esc(cxMesa != null ? 'MESA ' + cxMesa : 'BALCÃO')}</div>
     <div class="c">${new Date().toLocaleString('pt-BR')}</div><div class="sep"></div>
-    ${cxItensComprovante().map(it => `<div class="li"><span>${it.qtd}x ${esc(it.nome)}</span><span>${fmt(it.preco*it.qtd)}</span></div>`).join('')}
+    ${(itens || []).map(it => `<div class="li"><span>${it.qtd}x ${esc(it.nome)}</span><span>${fmt(it.preco*it.qtd)}</span></div>`).join('')}
     <div class="sep"></div>
     <div class="li"><span>Base</span><span>${fmt(cxBase)}</span></div>
     ${t.taxa ? `<div class="li"><span>Taxa de serviço</span><span>${fmt(t.taxa)}</span></div>` : ''}
@@ -1876,11 +1898,6 @@ function htmlComprovante(t){
     <div class="sep"></div>
     <div class="c" style="font-weight:bold">ESTE DOCUMENTO NÃO POSSUI<br>VALOR FISCAL</div>
     <div class="c" style="margin-top:6px">Obrigado pela preferência!</div>`;
-}
-function cxItensComprovante(){
-  if(cxMesa === null) return carrinho;
-  if(cxModo === 'itens') return (cxItens || []).filter(i => cxSel.includes(i.uid));
-  return cxItens || [];
 }
 async function aplicarPagtoNaMesa(t){
   const ref = col('mesas').doc(String(cxMesa));
@@ -2275,9 +2292,10 @@ function impressoraDoSetor(setorId){
   return (s && s.impressora) || '';
 }
 const semAcento = (s) => String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function colWidth(){ return (CFG && CFG.larguraPapel === '58') ? 32 : 42; }
 function linhaEsq(a2, b2){
   const a = semAcento(a2), b = semAcento(b2);
-  const espaco = Math.max(1, 42 - a.length - b.length);
+  const espaco = Math.max(1, colWidth() - a.length - b.length);
   return a + ' '.repeat(espaco) + b;
 }
 function tamTexto(){
@@ -2301,13 +2319,13 @@ function escposPedido(p, itensSetor, nomeSet){
   s += semAcento((nomeSet ? '[' + nomeSet + '] ' : '') + new Date().toLocaleString('pt-BR')) + '\n';
   s += semAcento('Garcom: ' + (p.garcom || '-')) + '\n';
   if(p.cliente) s += semAcento('Cliente: ' + p.cliente.nome + (p.cliente.telefone ? ' ' + p.cliente.telefone : '')) + '\n' + (p.cliente.endereco ? semAcento(p.cliente.endereco) + '\n' : '');
-  s += E + 'a' + '\x00' + '-'.repeat(42) + '\n' + tamTexto();
+  s += E + 'a' + '\x00' + '-'.repeat(colWidth()) + '\n' + tamTexto();
   itensSetor.forEach(it => {
     s += E + 'E' + '\x01' + G + '!' + '\x01' + semAcento(it.qtd + 'x ' + it.nome) + '\n' + G + '!' + '\x00' + E + 'E' + '\x00';
     const m = [...(it.mods || [])]; if(it.obs) m.push('Obs: ' + it.obs);
     if(m.length) s += semAcento('   > ' + m.join(' / ')) + '\n';
   });
-  s += resetTam() + '-'.repeat(42) + '\n' + avancoPapel() + G + 'V' + '\x41' + '\x03';
+  s += resetTam() + '-'.repeat(colWidth()) + '\n' + avancoPapel() + G + 'V' + '\x41' + '\x03';
   return s;
 }
 function escposConta(p){
@@ -2317,9 +2335,9 @@ function escposConta(p){
   let s = E + '@' + E + 'a' + '\x01';
   s += E + 'E' + '\x01' + semAcento((CFG && CFG.nome) || 'PDV Ja') + '\n' + E + 'E' + '\x00';
   s += G + '!' + '\x11' + semAcento('CONTA MESA ' + p.mesa) + '\n' + G + '!' + '\x00';
-  s += semAcento(new Date().toLocaleString('pt-BR')) + '\n' + E + 'a' + '\x00' + '-'.repeat(42) + '\n' + tamTexto();
+  s += semAcento(new Date().toLocaleString('pt-BR')) + '\n' + E + 'a' + '\x00' + '-'.repeat(colWidth()) + '\n' + tamTexto();
   (p.itens || []).forEach(it => { s += linhaEsq(it.qtd + 'x ' + it.nome, fmt(it.preco * it.qtd)) + '\n'; });
-  s += resetTam() + '-'.repeat(42) + '\n';
+  s += resetTam() + '-'.repeat(colWidth()) + '\n';
   if(p.pagoAvulso) s += linhaEsq('Ja pago', '-' + fmt(p.pagoAvulso)) + '\n';
   s += linhaEsq('Subtotal', fmt(sub)) + '\n';
   if(taxa) s += linhaEsq('Taxa servico ' + CFG.taxa + '% (opcional)', fmt(taxa)) + '\n';
@@ -2464,7 +2482,11 @@ function preencherConfig(){
   $('cfgFracRegra').value = CFG.fracRegra || 'cara';
   $('cfgFonteTexto').value = CFG.fonteTexto || 'normal';
   $('cfgFontePreco').value = CFG.fontePreco || 'normal';
-  $('cfgAvancoPapel').value = CFG.avancoPapel != null ? CFG.avancoPapel : 6;
+  const larg = (CFG && CFG.larguraPapel) || '80';
+  $('papel58').classList.toggle('on', larg === '58');
+  $('papel80').classList.toggle('on', larg === '80');
+  $('avancoView').textContent = CFG.avancoPapel != null ? CFG.avancoPapel : 6;
+  atualizarDicaAvanco();
   $('togAuto').classList.toggle('on', CFG.autoImprimir !== false);
   $('togSom').classList.toggle('on', CFG.som !== false);
   $('togBaixa').classList.toggle('on', !!CFG.baixaSoComputador);
@@ -2472,6 +2494,26 @@ function preencherConfig(){
   $('togPedidoQR').classList.toggle('on', CFG.pedidoQR !== false);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
   renderFracPills(); renderSetores(); renderCatOrd();
+}
+async function setLarguraPapel(v){
+  $('papel58').classList.toggle('on', v === '58');
+  $('papel80').classList.toggle('on', v === '80');
+  await rcol().update({ larguraPapel: v });
+  toast('Papel ' + v + 'mm salvo ✅');
+}
+async function mudarAvanco(d){
+  const atual = CFG && CFG.avancoPapel != null ? CFG.avancoPapel : 6;
+  const novo = Math.max(0, Math.min(15, atual + d));
+  $('avancoView').textContent = novo;
+  await rcol().update({ avancoPapel: novo });
+  atualizarDicaAvanco();
+}
+function atualizarDicaAvanco(){
+  const el = $('avancoDica'); if(!el) return;
+  const n = parseInt($('avancoView').textContent) || 0;
+  if(n <= 2) el.innerHTML = '⚠️ Bem curto — se ainda cortar em cima do texto, <b>aumenta</b> mais.';
+  else if(n >= 10) el.innerHTML = '⚠️ Bem longo — vai sobrar bastante papel em branco embaixo do cupom.';
+  else el.innerHTML = 'Se o cupom está cortando em cima do texto (falta papel), <b>aumenta</b> esse número. Se está sobrando muito papel em branco embaixo, <b>diminui</b>.';
 }
 async function setTaxaRapida(v){
   $('cfgTaxa').value = v;
@@ -2613,7 +2655,7 @@ function renderSetores(){
       <button class="iconb" style="flex:0 0 42px" onclick="delSetor(${i})">🗑️</button></div>
       <label>Impressora deste setor</label>
       ${selImpressora(s.impressora, `edSetor(${i},'impressora',this.value)`)}
-      <button class="btn o sm" style="margin-top:8px" onclick="imprimirTeste(${i})">🖨️ Testar impressão deste setor</button>
+      <button class="btn" style="margin-top:10px;width:100%" onclick="imprimirTeste(${i})">🖨️ Imprimir teste — setor "${esc(s.nome)}"</button>
     </div>`).join('');
   const sel = $('cfgImpConta');
   if(sel) sel.innerHTML = '<option value="">— janela do navegador —</option>' + opcoesImpressora((CFG && CFG.impConta) || '');
@@ -2625,7 +2667,7 @@ async function imprimirTeste(i){
     try{
       const E = '\x1b', G = '\x1d';
       let d = E + '@' + E + 'a' + '\x01' + E + 'E' + '\x01' + semAcento('TESTE DE IMPRESSAO') + '\n' + E + 'E' + '\x00';
-      d += semAcento(s.nome) + '\n' + semAcento(new Date().toLocaleString('pt-BR')) + '\n' + '-'.repeat(42) + '\n';
+      d += semAcento(s.nome) + '\n' + semAcento(new Date().toLocaleString('pt-BR')) + '\n' + '-'.repeat(colWidth()) + '\n';
       d += semAcento('Se este cupom saiu aqui, esta e a') + '\n' + semAcento('impressora certa para o setor "' + s.nome + '"') + '\n\n\n\n' + G + 'V' + '\x41' + '\x03';
       await printRaw(s.impressora, d);
       toast('Teste enviado 🖨️');
