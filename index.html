@@ -612,7 +612,7 @@ function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList
 function abrirOv(id){ $(id).classList.add('on'); }
 function fecharOv(id){ $(id).classList.remove('on'); }
 function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2800); }
-function notif(msg){ const n = $('notif'); n.textContent = msg; n.classList.add('on'); clearTimeout(n._t); n._t = setTimeout(() => n.classList.remove('on'), 6000); beep(); }
+function notif(msg){ const n = $('notif'); n.textContent = msg; n.classList.add('on'); clearTimeout(n._t); n._t = setTimeout(() => n.classList.remove('on'), 6000); beep(); if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]); }
 function pararListeners(){ unsubs.forEach(u => u()); unsubs = []; }
 function avatarHTML(nome, foto, cls){
   cls = cls || '';
@@ -1475,7 +1475,7 @@ function atualizarCartBar(){
   const n = carrinho.reduce((a,x) => a + x.qtd, 0);
   const tot = carrinho.reduce((a,x) => a + x.preco * x.qtd, 0);
   const txt = `🛒 ${n} ${n === 1 ? 'item' : 'itens'} · ${fmt(tot)} — Revisar`;
-  $('cartBar').style.display = (n && contexto === 'garcom') ? '' : 'none';
+  $('cartBar').style.display = (n && contexto !== 'balcao') ? '' : 'none';
   $('cartBarB').style.display = (n && contexto === 'balcao') ? '' : 'none';
   $('cartResumo').textContent = txt; $('cartResumoB').textContent = txt;
 }
