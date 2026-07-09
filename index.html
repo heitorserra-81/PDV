@@ -267,7 +267,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <label>Código do estabelecimento</label>
       <input id="inRest" placeholder="ex: marchesini" autocapitalize="none">
       <button class="btn" style="margin-top:14px" onclick="entrarRest()">Entrar</button>
-      <button class="btn o" style="margin-top:10px" onclick="show('scSetup')">＋ Criar novo estabelecimento</button>
+      <p style="color:var(--mut);font-size:12px;text-align:center;margin-top:12px">Novo estabelecimento? Fale com quem te vendeu o acesso.</p>
     </div>
     <div class="credit">Desenvolvido por Heitor Serra Neto</div>
   </div>
@@ -275,7 +275,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 
 <!-- ============ SETUP ============ -->
 <div class="screen" id="scSetup">
-  <div class="top"><button class="iconb" onclick="show('scEntrada')">←</button><h2>Novo estabelecimento</h2></div>
+  <div class="top"><button class="iconb" onclick="show('scAdmin')">←</button><h2>Novo estabelecimento</h2></div>
   <div class="wrap">
     <label>Nome do estabelecimento</label><input id="stNome" placeholder="ex: Marchesini di Roverbella">
     <label>Código (será usado no link)</label><input id="stCod" placeholder="ex: marchesini" autocapitalize="none">
@@ -285,6 +285,25 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
     <label>Número de mesas</label><input id="stMesas" type="number" value="20" min="1" max="200">
     <button class="btn g" style="margin-top:22px" onclick="criarRest()">Criar estabelecimento</button>
     <p style="color:var(--mut);font-size:12.5px;margin-top:14px;line-height:1.5">Setores <b>Cozinha</b> e <b>Bar</b> já vêm criados. A senha do gerente começa igual à do administrador — troque nas Configurações.</p>
+  </div>
+</div>
+
+<!-- ============ PAINEL MESTRE (só Heitor) ============ -->
+<div class="screen" id="scAdminLogin">
+  <div class="wrap" style="display:flex;flex-direction:column;justify-content:center;min-height:100dvh">
+    <div style="text-align:center;margin-bottom:20px"><span style="font-size:44px">🛠️</span><h2 style="margin-top:10px">Painel mestre</h2></div>
+    <div class="card">
+      <label>Senha mestre</label>
+      <input id="inSenhaMestre" type="password" placeholder="••••••••">
+      <button class="btn g" style="margin-top:14px" onclick="checarSenhaMestre()">Entrar</button>
+    </div>
+  </div>
+</div>
+<div class="screen" id="scAdmin">
+  <div class="top"><button class="iconb" onclick="location.href=location.pathname">←</button><h2>🛠️ Painel mestre</h2></div>
+  <div class="wrap">
+    <button class="btn g" onclick="show('scSetup')">＋ Novo estabelecimento</button>
+    <div id="adminLista" style="margin-top:16px"></div>
   </div>
 </div>
 
@@ -302,7 +321,8 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <div class="rolecard" id="cardBalcao" onclick="entrarBalcao()"><span class="ic">🛒</span><b>Balcão</b><span>Venda direta e pedido por telefone</span></div>
       <div class="rolecard" onclick="abrirConfig()"><span class="ic">⚙️</span><b>Configurações</b><span>Produtos, adicionais, equipe e impressoras</span></div>
     </div>
-    <button class="btn o" style="margin-top:20px" id="btnInstalar" onclick="instalarApp()">📲 Instalar aplicativo</button>
+    <button class="btn o" style="margin-top:14px" onclick="abrirChamadas()">🛎️ Ver chamadas de mesa</button>
+    <button class="btn o" style="margin-top:10px" id="btnInstalar" onclick="instalarApp()">📲 Instalar aplicativo</button>
     <div class="credit">Desenvolvido por Heitor Serra Neto</div>
   </div>
 </div>
@@ -353,6 +373,26 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
     <div class="prodgrid" id="prodGrid"></div>
   </div>
   <div class="cartbar" id="cartBar" style="display:none"><div class="inner"><button class="btn g" onclick="abrirCarrinho()"><span id="cartResumo"></span></button></div></div>
+</div>
+
+<!-- ============ CLIENTE (QR da mesa) ============ -->
+<div class="screen" id="scCliente">
+  <div class="top"><div class="brand"><div class="logo">PJ</div><div><h2 id="clienteNome">—</h2><div class="sub">Mesa <span id="clienteMesaNum"></span></div></div></div></div>
+  <div class="wrap" style="display:flex;flex-direction:column;justify-content:center;min-height:70dvh;text-align:center">
+    <span style="font-size:52px">👋</span>
+    <h2 style="margin-top:10px">Bem-vindo(a)!</h2>
+    <p style="color:var(--mut);margin-top:8px">Peça direto pelo celular ou chame o garçom</p>
+    <button class="btn g" style="margin-top:24px" onclick="abrirCardapio()" id="btnClientePedir">🍽️ Ver cardápio e pedir</button>
+    <button class="btn o" style="margin-top:12px" onclick="chamarGarcom()">🛎️ Chamar garçom</button>
+  </div>
+</div>
+<div class="screen" id="scClienteOk">
+  <div class="wrap" style="display:flex;flex-direction:column;justify-content:center;min-height:100dvh;text-align:center">
+    <span style="font-size:56px">✅</span>
+    <h2 style="margin-top:14px" id="clienteOkTitulo">Pedido enviado!</h2>
+    <p style="color:var(--mut);margin-top:8px;line-height:1.6" id="clienteOkTexto">Já mandamos para a cozinha 🍽️<br>Qualquer coisa, chame o garçom.</p>
+    <button class="btn g" style="margin-top:24px" onclick="show('scCliente')">← Voltar</button>
+  </div>
 </div>
 
 <!-- ============ COMPUTADOR ============ -->
@@ -462,6 +502,10 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <div class="sw"><div><b>Alerta sonoro</b><small>Som quando chega pedido novo</small></div><div class="tog" id="togSom" onclick="togCampo('som', this)"></div></div>
       <div class="sw"><div><b>Baixa da mesa só pelo computador</b><small>Garçom só marca "paga"; o caixa é quem libera a mesa</small></div><div class="tog" id="togBaixa" onclick="togCampo('baixaSoComputador', this)"></div></div>
       <div class="sw"><div><b>Exigir caixa aberto para operar</b><small>Ninguém tira pedido nem vende no balcão antes do gerente abrir o caixa do dia</small></div><div class="tog" id="togExigirCaixa" onclick="togCampo('exigirCaixa', this)"></div></div>
+      <div class="sw"><div><b>Cliente pode pedir pelo QR</b><small>Se desligar, o QR só mostra "Chamar garçom", sem cardápio</small></div><div class="tog" id="togPedidoQR" onclick="togCampo('pedidoQR', this)"></div></div>
+      <label>📱 QR / link da mesa para o cliente</label>
+      <div class="row"><input id="qrMesaNum" type="number" min="1" placeholder="nº da mesa"><button class="btn sm" onclick="gerarQrMesa()">Gerar</button></div>
+      <div id="qrMesaBox"></div>
       <label>📋 Ordem das categorias no cardápio</label>
       <div id="catOrdList"></div>
       <p style="color:var(--mut);font-size:12px;margin:-6px 0 4px">Vale para o cardápio do garçom e do balcão.</p>
@@ -496,6 +540,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 
 <div class="notif" id="notif"></div>
 <div class="toast" id="toast"></div>
+<div id="offlineBar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:300;background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12.5px;padding:8px;">🔴 Sem internet — os pedidos ficam guardados no aparelho e enviam sozinhos quando a conexão voltar</div>
 <div id="printArea"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -532,6 +577,7 @@ let CFG = null, PRODUTOS = [], MESAS = {}, GRUPOS = [], EQUIPE = [], CLIENTES = 
 let unsubs = [], garcom = localStorage.getItem('pdv_garcom') || '', garcomFoto = localStorage.getItem('pdv_garcom_foto') || '';
 let garcomId = localStorage.getItem('pdv_garcom_id') || '', gerenteOk = false;
 const gParam = new URLSearchParams(location.search).get('g') || '';
+const mesaParam = new URLSearchParams(location.search).get('mesa') || '';
 let adminOk = false, mesaAtual = null, carrinho = [], catAtiva = 'Todos', contexto = 'garcom';
 let pedidosVistos = new Set(), primeiraCarga = true, deferredPrompt = null, clienteSel = null;
 let ocupado = false; // trava anti toque-duplo
@@ -573,6 +619,7 @@ async function logAcao(tipo, dados){
 
 /* ---------- boot ---------- */
 async function boot(){
+  if(!REST && new URLSearchParams(location.search).get('admin') === '1'){ show('scAdminLogin'); return; }
   if(!REST){ show('scEntrada'); return; }
   try{
     const doc = await rcol().get();
@@ -613,7 +660,13 @@ async function boot(){
       if($('scMesas').classList.contains('on')) renderMesas('mesaGrid', false);
       if($('scComp').classList.contains('on') && $('compCaixa').style.display !== 'none') renderMesas('mesaGridCaixa', true);
     }, 60000);
-    show('scHome');
+    let primeiraCargaChamadas = true;
+    unsubs.push(col('chamadas').where('atendida', '==', false).onSnapshot(s => {
+      if(primeiraCargaChamadas){ primeiraCargaChamadas = false; return; }
+      s.docChanges().forEach(ch => { if(ch.type === 'added') notif('🛎️ Mesa ' + ch.doc.data().mesa + ' está chamando!'); });
+    }));
+    if(mesaParam && parseInt(mesaParam) > 0){ entrarCliente(parseInt(mesaParam)); }
+    else show('scHome');
   }catch(e){
     console.error(e);
     if(String(e.code).includes('permission')) toast('⛔ Regras do Firestore bloqueando: libere pdv_restaurantes');
@@ -650,7 +703,9 @@ async function criarRest(){
       setores: [{ id:'cozinha', nome:'Cozinha', impressora:'' }, { id:'bar', nome:'Bar', impressora:'' }],
       criadoEm: TS()
     });
-    REST = cod; toast('Estabelecimento criado! 🎉'); boot();
+    toast('Estabelecimento criado! 🎉');
+    if(adminMestreOk){ show('scAdmin'); carregarListaAdmin(); }
+    else{ REST = cod; boot(); }
   }catch(e){
     console.error(e);
     if(String(e.code).includes('permission')) toast('⛔ Regras do Firestore bloqueando: libere pdv_restaurantes');
@@ -658,6 +713,36 @@ async function criarRest(){
   }
 }
 function sairRest(){ pararListeners(); REST=''; localStorage.removeItem('pdv_rest'); adminOk=false; show('scEntrada'); }
+
+/* ---------- painel mestre (Heitor) ---------- */
+const SENHA_MESTRE = "heitor2026"; // ⚠️ troque aqui pra sua senha real antes de usar
+let adminMestreOk = false;
+function checarSenhaMestre(){
+  if($('inSenhaMestre').value === SENHA_MESTRE){ adminMestreOk = true; show('scAdmin'); carregarListaAdmin(); }
+  else toast('Senha incorreta');
+}
+async function carregarListaAdmin(){
+  $('adminLista').innerHTML = '<div class="empty">Carregando…</div>';
+  try{
+    const snap = await db.collection('pdv_restaurantes').orderBy('criadoEm', 'desc').get();
+    const restaurantes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    $('adminLista').innerHTML = restaurantes.length ? restaurantes.map(r => {
+      const data = r.criadoEm && r.criadoEm.toDate ? r.criadoEm.toDate().toLocaleDateString('pt-BR') : '';
+      return `<div class="pagrow">
+        <b style="flex:1">${esc(r.nome)}<div style="font-size:11.5px;color:var(--mut);font-weight:400">código: ${esc(r.id)} · criado ${data}</div></b>
+        <button class="btn o sm" onclick="copiarLinkRest('${r.id}')">🔗 Link</button>
+        <button class="btn sm" onclick="entrarComoAdmin('${r.id}')">Entrar</button></div>`;
+    }).join('') : '<div class="empty"><span class="ic">🏢</span>Nenhum estabelecimento ainda.</div>';
+  }catch(e){
+    console.error(e);
+    $('adminLista').innerHTML = '<div class="empty">Erro ao carregar: ' + (e.code || e.message) + '</div>';
+  }
+}
+function copiarLinkRest(cod){
+  const url = location.origin + location.pathname + '?rest=' + cod;
+  navigator.clipboard.writeText(url).then(() => toast('Link copiado 📋 ' + url));
+}
+function entrarComoAdmin(cod){ REST = cod; boot(); }
 
 /* ---------- login do garçom (com equipe) ---------- */
 function entrarGarcom(){
@@ -1130,16 +1215,19 @@ async function juntarMesa(src){
 
 /* ---------- cardápio ---------- */
 function abrirCardapio(){
-  contexto = 'garcom'; catAtiva = 'Todos';
+  if(contexto !== 'cliente') contexto = 'garcom';
+  catAtiva = 'Todos';
   const m = MESAS[String(mesaAtual)] || {};
+  const staffOnly = contexto === 'cliente' ? 'none' : '';
+  $('btnCardPessoa').style.display = staffOnly; $('btnCardComanda').style.display = staffOnly; $('btnCardMenu').style.display = staffOnly;
   $('cardTitulo').textContent = 'Mesa ' + mesaAtual;
-  $('cardSub').textContent = '👥 ' + (m.numPessoas || 1) + ' pessoas · restante ' + fmt(itensRestanteTotal(m));
+  $('cardSub').textContent = contexto === 'cliente' ? 'Toque no prato para adicionar' : '👥 ' + (m.numPessoas || 1) + ' pessoas · restante ' + fmt(itensRestanteTotal(m));
   renderCardapio('prodGrid','catChips'); atualizarCartBar(); show('scCardapio');
 }
 function voltarDoCardapio(){
   if(carrinho.length && !confirm('Há itens não enviados no carrinho. Sair mesmo assim?')) return;
   carrinho = []; atualizarCartBar();
-  if(contexto === 'balcao'){ show('scBalcao'); } else { show('scMesas'); }
+  if(contexto === 'cliente'){ show('scCliente'); } else if(contexto === 'balcao'){ show('scBalcao'); } else { show('scMesas'); }
 }
 function categorias(){
   const set = [...new Set(PRODUTOS.map(p => p.categoria || 'Geral'))];
@@ -1403,21 +1491,29 @@ function removerCarrinho(i){
 }
 async function enviarPedido(){
   if(!carrinho.length) return;
+  const souCliente = contexto === 'cliente';
   await trava(async () => {
     const agora = Date.now();
-    const itens = carrinho.map(it => ({ ...it, pedidoEm: agora, pedidoPor: garcom })); carrinho = [];
+    const quem = souCliente ? 'Cliente (mesa ' + mesaAtual + ')' : garcom;
+    const itens = carrinho.map(it => ({ ...it, pedidoEm: agora, pedidoPor: quem })); carrinho = [];
     fecharOv('ovCart'); atualizarCartBar();
     try{
-      await col('pedidos').add({ mesa: mesaAtual, garcom, itens, tipo: 'pedido', status: 'novo', impresso: false, entregue: false, criadoEm: TS() });
+      await col('pedidos').add({ mesa: mesaAtual, garcom: quem, itens, tipo: 'pedido', status: 'novo', impresso: false, entregue: false, viaCliente: souCliente, criadoEm: TS() });
       const ref = col('mesas').doc(String(mesaAtual));
       await db.runTransaction(async t => {
         const d = await t.get(ref);
         const dm = d.exists ? d.data() : {};
-        t.set(ref, { ...dm, status: dm.status === 'conta' ? 'conta' : 'ocupada', garcom: dm.garcom || garcom, garcomFoto: dm.garcomFoto || garcomFoto,
+        t.set(ref, { ...dm, status: dm.status === 'conta' ? 'conta' : 'ocupada', garcom: dm.garcom || (souCliente ? '' : garcom), garcomFoto: dm.garcomFoto || garcomFoto,
           itens: (dm.itens || []).concat(itens), abertaEm: dm.abertaEm || firebase.firestore.Timestamp.now(), numPessoas: dm.numPessoas || 1, pessoas: dm.pessoas || [], pagoAvulso: dm.pagoAvulso || 0 }, { merge: true });
       });
-      toast('Pedido enviado! 🖨️');
-      show('scMesas');
+      if(souCliente){
+        $('clienteOkTitulo').textContent = 'Pedido enviado! 🎉';
+        $('clienteOkTexto').innerHTML = 'Já mandamos pra cozinha 🍽️<br>Qualquer coisa, chame o garçom.';
+        show('scClienteOk');
+      }else{
+        toast('Pedido enviado! 🖨️');
+        show('scMesas');
+      }
     }catch(e){ console.error(e); carrinho = itens; atualizarCartBar(); toast('Falha ao enviar. Tente de novo.'); }
   });
 }
@@ -1735,9 +1831,56 @@ async function finalizarPagto(){
       }else{
         await aplicarPagtoNaMesa(t);
       }
+      imprimirComprovante(t);
       fecharOv('ovCaixa'); toast('Pagamento registrado ✅');
     }catch(e){ console.error(e); toast('Erro ao finalizar: ' + (e.code || e.message)); }
   });
+}
+function imprimirComprovante(t){
+  const imp = (CFG && CFG.impConta) || '';
+  if(qzOn && imp){
+    printRaw(imp, escposComprovante(t)).catch(e => console.error(e));
+  }else{
+    fallbackPrint(htmlComprovante(t));
+  }
+}
+function escposComprovante(t){
+  const E = '\x1b', G = '\x1d';
+  let s = E + '@' + E + 'a' + '\x01';
+  s += E + 'E' + '\x01' + semAcento((CFG && CFG.nome) || 'PDV Já') + '\n' + E + 'E' + '\x00';
+  s += semAcento(cxMesa != null ? 'MESA ' + cxMesa : 'BALCÃO') + '\n';
+  s += semAcento(new Date().toLocaleString('pt-BR')) + '\n' + E + 'a' + '\x00' + '-'.repeat(42) + '\n' + tamTexto();
+  cxItensComprovante().forEach(it => { s += linhaEsq(it.qtd + 'x ' + it.nome, fmt(it.preco * it.qtd)) + '\n'; });
+  s += resetTam() + '-'.repeat(42) + '\n';
+  s += linhaEsq('Base', fmt(cxBase)) + '\n';
+  if(t.taxa) s += linhaEsq('Taxa de servico', fmt(t.taxa)) + '\n';
+  if(cxDesc) s += linhaEsq('Desconto', '-' + fmt(cxDesc)) + '\n';
+  s += tamPreco() + E + 'E' + '\x01' + linhaEsq('TOTAL', fmt(t.total)) + '\n' + resetTam() + E + 'E' + '\x00';
+  cxPagamentos.forEach(p => { s += linhaEsq(p.forma, fmt(p.valor)) + '\n'; });
+  if(t.troco > 0.009) s += linhaEsq('Troco', fmt(t.troco)) + '\n';
+  s += '\n' + E + 'a' + '\x01' + E + 'E' + '\x01' + semAcento('ESTE DOCUMENTO NAO POSSUI') + '\n' + semAcento('VALOR FISCAL') + '\n' + E + 'E' + '\x00';
+  s += semAcento('Obrigado pela preferencia!') + '\n' + avancoPapel() + G + 'V' + '\x41' + '\x03';
+  return s;
+}
+function htmlComprovante(t){
+  return `<h3>${esc((CFG && CFG.nome) || '')}</h3><div class="c">${esc(cxMesa != null ? 'MESA ' + cxMesa : 'BALCÃO')}</div>
+    <div class="c">${new Date().toLocaleString('pt-BR')}</div><div class="sep"></div>
+    ${cxItensComprovante().map(it => `<div class="li"><span>${it.qtd}x ${esc(it.nome)}</span><span>${fmt(it.preco*it.qtd)}</span></div>`).join('')}
+    <div class="sep"></div>
+    <div class="li"><span>Base</span><span>${fmt(cxBase)}</span></div>
+    ${t.taxa ? `<div class="li"><span>Taxa de serviço</span><span>${fmt(t.taxa)}</span></div>` : ''}
+    ${cxDesc ? `<div class="li"><span>Desconto</span><span>-${fmt(cxDesc)}</span></div>` : ''}
+    <div class="li big"><span>TOTAL</span><span>${fmt(t.total)}</span></div>
+    ${cxPagamentos.map(p => `<div class="li"><span>${esc(p.forma)}</span><span>${fmt(p.valor)}</span></div>`).join('')}
+    ${t.troco > 0.009 ? `<div class="li"><span>Troco</span><span>${fmt(t.troco)}</span></div>` : ''}
+    <div class="sep"></div>
+    <div class="c" style="font-weight:bold">ESTE DOCUMENTO NÃO POSSUI<br>VALOR FISCAL</div>
+    <div class="c" style="margin-top:6px">Obrigado pela preferência!</div>`;
+}
+function cxItensComprovante(){
+  if(cxMesa === null) return carrinho;
+  if(cxModo === 'itens') return (cxItens || []).filter(i => cxSel.includes(i.uid));
+  return cxItens || [];
 }
 async function aplicarPagtoNaMesa(t){
   const ref = col('mesas').doc(String(cxMesa));
@@ -1795,6 +1938,37 @@ function entrarBalcao(){
   if((CFG && CFG.exigirCaixa !== false) && !GAVETA){ aguardandoCaixa = 'balcao'; show('scCaixaFechado'); return; }
   contexto = 'balcao'; mesaAtual = null; carrinho = []; catAtiva = 'Todos';
   renderCardapio('prodGridB','catChipsB'); atualizarCartBar(); atualizarClienteBar(); show('scBalcao');
+}
+/* ---------- cliente (QR da mesa) ---------- */
+function entrarCliente(n){
+  mesaAtual = n; contexto = 'cliente'; carrinho = [];
+  $('clienteNome').textContent = (CFG && CFG.nome) || REST;
+  $('clienteMesaNum').textContent = n;
+  $('btnClientePedir').style.display = (CFG && CFG.pedidoQR === false) ? 'none' : '';
+  show('scCliente');
+}
+async function chamarGarcom(){
+  try{
+    await col('chamadas').add({ mesa: mesaAtual, atendida: false, criadoEm: TS() });
+    toast('Garçom chamado! 🛎️ Já estamos indo até você');
+  }catch(e){ console.error(e); toast('Não consegui chamar — tente de novo'); }
+}
+async function abrirChamadas(){
+  const snap = await col('chamadas').where('atendida', '==', false).orderBy('criadoEm', 'desc').limit(20).get();
+  const chamadas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🛎️ Chamadas pendentes</h3>
+    <div style="margin-top:10px">${chamadas.map(c => {
+      const h = c.criadoEm && c.criadoEm.toDate ? c.criadoEm.toDate().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '';
+      return `<div class="pagrow"><b>Mesa ${c.mesa}</b><span style="flex:1;font-size:12px;color:var(--mut)">${h}</span>
+        <button class="btn g sm" onclick="atenderChamada('${c.id}')">✅ Atendida</button></div>`;
+    }).join('') || '<div class="empty">Nenhuma chamada pendente 🎉</div>'}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
+async function atenderChamada(id){
+  await col('chamadas').doc(id).update({ atendida: true });
+  abrirChamadas();
 }
 function atualizarClienteBar(){
   $('balcaoCliente').textContent = clienteSel ? ('👤 ' + clienteSel.nome + (clienteSel.telefone ? ' · ' + clienteSel.telefone : '')) : 'Sem cliente vinculado';
@@ -1910,7 +2084,22 @@ async function esperadoGaveta(){
   Object.keys(porForma).forEach(k => porForma[k] = round2(porForma[k]));
   return porForma;
 }
+function mesasAbertas(){
+  const n = (CFG && CFG.numMesas) || 20;
+  const abertas = [];
+  for(let i = 1; i <= n; i++){
+    const st = (MESAS[String(i)] || {}).status;
+    if(st && st !== 'livre' && st !== 'agrupada') abertas.push(i);
+  }
+  return abertas;
+}
 async function fecharGavetaUI(){
+  const abertas = mesasAbertas();
+  if(abertas.length){
+    if(!confirm('⚠️ Ainda há ' + abertas.length + ' mesa(s) aberta(s): ' + abertas.join(', ') + '.\n\nFeche todas antes de fechar o caixa. Se tem certeza que quer continuar mesmo assim (precisa da senha do gerente), toque OK.')) return;
+    if(!senhaGerente()) return;
+    logAcao('fechamento_caixa_com_mesa_aberta', { mesas: abertas });
+  }
   const espera = await esperadoGaveta();
   const formas = Object.keys(espera);
   $('ovExtraBox').innerHTML = `
@@ -2280,6 +2469,7 @@ function preencherConfig(){
   $('togSom').classList.toggle('on', CFG.som !== false);
   $('togBaixa').classList.toggle('on', !!CFG.baixaSoComputador);
   $('togExigirCaixa').classList.toggle('on', CFG.exigirCaixa !== false);
+  $('togPedidoQR').classList.toggle('on', CFG.pedidoQR !== false);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
   renderFracPills(); renderSetores(); renderCatOrd();
 }
@@ -2335,6 +2525,18 @@ async function trocarSenhaGer(){
   await rcol().update({ senhaGerente: v }); $('cfgSenhaGer').value = ''; toast('Senha do gerente alterada 🔑');
 }
 function copiarLink(){ navigator.clipboard.writeText($('cfgLink').value).then(() => toast('Link copiado 📋')); }
+function gerarQrMesa(){
+  const n = parseInt($('qrMesaNum').value);
+  if(!n || n < 1){ toast('Digite o número da mesa'); return; }
+  const url = location.origin + location.pathname + '?rest=' + REST + '&mesa=' + n;
+  const qrImg = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(url);
+  $('qrMesaBox').innerHTML = `
+    <div class="card" style="text-align:center">
+      <img src="${qrImg}" style="width:180px;height:180px;border-radius:12px;background:#fff;padding:8px" onerror="this.style.display='none'">
+      <p style="font-size:12px;color:var(--mut);margin-top:10px;word-break:break-all">${esc(url)}</p>
+      <button class="btn o sm" style="margin-top:8px" onclick="navigator.clipboard.writeText('${url}').then(()=>toast('Link copiado 📋'))">📋 Copiar link</button>
+    </div>`;
+}
 
 /* setores */
 /* praças (áreas de mesas) */
@@ -3024,6 +3226,15 @@ function alternarTema(){
   localStorage.setItem('pdv_tema', atual === 'light' ? 'dark' : 'light');
   aplicarTema();
 }
+/* ---------- indicador de conexão (fila offline já é feita pelo Firestore) ---------- */
+function atualizarStatusConexao(){
+  const bar = $('offlineBar');
+  if(!bar) return;
+  bar.style.display = navigator.onLine ? 'none' : '';
+}
+window.addEventListener('online', () => { atualizarStatusConexao(); toast('Conexão voltou — sincronizando ✅'); });
+window.addEventListener('offline', atualizarStatusConexao);
+atualizarStatusConexao();
 aplicarTema();
 boot();
 </script>
