@@ -16,6 +16,7 @@
   --amber:#E8A33D; --amber2:#f5bd63; --green:#2FBF71; --red:#E0554D; --blue:#4FA3E0;
   --ink:#F4EFE7; --mut:#9c9184;
   --paper:#FBF6EC; --paperInk:#2a2620;
+  --tintAmber:#2e2519; --tintBlue:#1c2a38;
   --r:16px;
 }
 [data-theme="light"]{
@@ -23,6 +24,7 @@
   --amber:#C9822A; --amber2:#E0A550; --green:#1E9B5C; --red:#D14840; --blue:#2E7DBF;
   --ink:#211D18; --mut:#7A7263;
   --paper:#FFFFFF; --paperInk:#2a2620;
+  --tintAmber:#F3E2C4; --tintBlue:#D9E6F2;
 }
 body,.mesa,.prod,.card,.chip,.pill,.tog,.rolecard{transition:background-color .25s, border-color .25s, color .25s}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -76,7 +78,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa .n{font-size:24px;font-weight:800}
 .mesa .st{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
 .mesa .tot{font-size:11px;color:var(--amber);font-family:'IBM Plex Mono',monospace;font-weight:700}
-.mesa.ocupada{border-color:var(--amber);background:linear-gradient(160deg,#2e2519,var(--card))}
+.mesa.ocupada{border-color:var(--amber);background:linear-gradient(160deg,var(--tintAmber),var(--card))}
 .mesa.ocupada .st{color:var(--amber)}
 .mesa.conta{border-color:var(--green);animation:pulse 1.6s infinite}
 .mesa.conta .st{color:var(--green)}
@@ -234,16 +236,16 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.agrupada{opacity:.5;border-style:dashed}
 .mesa.agrupada::before,.mesa.agrupada::after{display:none}
 .mesagrid{row-gap:20px}
-.mesa{transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .2s;user-select:none;-webkit-user-select:none;touch-action:none}
+.mesa{transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .2s;user-select:none;-webkit-user-select:none;touch-action:pan-y}
 .mesa.segurando{transform:scale(1.08) translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.45);z-index:5}
 .mesa.arrastando{opacity:.2}
 .mesa.drop-alvo{border-color:var(--green) !important;box-shadow:0 0 0 5px rgba(47,191,113,.28)}
 .mesa-clone{border-radius:18px;pointer-events:none;transform:scale(1.1) rotate(-2deg);box-shadow:0 22px 44px rgba(0,0,0,.5);transition:none}
 .mesa.grupo{aspect-ratio:auto;min-height:96px;padding:12px 10px}
 .grupo-nums{display:flex;align-items:center;gap:6px}
-.grupo-nums .gn{font-size:20px;font-weight:800;background:rgba(0,0,0,.18);border-radius:10px;padding:2px 9px}
+.grupo-nums .gn{font-size:20px;font-weight:800;padding:2px 4px}
 .grupo-nums .gl{width:16px;height:2px;background:var(--amber);opacity:.7}
-.mesa.paga{border-color:var(--blue);background:linear-gradient(160deg,#1c2a38,var(--card))}
+.mesa.paga{border-color:var(--blue);background:linear-gradient(160deg,var(--tintBlue),var(--card))}
 .mesa.paga .st{color:var(--blue)}
 .catorder{display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
 .catorder b{flex:1;font-size:14px}
@@ -316,6 +318,16 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
     <span style="font-size:52px">⏳</span>
     <h2 style="margin-top:14px">Aguardando liberação</h2>
     <p style="color:var(--mut);margin-top:10px;line-height:1.7">Olá, <b id="bloqNome"></b>!<br>Peça ao gerente para te liberar em<br><b>Computador → Gaveta → Equipe do dia</b>.<br>Assim que liberar, esta tela abre sozinha.</p>
+    <button class="btn o" style="margin-top:22px" onclick="show('scHome')">← Voltar</button>
+  </div>
+</div>
+
+<!-- ============ CAIXA FECHADO ============ -->
+<div class="screen" id="scCaixaFechado">
+  <div class="wrap" style="display:flex;flex-direction:column;justify-content:center;min-height:100dvh;text-align:center">
+    <span style="font-size:52px">🔒</span>
+    <h2 style="margin-top:14px">Caixa ainda não foi aberto</h2>
+    <p style="color:var(--mut);margin-top:10px;line-height:1.7">Ninguém pode tirar pedido ou abrir mesa antes de abrir o caixa do dia.<br>Peça ao gerente para abrir em<br><b>Computador → Gaveta → Abrir caixa</b>.<br>Assim que abrir, esta tela avança sozinha.</p>
     <button class="btn o" style="margin-top:22px" onclick="show('scHome')">← Voltar</button>
   </div>
 </div>
@@ -442,6 +454,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <div class="sw"><div><b>Impressão automática</b><small>Imprimir pedidos assim que chegam</small></div><div class="tog" id="togAuto" onclick="togCampo('autoImprimir', this)"></div></div>
       <div class="sw"><div><b>Alerta sonoro</b><small>Som quando chega pedido novo</small></div><div class="tog" id="togSom" onclick="togCampo('som', this)"></div></div>
       <div class="sw"><div><b>Baixa da mesa só pelo computador</b><small>Garçom só marca "paga"; o caixa é quem libera a mesa</small></div><div class="tog" id="togBaixa" onclick="togCampo('baixaSoComputador', this)"></div></div>
+      <div class="sw"><div><b>Exigir caixa aberto para operar</b><small>Ninguém tira pedido nem vende no balcão antes do gerente abrir o caixa do dia</small></div><div class="tog" id="togExigirCaixa" onclick="togCampo('exigirCaixa', this)"></div></div>
       <label>📋 Ordem das categorias no cardápio</label>
       <div id="catOrdList"></div>
       <p style="color:var(--mut);font-size:12px;margin:-6px 0 4px">Vale para o cardápio do garçom e do balcão.</p>
@@ -516,6 +529,7 @@ let adminOk = false, mesaAtual = null, carrinho = [], catAtiva = 'Todos', contex
 let pedidosVistos = new Set(), primeiraCarga = true, deferredPrompt = null, clienteSel = null;
 let ocupado = false; // trava anti toque-duplo
 let modoAtual = 'garcom'; // 'garcom' | 'computador' — controla quem pode dar baixa na mesa
+let aguardandoCaixa = null; // 'garcom' | 'balcao' | null — tela travada esperando o caixa abrir
 
 const rcol = () => db.collection('pdv_restaurantes').doc(REST);
 const col = (c) => rcol().collection(c);
@@ -583,6 +597,10 @@ async function boot(){
     unsubs.push(col('caixas').where('status', '==', 'aberto').onSnapshot(s => {
       GAVETA = s.docs.length ? { id: s.docs[0].id, ...s.docs[0].data() } : null;
       if($('scComp').classList.contains('on') && $('compGav').style.display !== 'none') renderGaveta();
+      if(GAVETA && aguardandoCaixa){
+        const dest = aguardandoCaixa; aguardandoCaixa = null;
+        if($('scCaixaFechado').classList.contains('on')){ toast('Caixa aberto! 🎉'); if(dest === 'balcao') entrarBalcao(); else entrarGarcom(); }
+      }
     }));
     setInterval(() => { // atualiza tempos das mesas
       if($('scMesas').classList.contains('on')) renderMesas('mesaGrid', false);
@@ -621,7 +639,7 @@ async function criarRest(){
       nome, senha, senhaGerente: senha, modo: $('stModo').value,
       numMesas: parseInt($('stMesas').value) || 20,
       taxa: 10, autoImprimir: true, som: true, impConta: '',
-      fracRegra: 'cara', categoriasFracao: [],
+      fracRegra: 'cara', categoriasFracao: [], exigirCaixa: true,
       setores: [{ id:'cozinha', nome:'Cozinha', impressora:'' }, { id:'bar', nome:'Bar', impressora:'' }],
       criadoEm: TS()
     });
@@ -638,6 +656,7 @@ function sairRest(){ pararListeners(); REST=''; localStorage.removeItem('pdv_res
 function entrarGarcom(){
   if(!garcom || (!garcomId && EQUIPE.some(f => f.funcao === 'garcom'))){ abrirNome(); return; }
   if(garcomId && !garcomHabilitado()){ mostrarBloqueio(); return; }
+  if((CFG && CFG.exigirCaixa !== false) && !GAVETA){ aguardandoCaixa = 'garcom'; show('scCaixaFechado'); return; }
   modoAtual = 'garcom';
   $('garcomNomeTop').textContent = garcom;
   renderMesas('mesaGrid', false); escutarProntos(); show('scMesas');
@@ -718,14 +737,14 @@ function renderMesas(elId, modoCaixa){
     const m = MESAS[String(i)] || {};
     const st = m.status || 'livre';
     const resta = itensRestanteTotal(m);
-    const dragAttrs = !modoCaixa ? `onpointerdown="iniciarDragMesa(event,${i})"` : `onpointerdown="segurarMesa(this)"`;
+    const dragAttrs = !modoCaixa ? `onpointerdown="iniciarDragMesa(event,${i})"` : `onpointerdown="segurarMesa(this)" onclick="abrirCaixaMesa(${i})"`;
     const grupo = m.grupoCom || [];
     const stTxt = st === 'livre' ? 'Livre' : (st === 'conta' ? 'Pediu conta' : (st === 'paga' ? 'Pago · aguardando baixa' : 'Ocupada'));
     const todos = [i, ...grupo];
     const numsHTML = grupo.length
       ? `<div class="grupo-nums">${todos.map((num, idx) => `<span class="gn">${num}</span>${idx < todos.length - 1 ? '<span class="gl"></span>' : ''}`).join('')}</div>`
       : `<div class="n">${i}</div>`;
-    html += `<div class="mesa ${st} ${grupo.length ? 'grupo' : ''}" data-mesa="${i}" ${grupo.length ? `style="grid-column:span ${Math.min(todos.length, 4)}"` : ''} ${dragAttrs} onclick="${modoCaixa ? `abrirCaixaMesa(${i})` : `abrirMesa(${i})`}">
+    html += `<div class="mesa ${st} ${grupo.length ? 'grupo' : ''}" data-mesa="${i}" ${grupo.length ? `style="grid-column:span ${Math.min(todos.length, 4)}"` : ''} ${dragAttrs}>
       ${st !== 'livre' && m.numPessoas ? `<div class="pess">👥${m.numPessoas}</div>` : ''}
       ${st !== 'livre' && (m.garcomFoto || m.garcom) ? `<div class="gpic">${avatarHTML(m.garcom, m.garcomFoto, 'sm')}</div>` : ''}
       ${numsHTML}<div class="st">${stTxt}</div>
@@ -822,7 +841,14 @@ function soltarDragMesa(ev){
   clearTimeout(dragState.timer);
   clearInterval(window._scrollDragT);
   try{ dragState.el.releasePointerCapture(dragState.pid); }catch(e){}
-  if(!dragState.longPress){ dragState = null; return; }
+  const src = dragState.i;
+  if(!dragState.longPress){
+    // toque rápido, sem segurar: abre a mesa normalmente
+    dragState = null;
+    abrirMesa(src);
+    return;
+  }
+  ev.preventDefault();
   const clone = dragState.cloneEl;
   dragState.el.classList.remove('arrastando');
   document.querySelectorAll('.mesa.drop-alvo').forEach(x => x.classList.remove('drop-alvo'));
@@ -830,7 +856,7 @@ function soltarDragMesa(ev){
   const under = document.elementFromPoint(ev.clientX, ev.clientY);
   clone.style.display = '';
   const alvoEl = under && under.closest && under.closest('.mesa[data-mesa]');
-  const src = dragState.i;
+  dragState = null;
   if(alvoEl && alvoEl.dataset.mesa != src){
     const dest = parseInt(alvoEl.dataset.mesa);
     const destM = MESAS[String(dest)] || {};
@@ -840,14 +866,17 @@ function soltarDragMesa(ev){
       clone.style.left = r.left + 'px'; clone.style.top = r.top + 'px';
       clone.style.transform = 'scale(.94)'; clone.style.opacity = '.7';
       setTimeout(() => { clone.remove(); agruparMesaDrag(src, dest); }, 190);
-      dragState = null; return;
+      return;
     }
   }
-  clone.remove(); dragState = null;
+  clone.remove();
+  // segurou e soltou sem largar em cima de outra mesa: abre o menu rápido (não entra na mesa)
+  abrirMenuRapido(src);
 }
 document.addEventListener('pointermove', moverDragMesa);
 document.addEventListener('pointerup', soltarDragMesa);
 document.addEventListener('pointercancel', () => { if(dragState){ if(dragState.cloneEl) dragState.cloneEl.remove(); if(dragState.el) dragState.el.classList.remove('arrastando'); dragState = null; } });
+function abrirMenuRapido(i){ mesaAtual = i; mesaMenu(); }
 async function agruparMesaDrag(src, dest){
   await trava(async () => {
     const sRef = col('mesas').doc(String(src)), dRef = col('mesas').doc(String(dest));
@@ -1726,6 +1755,7 @@ async function aplicarPagtoNaMesa(t){
 
 /* ---------- balcão + clientes ---------- */
 function entrarBalcao(){
+  if((CFG && CFG.exigirCaixa !== false) && !GAVETA){ aguardandoCaixa = 'balcao'; show('scCaixaFechado'); return; }
   contexto = 'balcao'; mesaAtual = null; carrinho = []; catAtiva = 'Todos';
   renderCardapio('prodGridB','catChipsB'); atualizarCartBar(); atualizarClienteBar(); show('scBalcao');
 }
@@ -2175,6 +2205,7 @@ function preencherConfig(){
   $('togAuto').classList.toggle('on', CFG.autoImprimir !== false);
   $('togSom').classList.toggle('on', CFG.som !== false);
   $('togBaixa').classList.toggle('on', !!CFG.baixaSoComputador);
+  $('togExigirCaixa').classList.toggle('on', CFG.exigirCaixa !== false);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
   renderFracPills(); renderSetores(); renderCatOrd();
 }
