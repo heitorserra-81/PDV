@@ -18,6 +18,13 @@
   --paper:#FBF6EC; --paperInk:#2a2620;
   --r:16px;
 }
+[data-theme="light"]{
+  --bg:#F5F1E8; --surf:#FFFFFF; --card:#FBF8F1; --line:#E3DBC9;
+  --amber:#C9822A; --amber2:#E0A550; --green:#1E9B5C; --red:#D14840; --blue:#2E7DBF;
+  --ink:#211D18; --mut:#7A7263;
+  --paper:#FFFFFF; --paperInk:#2a2620;
+}
+body,.mesa,.prod,.card,.chip,.pill,.tog,.rolecard{transition:background-color .25s, border-color .25s, color .25s}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:'Sora',system-ui,sans-serif;font-size:15px;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -227,7 +234,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.agrupada{opacity:.5;border-style:dashed}
 .mesa.agrupada::before,.mesa.agrupada::after{display:none}
 .mesagrid{row-gap:20px}
-.mesa{transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .2s;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.mesa{transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .2s;user-select:none;-webkit-user-select:none;touch-action:none}
 .mesa.segurando{transform:scale(1.08) translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.45);z-index:5}
 .mesa.arrastando{opacity:.2}
 .mesa.drop-alvo{border-color:var(--green) !important;box-shadow:0 0 0 5px rgba(47,191,113,.28)}
@@ -766,6 +773,7 @@ function iniciarArrasteVisual(ev){
   if(!dragState) return;
   dragState.longPress = true;
   const el = dragState.el;
+  try{ el.setPointerCapture(dragState.pid); }catch(e){}
   const r = el.getBoundingClientRect();
   const clone = el.cloneNode(true);
   clone.className = 'mesa mesa-clone';
@@ -813,6 +821,7 @@ function soltarDragMesa(ev){
   if(!dragState) return;
   clearTimeout(dragState.timer);
   clearInterval(window._scrollDragT);
+  try{ dragState.el.releasePointerCapture(dragState.pid); }catch(e){}
   if(!dragState.longPress){ dragState = null; return; }
   const clone = dragState.cloneEl;
   dragState.el.classList.remove('arrastando');
@@ -947,10 +956,14 @@ function mesaMenu(){
   const m = MESAS[String(mesaAtual)] || {};
   const doisPassos = !!(CFG && CFG.baixaSoComputador);
   const souGarcom = modoAtual !== 'computador';
+  const meuPerfil = garcomId ? EQUIPE.find(f => f.id === garcomId) : null;
+  const semPermissao = souGarcom && meuPerfil && meuPerfil.podeFecharConta === false;
   let botaoPagamento;
   if(doisPassos && souGarcom){
     if(m.status === 'paga') botaoPagamento = `<button disabled style="opacity:.5"><span style="font-size:20px">🔵</span><span>Já pago — aguardando o caixa dar baixa</span></button>`;
     else botaoPagamento = `<button onclick="marcarMesaPaga()"><span style="font-size:20px">💳</span><span>Marcar como paga (levei a maquininha)</span></button>`;
+  }else if(semPermissao){
+    botaoPagamento = `<button onclick="tentarFecharComSenha(${mesaAtual})"><span style="font-size:20px">🔒</span><span>Fechar conta (peça a senha do gerente)</span></button>`;
   }else{
     botaoPagamento = `<button onclick="fecharOv('ovExtra');abrirCaixaMesa(${mesaAtual})"><span style="font-size:20px">💰</span><span>Receber pagamento${m.status === 'paga' ? ' e dar baixa' : ''}</span></button>`;
   }
@@ -1372,6 +1385,11 @@ async function marcarMesaPaga(){
   logAcao('mesa_marcada_paga', { mesa: mesaAtual });
   fecharOv('ovExtra'); toast('Mesa marcada como paga 💳 — aguardando baixa no caixa');
 }
+function tentarFecharComSenha(n){
+  if(!senhaGerente()) return;
+  logAcao('fechamento_liberado_por_senha', { mesa: n, garcom });
+  fecharOv('ovExtra'); abrirCaixaMesa(n);
+}
 
 /* ---------- computador: monitor ---------- */
 function entrarComputador(){
@@ -1610,7 +1628,9 @@ function renderPagto(){
     <button class="btn o" style="margin-top:10px" onclick="${cxMesa === null ? "fecharOv('ovCaixa')" : 'renderModoPagto()'}">← Voltar</button>`;
 }
 function darDesconto(){
-  if(!senhaGerente()) return;
+  const meuPerfil = garcomId ? EQUIPE.find(f => f.id === garcomId) : null;
+  const liberado = modoAtual === 'computador' || (meuPerfil && meuPerfil.podeDesconto);
+  if(!liberado && !senhaGerente()) return;
   const v = prompt('Desconto — digite o valor em R$ (ex: 10) ou porcentagem (ex: 10%):');
   if(!v) return;
   let d = 0;
@@ -2421,6 +2441,7 @@ function renderEquipe(){
     <div class="pagrow" style="cursor:pointer" onclick="editarFunc('${f.id}')">
       ${avatarHTML(f.nome, f.foto)}<b style="flex:1">${esc(f.nome)}</b>
       <span class="badge a">${nomeF[f.funcao] || f.funcao}</span>
+      ${f.podeFecharConta === false ? `<span class="badge r">🔒 sem fechar conta</span>` : ''}
       <button class="iconb" style="width:36px;height:36px;flex:0 0 36px" title="Copiar link pessoal" onclick="event.stopPropagation();copiarLinkGarcom('${f.id}')">🔗</button></div>`).join('')
     || '<div class="empty"><span class="ic">👥</span>Ninguém cadastrado ainda.</div>';
 }
@@ -2438,6 +2459,10 @@ function editarFunc(id){
       <button class="btn sm" style="flex:0 0 auto" onclick="$('efFile').click()">📸</button></div>
     <input type="file" id="efFile" accept="image/*" style="display:none" onchange="escolherFoto(this,'efFoto','efPrev')">
     <img id="efPrev" class="fotoprev" style="border-radius:50%;${f && f.foto ? '' : 'display:none'}" src="${f && f.foto ? esc(f.foto) : ''}" onerror="this.style.display='none'">
+    <label style="margin-top:16px">🔐 Permissões deste funcionário</label>
+    <div class="sw"><div><b>Pode lançar pedidos</b><small>Se desligar, ele fica bloqueado até o gerente liberar (mesmo controle da aba Gaveta → Equipe do dia)</small></div><div class="tog ${f && f.habilitado ? 'on' : ''}" id="efHabilitado" onclick="this.classList.toggle('on')"></div></div>
+    <div class="sw"><div><b>Pode fechar conta / receber pagamento</b><small>Se desligar, ele só consegue fechar mesa digitando a senha do gerente na hora</small></div><div class="tog ${!f || f.podeFecharConta !== false ? 'on' : ''}" id="efPodeFechar" onclick="this.classList.toggle('on')"></div></div>
+    <div class="sw"><div><b>Pode dar desconto</b><small>Além da senha do gerente, permite que ele mesmo aplique desconto</small></div><div class="tog ${f && f.podeDesconto ? 'on' : ''}" id="efPodeDesconto" onclick="this.classList.toggle('on')"></div></div>
     <button class="btn g" style="margin-top:16px" onclick="salvarFunc()">Salvar</button>
     ${id ? `<button class="btn r" style="margin-top:10px" onclick="excluirFunc()">🗑️ Remover</button>` : ''}
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
@@ -2446,7 +2471,12 @@ function editarFunc(id){
 async function salvarFunc(){
   const nome = $('efNome').value.trim();
   if(!nome){ toast('Digite o nome'); return; }
-  const dados = { nome, funcao: $('efFuncao').value, foto: $('efFoto').value.trim() };
+  const dados = {
+    nome, funcao: $('efFuncao').value, foto: $('efFoto').value.trim(),
+    habilitado: $('efHabilitado').classList.contains('on'),
+    podeFecharConta: $('efPodeFechar').classList.contains('on'),
+    podeDesconto: $('efPodeDesconto').classList.contains('on')
+  };
   if(funcId) await col('equipe').doc(funcId).update(dados);
   else await col('equipe').add({ ...dados, criadoEm: TS() });
   fecharOv('ovExtra'); toast('Funcionário salvo ✅');
