@@ -2460,7 +2460,7 @@ function checarSenha(){
   if($('inSenha').value === (CFG && CFG.senha)){ adminOk = true; fecharOv('ovSenha'); entrarConfig(); }
   else toast('Senha incorreta');
 }
-function entrarConfig(){ preencherConfig(); cfgTab('prod'); show('scConfig'); }
+function entrarConfig(){ preencherConfig(); cfgTab('prod'); show('scConfig'); conectarImpressao(false); }
 function cfgTab(t){
   const map = { prod:'Prod', grp:'Grp', eqp:'Eqp', set:'Set', praca:'Praca', geral:'Geral' };
   Object.keys(map).forEach(k => {
