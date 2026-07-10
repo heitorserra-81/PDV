@@ -1897,7 +1897,7 @@ function calcularItensComprovante(m){
 function imprimirComprovante(t, itens){
   const imp = (CFG && CFG.impConta) || '';
   if(qzOn && imp){
-    printRaw(imp, escposComprovante(t, itens)).catch(e => console.error(e));
+    comTimeout(printRaw(imp, escposComprovante(t, itens)), 15000).catch(e => { console.error(e); toast('Comprovante não imprimiu: ' + (e.message||e)); });
   }else{
     fallbackPrint(htmlComprovante(t, itens));
   }
@@ -2184,7 +2184,7 @@ async function confirmarFechamento(espera){
 function imprimirFechamento(espera, contado, divergencia, quem){
   const imp = (CFG && CFG.impConta) || '';
   const texto = escposFechamento(espera, contado, divergencia, quem);
-  if(qzOn && imp){ printRaw(imp, texto).catch(e => console.error(e)); }
+  if(qzOn && imp){ comTimeout(printRaw(imp, texto), 15000).catch(e => { console.error(e); toast('Fechamento não imprimiu: ' + (e.message||e)); }); }
   else{ fallbackPrint(htmlFechamento(espera, contado, divergencia, quem)); }
 }
 function escposFechamento(espera, contado, divergencia, quem){
@@ -2483,13 +2483,19 @@ async function printRaw(impressora, dados){
   const cfg = qz.configs.create(impressora);
   await qz.print(cfg, [{ type: 'raw', format: 'command', flavor: 'plain', data: dados }]);
 }
+function comTimeout(promessa, ms, msg){
+  return Promise.race([
+    promessa,
+    new Promise((_, rej) => setTimeout(() => rej(new Error(msg || 'A impressora não respondeu a tempo')), ms))
+  ]);
+}
 function imprimirPedido(id, p, auto){
-  if(!p) return;
+  if(!p){ console.warn('imprimirPedido chamado sem dados do pedido', id); return Promise.resolve(); }
   filaPrint = filaPrint.then(async () => {
     try{
       if(p.tipo === 'conta'){
         const imp = (CFG && CFG.impConta) || '';
-        if(qzOn && imp) await printRaw(imp, escposConta(p));
+        if(qzOn && imp) await comTimeout(printRaw(imp, escposConta(p)), 15000);
         else fallbackPrint(htmlConta(p));
       }else{
         const grupos = {};
@@ -2497,7 +2503,7 @@ function imprimirPedido(id, p, auto){
         let algumFallback = false;
         for(const k of Object.keys(grupos)){
           const imp = impressoraDoSetor(k);
-          if(qzOn && imp) await printRaw(imp, escposPedido(p, grupos[k], nomeSetor(k)));
+          if(qzOn && imp) await comTimeout(printRaw(imp, escposPedido(p, grupos[k], nomeSetor(k))), 15000);
           else algumFallback = true;
         }
         if(algumFallback) fallbackPrint(htmlPedido(p));
@@ -2505,7 +2511,7 @@ function imprimirPedido(id, p, auto){
       await marcarImpresso(id);
       if(!auto) toast('Impresso ✅');
     }catch(e){ console.error(e); toast('Falha na impressão: ' + (e.message || e)); }
-  });
+  }).catch(e => { console.error('Erro inesperado na fila de impressão:', e); });
   return filaPrint;
 }
 function htmlPedido(p){
