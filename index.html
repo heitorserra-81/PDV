@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#141210">
+<link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Konecta PDV — Ponto de Venda</title>
@@ -2177,7 +2178,35 @@ async function confirmarFechamento(espera){
   const quem = prompt('Quem está fechando?', garcom || '') || '';
   await col('caixas').doc(GAVETA.id).update({ status: 'fechado', fechadoEm: TS(), fechadoPor: quem, esperado: espera, contado, divergencia });
   logAcao('fechamento_caixa', { divergencia });
+  imprimirFechamento(espera, contado, divergencia, quem);
   fecharOv('ovExtra'); toast('Caixa fechado 🔒 ' + (divergencia ? 'Divergência: ' + fmt(divergencia) : 'Bateu certinho!'));
+}
+function imprimirFechamento(espera, contado, divergencia, quem){
+  const imp = (CFG && CFG.impConta) || '';
+  const texto = escposFechamento(espera, contado, divergencia, quem);
+  if(qzOn && imp){ printRaw(imp, texto).catch(e => console.error(e)); }
+  else{ fallbackPrint(htmlFechamento(espera, contado, divergencia, quem)); }
+}
+function escposFechamento(espera, contado, divergencia, quem){
+  const E = '\x1b', G = '\x1d';
+  let s = E + '@' + E + 'a' + '\x01';
+  s += E + 'E' + '\x01' + semAcento('FECHAMENTO DE CAIXA') + '\n' + E + 'E' + '\x00';
+  s += semAcento((CFG && CFG.nome) || '') + '\n' + semAcento(new Date().toLocaleString('pt-BR')) + '\n';
+  s += semAcento('Fechado por: ' + (quem || '-')) + '\n' + E + 'a' + '\x00' + '-'.repeat(colWidth()) + '\n' + tamTexto();
+  Object.keys(espera).forEach(f => {
+    s += linhaEsq(f + ' esperado', fmt(espera[f])) + '\n';
+    s += linhaEsq(f + ' contado', fmt(contado[f])) + '\n';
+  });
+  s += resetTam() + '-'.repeat(colWidth()) + '\n';
+  s += tamPreco() + linhaEsq(divergencia === 0 ? 'BATEU CERTINHO' : (divergencia > 0 ? 'SOBRA' : 'FALTA'), fmt(Math.abs(divergencia))) + '\n' + resetTam();
+  s += '\n\n' + avancoPapel() + G + 'V' + '\x41' + '\x03';
+  return s;
+}
+function htmlFechamento(espera, contado, divergencia, quem){
+  return `<h3>FECHAMENTO DE CAIXA</h3><div class="c">${esc((CFG && CFG.nome) || '')}</div>
+    <div class="c">${new Date().toLocaleString('pt-BR')}</div><div class="c">Fechado por: ${esc(quem || '-')}</div><div class="sep"></div>
+    ${Object.keys(espera).map(f => `<div class="li"><span>${esc(f)} esperado</span><span>${fmt(espera[f])}</span></div><div class="li"><span>${esc(f)} contado</span><span>${fmt(contado[f])}</span></div>`).join('')}
+    <div class="sep"></div><div class="li big"><span>${divergencia === 0 ? 'BATEU CERTINHO' : (divergencia > 0 ? 'SOBRA' : 'FALTA')}</span><span>${fmt(Math.abs(divergencia))}</span></div>`;
 }
 async function historicoGavetas(){
   const snap = await col('caixas').orderBy('abertoEm', 'desc').limit(15).get();
@@ -2359,13 +2388,17 @@ mZ6+4saqVxA1Dt8XkCN4xw==
 -----END PRIVATE KEY-----`;
 async function conectarImpressao(avisar){
   if(!window.qz){ setQzStatus(false); return false; }
+  if(typeof KEYUTIL === 'undefined' || typeof KJUR === 'undefined'){
+    if(avisar) toast('⛔ Biblioteca de assinatura não carregou — verifique a internet/firewall');
+    console.error('jsrsasign não carregou — KEYUTIL/KJUR indefinidos');
+  }
   try{
     qz.security.setCertificatePromise(resolve => resolve(QZ_CERTIFICADO));
-    try{ qz.security.setSignatureAlgorithm('SHA512'); }catch(e){}
+    qz.security.setSignatureAlgorithm('SHA1');
     qz.security.setSignaturePromise(toSign => (resolve, reject) => {
       try{
         const pk = KEYUTIL.getKey(QZ_CHAVE_PRIVADA);
-        const sig = new KJUR.crypto.Signature({ alg: 'SHA512withRSA' });
+        const sig = new KJUR.crypto.Signature({ alg: 'SHA1withRSA' });
         sig.init(pk);
         sig.updateString(toSign);
         const hex = sig.sign();
@@ -3329,18 +3362,6 @@ async function excluirBackup(id){
 
 
 /* ---------- PWA ---------- */
-(function(){
-  const manifest = {
-    name: 'Konecta PDV', short_name: 'Konecta PDV',
-    start_url: location.pathname + (REST ? '?rest=' + REST : ''),
-    display: 'standalone', background_color: '#141210', theme_color: '#141210',
-    icons: [{ src: 'data:image/svg+xml,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='#E8A33D'/><text x='256' y='340' font-size='240' text-anchor='middle' font-family='Arial' font-weight='bold' fill='#141210'>KP</text></svg>"), sizes: '512x512', type: 'image/svg+xml', purpose: 'any' }]
-  };
-  const link = document.createElement('link');
-  link.rel = 'manifest';
-  link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' }));
-  document.head.appendChild(link);
-})();
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
 function instalarApp(){
   if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; return; }
