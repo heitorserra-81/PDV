@@ -267,8 +267,9 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <label>Código do estabelecimento</label>
       <input id="inRest" placeholder="ex: marchesini" autocapitalize="none">
       <button class="btn" style="margin-top:14px" onclick="entrarRest()">Entrar</button>
-      <p style="color:var(--mut);font-size:12px;text-align:center;margin-top:12px">Novo estabelecimento? Fale com quem te vendeu o acesso.</p>
     </div>
+    <div style="display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--mut);font-size:12px"><span style="flex:1;height:1px;background:var(--line)"></span>dono do sistema<span style="flex:1;height:1px;background:var(--line)"></span></div>
+    <button class="btn o" style="border-color:var(--amber);color:var(--amber)" onclick="abrirPainelDono()">👑 Acesso do Desenvolvedor</button>
     <div class="credit">Desenvolvido por Heitor Serra Neto</div>
   </div>
 </div>
@@ -300,9 +301,10 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
   </div>
 </div>
 <div class="screen" id="scAdmin">
-  <div class="top"><button class="iconb" onclick="location.href=location.pathname">←</button><h2>🛠️ Painel mestre</h2></div>
+  <div class="top"><button class="iconb" onclick="adminMestreOk=false;show('scEntrada')">←</button><h2>🛠️ Painel mestre</h2></div>
   <div class="wrap">
     <button class="btn g" onclick="show('scSetup')">＋ Novo estabelecimento</button>
+    <button class="btn o sm" style="margin-top:10px" onclick="trocarSenhaMestra()">🔑 Trocar senha do painel</button>
     <div id="adminLista" style="margin-top:16px"></div>
   </div>
 </div>
@@ -636,7 +638,6 @@ async function logAcao(tipo, dados){
 
 /* ---------- boot ---------- */
 async function boot(){
-  if(!REST && new URLSearchParams(location.search).get('admin') === '1'){ show('scAdminLogin'); return; }
   if(!REST){ show('scEntrada'); return; }
   try{
     const doc = await rcol().get();
@@ -732,11 +733,30 @@ async function criarRest(){
 function sairRest(){ pararListeners(); REST=''; localStorage.removeItem('pdv_rest'); adminOk=false; show('scEntrada'); }
 
 /* ---------- painel mestre (Heitor) ---------- */
-const SENHA_MESTRE = "heitor2026"; // ⚠️ troque aqui pra sua senha real antes de usar
+const SENHA_MESTRE_BOOTSTRAP = "heitor2026"; // usada só na 1ª vez, antes de existir senha salva no banco
 let adminMestreOk = false;
-function checarSenhaMestre(){
-  if($('inSenhaMestre').value === SENHA_MESTRE){ adminMestreOk = true; show('scAdmin'); carregarListaAdmin(); }
-  else toast('Senha incorreta');
+function abrirPainelDono(){ $('inSenhaMestre').value = ''; show('scAdminLogin'); }
+async function checarSenhaMestre(){
+  const digitada = $('inSenhaMestre').value;
+  try{
+    const doc = await db.collection('pdv_admin').doc('config').get();
+    const senhaAtual = doc.exists ? doc.data().senha : SENHA_MESTRE_BOOTSTRAP;
+    if(digitada === senhaAtual){
+      adminMestreOk = true;
+      if(!doc.exists) await db.collection('pdv_admin').doc('config').set({ senha: SENHA_MESTRE_BOOTSTRAP });
+      show('scAdmin'); carregarListaAdmin();
+    }else toast('Senha incorreta');
+  }catch(e){
+    console.error(e);
+    if(digitada === SENHA_MESTRE_BOOTSTRAP){ adminMestreOk = true; show('scAdmin'); carregarListaAdmin(); }
+    else toast('Erro ao conferir senha — tente de novo');
+  }
+}
+async function trocarSenhaMestra(){
+  const nova = prompt('Nova senha do painel do desenvolvedor:');
+  if(!nova || nova.trim().length < 4){ if(nova !== null) toast('Senha muito curta (mínimo 4 caracteres)'); return; }
+  await db.collection('pdv_admin').doc('config').set({ senha: nova.trim() });
+  toast('Senha mestra atualizada ✅');
 }
 async function carregarListaAdmin(){
   $('adminLista').innerHTML = '<div class="empty">Carregando…</div>';
@@ -3439,6 +3459,15 @@ function atualizarStatusConexao(){
 window.addEventListener('online', () => { atualizarStatusConexao(); toast('Conexão voltou — sincronizando ✅'); });
 window.addEventListener('offline', atualizarStatusConexao);
 atualizarStatusConexao();
+/* já instalado (rodando standalone)? esconde o botão de instalar de vez */
+(function(){
+  const jaInstalado = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(jaInstalado){
+    const s = document.createElement('style');
+    s.textContent = '#btnInstalar{display:none !important}';
+    document.head.appendChild(s);
+  }
+})();
 aplicarTema();
 boot();
 </script>
