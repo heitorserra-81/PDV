@@ -6,10 +6,10 @@
 <meta name="theme-color" content="#141210">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>PDV Já — Ponto de Venda</title>
+<title>Konecta PDV — Ponto de Venda</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23E8A33D'/><text x='50' y='68' font-size='52' text-anchor='middle' font-family='Arial' font-weight='bold' fill='%23141210'>PJ</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23E8A33D'/><text x='50' y='68' font-size='52' text-anchor='middle' font-family='Arial' font-weight='bold' fill='%23141210'>KP</text></svg>">
 <style>
 :root{
   --bg:#141210; --surf:#1e1b18; --card:#28241f; --line:#3a332b;
@@ -259,8 +259,8 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <div class="screen on" id="scEntrada">
   <div class="wrap" style="display:flex;flex-direction:column;justify-content:center;min-height:100dvh;padding-bottom:20px">
     <div style="text-align:center;margin-bottom:26px">
-      <div class="logo" style="width:74px;height:74px;font-size:26px;border-radius:22px;margin:0 auto 16px">PJ</div>
-      <h1 style="font-size:30px">PDV Já</h1>
+      <div class="logo" style="width:74px;height:74px;font-size:26px;border-radius:22px;margin:0 auto 16px">KP</div>
+      <h1 style="font-size:30px">Konecta PDV</h1>
       <p style="color:var(--mut);margin-top:8px;font-size:14px">Ponto de venda completo para restaurantes,<br>lanchonetes e comércios</p>
     </div>
     <div class="card">
@@ -310,7 +310,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <!-- ============ HOME ============ -->
 <div class="screen" id="scHome">
   <div class="top">
-    <div class="brand"><div class="logo">PJ</div><div><h2 id="homeNome">—</h2><div class="sub" id="homeCod"></div></div></div>
+    <div class="brand"><div class="logo">KP</div><div><h2 id="homeNome">—</h2><div class="sub" id="homeCod"></div></div></div>
     <button class="iconb" onclick="alternarTema()" title="Alternar tema" id="btnTema">🌙</button>
     <button class="iconb" onclick="sairRest()" title="Trocar estabelecimento">⏻</button>
   </div>
@@ -377,7 +377,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 
 <!-- ============ CLIENTE (QR da mesa) ============ -->
 <div class="screen" id="scCliente">
-  <div class="top"><div class="brand"><div class="logo">PJ</div><div><h2 id="clienteNome">—</h2><div class="sub">Mesa <span id="clienteMesaNum"></span></div></div></div></div>
+  <div class="top"><div class="brand"><div class="logo">KP</div><div><h2 id="clienteNome">—</h2><div class="sub">Mesa <span id="clienteMesaNum"></span></div></div></div></div>
   <div class="wrap" style="display:flex;flex-direction:column;justify-content:center;min-height:70dvh;text-align:center">
     <span style="font-size:52px">👋</span>
     <h2 style="margin-top:10px">Bem-vindo(a)!</h2>
@@ -565,7 +565,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.9.0/jsrsasign-all-min.js"></script>
 <script>
 /* ================================================================
-   PDV JÁ — Etapa 2 · Desenvolvido por Heitor Serra Neto
+   KONECTA PDV — Etapa 2 · Desenvolvido por Heitor Serra Neto
    ⚠️ COLE AQUI O SEU firebaseConfig (projeto staffcheck-d6f20):
 ================================================================ */
 const firebaseConfig = {
@@ -849,7 +849,7 @@ function renderMesas(elId, modoCaixa){
     const m = MESAS[String(i)] || {};
     const st = m.status || 'livre';
     const resta = itensRestanteTotal(m);
-    const dragAttrs = !modoCaixa ? `onpointerdown="iniciarDragMesa(event,${i})"` : `onpointerdown="segurarMesa(this)" onclick="abrirCaixaMesa(${i})"`;
+    const dragAttrs = !modoCaixa ? `onpointerdown="iniciarDragMesa(event,${i})"` : `onpointerdown="segurarMesa(this)" onclick="computadorClicouMesa(${i})"`;
     const grupo = m.grupoCom || [];
     const stTxt = st === 'livre' ? 'Livre' : (st === 'conta' ? 'Pediu conta' : (st === 'paga' ? 'Pago · aguardando baixa' : 'Ocupada'));
     const todos = [i, ...grupo];
@@ -1654,6 +1654,20 @@ async function abrirReimpressao(){
 
 /* ---------- pagamento (4 modos + desconto) ---------- */
 let cxMesa = null, cxPagamentos = [], cxTaxaOn = true, cxBase = 0, cxDesc = 0, cxModo = 'tudo', cxSel = [], cxPessoa = null, cxPartes = 2, cxDescricao = '';
+function computadorClicouMesa(n){
+  const m = MESAS[String(n)] || {};
+  if(m.status === 'agrupada'){ computadorClicouMesa(m.agrupadaEm); return; }
+  if(!m.status || m.status === 'livre'){ modoAtual = 'computador'; abrirMesa(n); return; }
+  mesaAtual = n;
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">Mesa ${n}</h3>
+    <div class="menuops">
+      <button onclick="fecharOv('ovExtra');modoAtual='computador';abrirMesa(${n})"><span style="font-size:20px">🧾</span><span>Ver comanda / lançar mais itens</span></button>
+      <button onclick="fecharOv('ovExtra');abrirCaixaMesa(${n})"><span style="font-size:20px">💰</span><span>Receber pagamento</span></button>
+    </div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
 function abrirCaixaMesa(n){
   const m = MESAS[String(n)] || {};
   if(m.status === 'agrupada'){ abrirCaixaMesa(m.agrupadaEm); return; }
@@ -1870,7 +1884,7 @@ function imprimirComprovante(t, itens){
 function escposComprovante(t, itens){
   const E = '\x1b', G = '\x1d';
   let s = E + '@' + E + 'a' + '\x01';
-  s += E + 'E' + '\x01' + semAcento((CFG && CFG.nome) || 'PDV Já') + '\n' + E + 'E' + '\x00';
+  s += E + 'E' + '\x01' + semAcento((CFG && CFG.nome) || 'Konecta PDV') + '\n' + E + 'E' + '\x00';
   s += semAcento(cxMesa != null ? 'MESA ' + cxMesa : 'BALCÃO') + '\n';
   s += semAcento(new Date().toLocaleString('pt-BR')) + '\n' + E + 'a' + '\x00' + '-'.repeat(colWidth()) + '\n' + tamTexto();
   (itens || []).forEach(it => { s += linhaEsq(it.qtd + 'x ' + it.nome, fmt(it.preco * it.qtd)) + '\n'; });
@@ -2268,60 +2282,60 @@ function exportCSV(){
 /* ---------- impressão (fila + QZ + fallback) ---------- */
 let qzOn = false, listaImpressoras = [], filaPrint = Promise.resolve();
 /* ================================================================
-   Certificado do PDV Já — identidade fixa pro QZ Tray reconhecer
+   Certificado do Konecta PDV — identidade fixa pro QZ Tray reconhecer
    sempre a mesma "pessoa" e poder LEMBRAR de verdade a permissão.
    Gerado uma vez, válido até 2046. Não precisa mexer aqui.
 ================================================================ */
 const QZ_CERTIFICADO = `-----BEGIN CERTIFICATE-----
-MIIDyTCCArGgAwIBAgIUWK97cNaOwRWUXMsqyh5GgQln2mwwDQYJKoZIhvcNAQEL
-BQAwdDELMAkGA1UEBhMCQlIxCzAJBgNVBAgMAlNQMREwDwYDVQQHDAhIb2xhbWJy
-YTEjMCEGA1UECgwaUERWIEphIC0gSGVpdG9yIFNlcnJhIE5ldG8xDzANBgNVBAsM
-BlBEViBKYTEPMA0GA1UEAwwGUERWIEphMB4XDTI2MDcwOTE1MTA1OFoXDTQ2MDcw
-NDE1MTA1OFowdDELMAkGA1UEBhMCQlIxCzAJBgNVBAgMAlNQMREwDwYDVQQHDAhI
-b2xhbWJyYTEjMCEGA1UECgwaUERWIEphIC0gSGVpdG9yIFNlcnJhIE5ldG8xDzAN
-BgNVBAsMBlBEViBKYTEPMA0GA1UEAwwGUERWIEphMIIBIjANBgkqhkiG9w0BAQEF
-AAOCAQ8AMIIBCgKCAQEAvh+A1euTSbBNqfF45KmrdfOSjP1Kjvox9KodfEUgm1qY
-+XuVx5bnDx1BuicOjfs3AJEUhYRuszkDrKhseoprPBoDu7Easfnx40mHz5WlmFh9
-M8BynWt0wUrSQoM9Hb73JCPk+UgK0bE8QwCc6svtvKe1O3jvwAt0rV7QnofV6H38
-tjz9K30Icv+bLWPb4UuOjey+s77ke7U4CyBmVu85I8/iSk63NvhGNqKLhcrIqD6I
-PZmGxVKBa1aPOzu8svrpU7Uf9gQxMdnoLx6vps5Tu4p7ryw8rarwhoSlM+/t+S1r
-fL9Kecpfmm7TSqPWG523aEFGLlLIrw4Nc784aoKSBwIDAQABo1MwUTAdBgNVHQ4E
-FgQU2YufhAyD8NmCVdkkTLv+mCfytswwHwYDVR0jBBgwFoAU2YufhAyD8NmCVdkk
-TLv+mCfytswwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAMAlr
-hx29FiLaFEKusi2btwu+G5ZMSdZlck8smNlwrG5XkUOQLWCDtnmYpIEo2CF1KxIU
-rXG0gdSS3ZnBdipNpq5TgLwbDMzF+kS+hZiC1Vus/7JxIm4ZmyWja0PbISZQAutz
-JKTYcyUoE9gQ2IcGznoKXXfDoAnxAsq8znWwJjMdnr//VAQJwUBRo+pSTwI0ogMx
-5R671UzXWah0t5GDIcfjawuXx/13CEWdaHqYJXA8TrwlovKoyc8tsvS3JTQ2o7JE
-zQzL9ycw6CtRjqStYun+kAPKuD7K7Fx82UA+dPy5Mpo4lV0k+1QJo/4fGKsJBHIL
-8zvJ1n2aD5VwpugzHQ==
+MIID6TCCAtGgAwIBAgIUBp74xlVE5WqTxYEuA0gjaEN9ruIwDQYJKoZIhvcNAQEL
+BQAwgYMxCzAJBgNVBAYTAkJSMQswCQYDVQQIDAJTUDERMA8GA1UEBwwISG9sYW1i
+cmExKDAmBgNVBAoMH0tvbmVjdGEgUERWIC0gSGVpdG9yIFNlcnJhIE5ldG8xFDAS
+BgNVBAsMC0tvbmVjdGEgUERWMRQwEgYDVQQDDAtLb25lY3RhIFBEVjAeFw0yNjA3
+MDkxOTA4MDdaFw00NjA3MDQxOTA4MDdaMIGDMQswCQYDVQQGEwJCUjELMAkGA1UE
+CAwCU1AxETAPBgNVBAcMCEhvbGFtYnJhMSgwJgYDVQQKDB9Lb25lY3RhIFBEViAt
+IEhlaXRvciBTZXJyYSBOZXRvMRQwEgYDVQQLDAtLb25lY3RhIFBEVjEUMBIGA1UE
+AwwLS29uZWN0YSBQRFYwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCN
+bqm24ENso3sr0ZWfNcymF8yxrSS6Gxt48NajZ+/8/ivu17Owa3SxcXCHgV9VKK8n
+yYrKHFewW23YzBTCWTtpwpm5u059io4SjnnQKqO3gWDo8Ew9eA2tlpCk8aKpgwP4
+OOGNB+fS7CxttX5+QZWeBcWNn2o3svYe1ChmO/bFXQRaFlXB4cORlbdiXU9z8lHT
+EZgGf+l4Qkd341dkBfB5c6+95++aMbG1SGIQ57dkUTDcnwNVecIWK3YMKug5xueW
+CzpjibB4LOtA3I5ZAAz52c7yEpjQbBloIdSfCAfQOWuHyoIHL3uUik/enOrVbNOK
+TbLeAoHUp3ZSnYxI9pkjAgMBAAGjUzBRMB0GA1UdDgQWBBR+42iaJGcYqbdY7RvE
+HSRRaDHtOjAfBgNVHSMEGDAWgBR+42iaJGcYqbdY7RvEHSRRaDHtOjAPBgNVHRMB
+Af8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBvIQjr6Zbf2Q9Gmp+RUe89heUC
+IjXFLKivh5lGY097iTNFveILEovP37V8YS+L3OytIa51JaBWzPZZfXWpfF2lcN1l
+wbFrCZq1h4R6PgLWxoCQCa9oARhvPGHToUvbgCCgW3kXILRfr5SFUDHg6NLCjfQY
+aWTthz43AjuhE8MtgzxgvviFMODcbR7UaCOTrtFNuSTSpYtELjKwqxIm6aVRfuQ3
+D3bnGldIHI0aEtjFmquBpt2CjZvJNnKVlTrqQHeBL8WqsiUhLfz7cu9+RgBdiM9X
+cyKaJL+0n/pW9hbMpSFiyIuDDT0t/2dNvClTkdQD6xwuIQdnYZ8D7PkLOwFg
 -----END CERTIFICATE-----`;
 const QZ_CHAVE_PRIVADA = `-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC+H4DV65NJsE2p
-8Xjkqat185KM/UqO+jH0qh18RSCbWpj5e5XHlucPHUG6Jw6N+zcAkRSFhG6zOQOs
-qGx6ims8GgO7sRqx+fHjSYfPlaWYWH0zwHKda3TBStJCgz0dvvckI+T5SArRsTxD
-AJzqy+28p7U7eO/AC3StXtCeh9Xoffy2PP0rfQhy/5stY9vhS46N7L6zvuR7tTgL
-IGZW7zkjz+JKTrc2+EY2oouFysioPog9mYbFUoFrVo87O7yy+ulTtR/2BDEx2egv
-Hq+mzlO7inuvLDytqvCGhKUz7+35LWt8v0p5yl+abtNKo9YbnbdoQUYuUsivDg1z
-vzhqgpIHAgMBAAECggEAAJTnF4BzgGe2LR1sgcKVIDTBD4Zc2ogga/+zPGSXv3Ht
-AuJiaGxpQ44S2+dvr3aDyhAnkGsBzbGQddBEGLHgtxvbRBE8JCxAFbJtZHCwQ4GN
-zIE7uIiSIF9CumpdXwBtECK9+hdC1TZmGUxgroU2MnwO3WI21Y8Tac5e9AU1XdM3
-fJAQuQeDbk0nGA+lJF+r64Vw238rOh4nO1Gtkhqm6cdWFdmOBKf8sn+SCmXttVwV
-zF9ibSPRko+DNxL7mWRsp0M10inqJHLR2MDS+TONkZ1LaBdVy/B2NldeTGBEj5HB
-mQVQ4xZYfs63Z+Z2ll3bQucKKKnUlxX8GpdjIKxjTQKBgQD8DUZdKYsD2V1FYXV6
-6oG6EBlCzJkn8JfqG2tqYHX8mPMbWtBIpWmEsWegmLyu4Fpvs5R4ICP2FGDq1Aga
-L+CrKou+w+ue9CDzEGFuQHlcRQbzZoJSh8PPVSydrKOr1Q1yBn0QFHHjJe/7Vv+2
-5JmhNa1dSW19KjTy1Yes/jlxzQKBgQDBGeUGCAci13PdgO7B+jfmHuGvDg533kKG
-JrmYAvUQlMIjRDkDr45N/OiDi2sr7S6WW9I92yIktfke3bEt1/rnGWAtAeo3H8QS
-ZL7hm0khYkJjZv+aorM5tB0eMvGvhB57+ygr1gvFrQsFISKKrxuLVU4+0cHb57R5
-AS5TzfEPIwKBgQDC+GXQlN0S6iYrEBt3LEWTLvbLZEaozYRFtFYf4GQENDABnfr1
-5vY7jZtycBOsVqG+PDSBw6LtrI/XtpJZ52UsImoc86Kkv4VpX+duCHOYO1EIIOh4
-fMqr69/qS+wDdHfFF13QfXAnXGZJjt+ZkzV/rWzgd3c5VdfFbAVafQDklQKBgFak
-pcylAX6yqbxzw62p9jb9GEqRxhAm3DaRXalFemxsMwfb7rEmrnVzy2hqwDW/gK3a
-mWVD0/gg5pzg4EUvqdbT3gGT4GHHkRSnu7ZDFPczvZIYfwwFgOGdXYtVVHhqkbsT
-oJy6uCGEWXN9wJ/1nihQqIErYQ6o0qOQ0hasS0N9AoGAKLw+I4FV2BVHLYTO/HOm
-Hy7ansEQ/pGUpl+fHc0Ns9GNVngdm+hWqCl1qTS4wK8mryHpqHc1oCU8r1dFYaeJ
-3orQpz09lN0wM8F1azotidW6zrKy3/MRpqZIHde53S5woHpH600yYtCiMOgOau7l
-BZIzoliU9N2RG5nNJIEpYFM=
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCNbqm24ENso3sr
+0ZWfNcymF8yxrSS6Gxt48NajZ+/8/ivu17Owa3SxcXCHgV9VKK8nyYrKHFewW23Y
+zBTCWTtpwpm5u059io4SjnnQKqO3gWDo8Ew9eA2tlpCk8aKpgwP4OOGNB+fS7Cxt
+tX5+QZWeBcWNn2o3svYe1ChmO/bFXQRaFlXB4cORlbdiXU9z8lHTEZgGf+l4Qkd3
+41dkBfB5c6+95++aMbG1SGIQ57dkUTDcnwNVecIWK3YMKug5xueWCzpjibB4LOtA
+3I5ZAAz52c7yEpjQbBloIdSfCAfQOWuHyoIHL3uUik/enOrVbNOKTbLeAoHUp3ZS
+nYxI9pkjAgMBAAECggEAAXmbfIRHP71OvgzABjqN6VeLM3kuTmCU/0RnwKmHV7ig
+5atLPPZJ78XSmh8vytgTR5NzBpuYEIdLlHzAZKyAkaBNcSHydh25UJk6zQB815+a
+TqOe7+8uGVbeKFI605DBvFd/hrSD5u++oOBJMvDlKhI+VrVIas9LgNPOng5XCwTi
+246PjoYI/7mgrnBqgyXXzW9GdZyP61cau6fJ+GvYEig+MkyEbghpv05wfspdK/Ns
+p01/qgYiVVD8n3CzasWvlasz2QLHyU9BFnezGmTCNrU/FsHU4KaRRkP8BlVEwvMW
+VUIRZUgX2TOwGMUVtRH0ucdZ2FuOu0837sSY3D0QVQKBgQDE+pBNHudHcSTre6de
+Xv9oOz/sx4qDVEuZr4Fthw8/xR19YW6Kh1Pvp9oG7ha0mx6MG534M4JfjNi6qxMC
+Ex/oRunHr9K8SSVsWY/Z7sFwvwSTG35HRFq0Unc5Hr/uLkQoP0IYhaT0xsoIlD2X
+NGrZ4LDDlpyPONfCj67MU1WOxwKBgQC3z1rrNBRR5KdT1dHdBRXDeRPQvhuXPfxF
+AC5d5IYkn/5r1n69cm75xvJ05LHwIM4KK4EmR08U1lvuWCudr+I6ipNNitdtgHok
+7h776vOpWe9XLbC7vJeCXIuZUnpA4MAov6yvaiLqsjVmBNOhec6NVPAJazQZnGRO
+FAKNdTB2xQKBgBdqriLs7JO6qKfx8EiwxG4wtP3CDv5j1AT2L03FA5QSK9pO7eQ8
+CEdyTeILBdn8otoHInVyMiqHxPAUDFNv0Jg9bedWSJgnnfJOh2JiFs7/dlzCpPV1
+886CCzhYJnr7NxENzB68LIsI4tW4QcYq7hTuuDTYP85q9INlr2MM+RvbAoGAOVdx
+uKBlmmqnnKq+rqGweWujN+KmvtbyhSAaVuY8xt42w7OFlFpHrppW9wqFTDEfteJ+
+hs+GJyz8Pu24pZfCDps+etlOfXWwJSc3+UUBwJoy5VJ2qQqbhWqTjkBBrU2wBMZO
+++YzgF4Z9Hqa/uv9+O8/duC/vyGf1Q+/ABxIAzUCgYBK3FpXNXIycVnTCak8mmCI
+2GFKYA2dlqCuczV7/kM91UqjfZqMKEY+H2cWh2grdCQhZ5R+MVCk6vYiudt8ebvL
+ZJothOA66D2Y7fXsujrPZWR9R17KIDPmX+HgCbFaeMzHlVC10X5Q7dPXDuanGLKW
+mZ6+4saqVxA1Dt8XkCN4xw==
 -----END PRIVATE KEY-----`;
 async function conectarImpressao(avisar){
   if(!window.qz){ setQzStatus(false); return false; }
@@ -2762,10 +2776,44 @@ function renderSetores(){
       <button class="iconb" style="flex:0 0 42px" onclick="delSetor(${i})">🗑️</button></div>
       <label>Impressora deste setor</label>
       ${selImpressora(s.impressora, `edSetor(${i},'impressora',this.value)`)}
-      <button class="btn" style="margin-top:10px;width:100%" onclick="imprimirTeste(${i})">🖨️ Imprimir teste — setor "${esc(s.nome)}"</button>
+      <div class="row" style="margin-top:10px">
+        <button class="btn o sm" style="flex:1" onclick="abrirCategoriasDoSetor(${i})">📂 Escolher categorias</button>
+        <button class="btn sm" style="flex:1" onclick="imprimirTeste(${i})">🖨️ Testar</button>
+      </div>
     </div>`).join('');
   const sel = $('cfgImpConta');
   if(sel) sel.innerHTML = '<option value="">— janela do navegador —</option>' + opcoesImpressora((CFG && CFG.impConta) || '');
+}
+let catSetorSel = [];
+function abrirCategoriasDoSetor(i){
+  const s = ((CFG && CFG.setores) || [])[i];
+  const cats = categorias().slice(1);
+  catSetorSel = [];
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">📂 Categorias em "${esc(s.nome)}"</h3>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Marque as categorias inteiras que devem sair nesta impressora. Depois é só tocar em Aplicar. Produtos avulsos continuam editáveis um a um no cadastro, se precisar.</p>
+    <div style="margin-top:10px">${cats.length ? cats.map(c =>
+      `<div class="chk" onclick="togCatSetor('${esc(c)}', this)"><div class="box"></div><div class="ci"><b>${esc(c)}</b></div></div>`).join('')
+      : '<p style="color:var(--mut);font-size:13px">Cadastre produtos primeiro</p>'}</div>
+    <button class="btn g" style="margin-top:16px" onclick="aplicarCategoriasSetor(${i})">Aplicar</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+function togCatSetor(cat, el){
+  const i = catSetorSel.indexOf(cat);
+  if(i >= 0) catSetorSel.splice(i, 1); else catSetorSel.push(cat);
+  el.classList.toggle('on', catSetorSel.includes(cat));
+  el.querySelector('.box').textContent = catSetorSel.includes(cat) ? '✓' : '';
+}
+async function aplicarCategoriasSetor(i){
+  const s = ((CFG && CFG.setores) || [])[i];
+  if(!catSetorSel.length){ toast('Selecione ao menos uma categoria'); return; }
+  const alvos = PRODUTOS.filter(p => catSetorSel.includes(p.categoria || 'Geral'));
+  if(!alvos.length){ toast('Nenhum produto nessas categorias'); return; }
+  const batch = db.batch();
+  alvos.forEach(p => batch.update(col('produtos').doc(p.id), { setor: s.id }));
+  await batch.commit();
+  fecharOv('ovExtra'); toast(alvos.length + ' produtos agora imprimem em "' + s.nome + '" 🖨️');
 }
 async function imprimirTeste(i){
   const s = ((CFG && CFG.setores) || [])[i]; if(!s) return;
@@ -3251,10 +3299,10 @@ async function excluirBackup(id){
 /* ---------- PWA ---------- */
 (function(){
   const manifest = {
-    name: 'PDV Já', short_name: 'PDV Já',
+    name: 'Konecta PDV', short_name: 'Konecta PDV',
     start_url: location.pathname + (REST ? '?rest=' + REST : ''),
     display: 'standalone', background_color: '#141210', theme_color: '#141210',
-    icons: [{ src: 'data:image/svg+xml,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='#E8A33D'/><text x='256' y='340' font-size='240' text-anchor='middle' font-family='Arial' font-weight='bold' fill='#141210'>PJ</text></svg>"), sizes: '512x512', type: 'image/svg+xml', purpose: 'any' }]
+    icons: [{ src: 'data:image/svg+xml,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='#E8A33D'/><text x='256' y='340' font-size='240' text-anchor='middle' font-family='Arial' font-weight='bold' fill='#141210'>KP</text></svg>"), sizes: '512x512', type: 'image/svg+xml', purpose: 'any' }]
   };
   const link = document.createElement('link');
   link.rel = 'manifest';
@@ -3263,8 +3311,15 @@ async function excluirBackup(id){
 })();
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
 function instalarApp(){
-  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; }
-  else toast('No iPhone: Compartilhar → Adicionar à Tela de Início');
+  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; return; }
+  const ua = navigator.userAgent || '';
+  const ehIOS = /iPhone|iPad|iPod/.test(ua);
+  const ehAndroid = /Android/.test(ua);
+  const ehMac = /Macintosh/.test(ua) && !ehIOS;
+  if(ehIOS) toast('No iPhone: toque em Compartilhar → Adicionar à Tela de Início');
+  else if(ehAndroid) toast('No Android: toque em ⋮ (menu do navegador) → Instalar aplicativo');
+  else if(ehMac) toast('No Mac: no Chrome, clique no ícone de instalar na barra de endereço (⊕)');
+  else toast('No Windows: no Chrome/Edge, clique no ícone de instalar (⊕) na barra de endereço, à direita do link');
 }
 document.addEventListener('keydown', e => {
   if(e.key === 'Enter' && $('scEntrada').classList.contains('on')) entrarRest();
