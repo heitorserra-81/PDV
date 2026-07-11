@@ -545,6 +545,9 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <label>🎯 Meta de faturamento do dia</label>
       <input id="cfgMetaDia" type="number" step="0.01" inputmode="decimal" placeholder="ex: 3000" onchange="salvarCampo('metaDiaria', parseFloat(this.value)||0)">
       <p style="color:var(--mut);font-size:12px;margin-top:-6px">Aparece como barra de progresso no relatório de Hoje. Deixe vazio pra não mostrar.</p>
+      <label>🎻 Valor do couvert por pessoa</label>
+      <input id="cfgCouvert" type="number" step="0.01" inputmode="decimal" placeholder="ex: 15" onchange="salvarCampo('couvertValor', parseFloat(this.value)||0)">
+      <p style="color:var(--mut);font-size:12px;margin-top:-6px">Deixe vazio se não cobra couvert. Aparece um botão de adicionar rápido na mesa.</p>
       <label>Taxa de serviço (%)</label>
       <div class="pills" style="margin-bottom:8px">
         <button class="pill" onclick="setTaxaRapida(10)">10%</button>
@@ -1375,6 +1378,7 @@ function mesaMenu(){
       ${(m.pessoas || []).length ? `<button onclick="transferirPessoasUI()"><span style="font-size:20px">👥</span><span>Transferir só algumas pessoas</span></button>` : ''}
       ${!vazia ? `<button onclick="transferirVariosItensUI()"><span style="font-size:20px">☑️</span><span>Transferir itens selecionados</span></button>` : ''}
       ${!vazia ? `<button onclick="juntarUI()"><span style="font-size:20px">🔗</span><span>Juntar outra mesa nesta</span></button>` : ''}
+      ${(CFG && CFG.couvertValor > 0) ? `<button onclick="adicionarCouvert()"><span style="font-size:20px">🎻</span><span>Adicionar couvert (${fmt(CFG.couvertValor)}/pessoa)</span></button>` : ''}
       ${!vazia && m.status !== 'conta' && m.status !== 'paga' ? `<button onclick="fecharOv('ovExtra');mesaAtual=${mesaAtual};pedirConta()"><span style="font-size:20px">🧾</span><span>Pedir a conta</span></button>` : ''}
       ${botaoPagamento}
     </div>
@@ -1547,7 +1551,7 @@ function renderCardapio(gridId, chipsId){
       ${p.foto ? `<img src="${esc(p.foto)}" loading="lazy" onerror="this.remove()">` : ''}
       <b>${esc(p.nome)}${p.isCombo ? ' <span class="badge a" style="vertical-align:middle">🎁 combo</span>' : ''}${emHappyHour(p) ? ' <span class="badge g" style="vertical-align:middle">🕒 promo</span>' : ''}</b>
       ${p.descricao ? `<div class="d">${esc(p.descricao)}</div>` : ''}
-      <div class="p">${emHappyHour(p) ? `<span style="text-decoration:line-through;color:var(--mut);font-size:12px;font-weight:400">${fmt(p.preco)}</span> ${fmt(p.hhPreco)}` : fmt(p.preco)}</div>
+      <div class="p">${emHappyHour(p) ? `<span style="text-decoration:line-through;color:var(--mut);font-size:12px;font-weight:400">${fmt(p.preco)}</span> ${fmt(p.hhPreco)}` : fmt(p.preco)}${p.porPeso ? '/kg' : ''}</div>
       <div class="set">${esc(nomeSetor(p.setor))}</div>
     </div>`).join('')
     : '<div class="empty" style="grid-column:1/-1"><span class="ic">📦</span>Nenhum produto cadastrado.<br>Configurações → Produtos.</div>';
@@ -1666,8 +1670,12 @@ function abrirProduto(id){
       <label>${esc(g.nome)}</label>
       <div class="pills">${g.opcoes.map((o, oi) =>
         `<button class="pill" id="pl_${gi}_${oi}" onclick="togLegacy(${gi},${oi})">${esc(o)}</button>`).join('')}</div>`).join('')}
+    ${prodSel.porPeso ? `
+    <label>Peso (kg)</label>
+    <input id="prodPeso" type="number" step="0.001" inputmode="decimal" placeholder="ex: 0.350" oninput="calcPreco()">
+    <p style="color:var(--mut);font-size:12px;margin-top:-4px">${fmt(precoAtual(prodSel))}/kg</p>` : `
     <label>Quantidade</label>
-    <div class="qty"><button onclick="mudarQtd(-1)">−</button><b id="qtdView">1</b><button onclick="mudarQtd(1)">＋</button></div>
+    <div class="qty"><button onclick="mudarQtd(-1)">−</button><b id="qtdView">1</b><button onclick="mudarQtd(1)">＋</button></div>`}
     <label>Observação (opcional)</label>
     <input id="prodObs" placeholder="ex: sem cebola, bem gelada…">
     <button class="btn g" style="margin-top:18px" onclick="addCarrinho()">Adicionar · <span id="prodTotBtn">${fmt(precoAtual(prodSel))}</span></button>
@@ -1703,6 +1711,11 @@ function extrasSel(){
   return { extras: round2(extras), mods };
 }
 function calcPreco(){
+  if(prodSel.porPeso){
+    const peso = parseFloat(($('prodPeso') && $('prodPeso').value) || 0) || 0;
+    $('prodTotBtn').textContent = fmt(round2(precoAtual(prodSel) * peso));
+    return;
+  }
   const { extras } = extrasSel();
   const unit = round2(precoFracao() + extras);
   $('prodTotBtn').textContent = fmt(unit * prodQtd);
@@ -1728,6 +1741,18 @@ function togLegacy(gi, oi){
 }
 function mudarQtd(d){ prodQtd = Math.max(1, prodQtd + d); $('qtdView').textContent = prodQtd; calcPreco(); }
 function addCarrinho(){
+  if(prodSel.porPeso){
+    const peso = parseFloat(($('prodPeso') && $('prodPeso').value) || 0) || 0;
+    if(peso <= 0){ toast('Digite o peso'); return; }
+    carrinho.push({
+      uid: uid(), nome: prodSel.nome, preco: round2(precoAtual(prodSel) * peso), qtd: 1,
+      setor: prodSel.setor || '',
+      mods: [peso.toFixed(3) + 'kg × ' + fmt(precoAtual(prodSel)) + '/kg'], obs: $('prodObs').value.trim(), pessoa: pessoaSel, pago: false, valorPago: 0
+    });
+    fecharOv('ovProduto'); atualizarCartBar();
+    toast(peso.toFixed(3) + 'kg de ' + prodSel.nome + ' no carrinho');
+    return;
+  }
   const { extras, mods } = extrasSel();
   let nome = prodSel.nome;
   if(fracao > 1){
@@ -1819,6 +1844,15 @@ async function enviarPedido(){
       }
     }catch(e){ console.error(e); carrinho = itens; atualizarCartBar(); toast('Falha ao enviar. Tente de novo.'); }
   });
+}
+async function adicionarCouvert(){
+  const m = MESAS[String(mesaAtual)] || {};
+  const n = m.numPessoas || 1;
+  const valor = CFG.couvertValor;
+  if(!confirm('Adicionar couvert de ' + fmt(valor) + ' × ' + n + ' pessoa(s) = ' + fmt(round2(valor * n)) + '?')) return;
+  const item = { uid: uid(), nome: 'Couvert artístico', preco: valor, qtd: n, setor: '', mods: [], obs: '', pessoa: '', pago: false, valorPago: 0 };
+  await col('mesas').doc(String(mesaAtual)).set({ itens: (m.itens || []).concat([item]) }, { merge: true });
+  fecharOv('ovExtra'); toast('Couvert adicionado 🎻');
 }
 async function pedirConta(){
   const m = MESAS[String(mesaAtual)] || {};
@@ -3285,6 +3319,7 @@ function preencherConfig(){
   $('cfgMesas').value = CFG.numMesas || 20;
   $('cfgFundoSugerido').value = CFG.fundoSugerido || '';
   $('cfgMetaDia').value = CFG.metaDiaria || '';
+  $('cfgCouvert').value = CFG.couvertValor || '';
   $('cfgTaxa').value = CFG.taxa != null ? CFG.taxa : 10;
   $('cfgFracRegra').value = CFG.fracRegra || 'cara';
   $('cfgFonteTexto').value = CFG.fonteTexto || 'normal';
@@ -3682,6 +3717,12 @@ function editarProduto(id){
       <input id="epHHPreco" type="number" step="0.01" inputmode="decimal" value="${p && p.hhPreco != null ? p.hhPreco : ''}">
       <p style="color:var(--mut);font-size:12px;margin-top:4px">Fora desse horário, vale o preço normal. Muda sozinho, sem precisar mexer em nada.</p>
     </div>
+    <label style="margin-top:16px">⚖️ Vendido por peso?</label>
+    <div class="pills"><button class="pill ${p && p.porPeso ? 'on' : ''}" id="epPeso" onclick="this.classList.toggle('on');$('epPesoBox').style.display=this.classList.contains('on')?'':'none'">É vendido por peso (kg)</button></div>
+    <div id="epPesoBox" style="display:${p && p.porPeso ? '' : 'none'}">
+      <label>Preço por quilo (R$/kg)</label>
+      <p style="color:var(--mut);font-size:12px;margin-top:-2px">Se marcar isso, o campo "Preço" acima vira o preço por kg. Na hora do pedido, o garçom digita o peso pesado.</p>
+    </div>
     <button class="btn g" style="margin-top:18px" onclick="salvarProduto()">Salvar produto</button>
     ${id ? `<button class="btn r" style="margin-top:10px" onclick="excluirProduto()">🗑️ Excluir produto</button>` : ''}
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovEditProd')">Cancelar</button>`;
@@ -3723,7 +3764,8 @@ async function salvarProduto(){
     hhAtivo,
     hhInicio: hhAtivo ? $('epHHIni').value : '',
     hhFim: hhAtivo ? $('epHHFim').value : '',
-    hhPreco: hhAtivo ? round2(parseFloat($('epHHPreco').value) || 0) : null
+    hhPreco: hhAtivo ? round2(parseFloat($('epHHPreco').value) || 0) : null,
+    porPeso: $('epPeso').classList.contains('on')
   };
   if(edId) await col('produtos').doc(edId).update(dados);
   else await col('produtos').add({ ...dados, esgotado: false, criadoEm: TS() });
