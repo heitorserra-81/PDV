@@ -541,6 +541,9 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <label>Número de mesas</label><input id="cfgMesas" type="number" min="1" max="200" onchange="salvarCampo('numMesas', parseInt(this.value)||20)">
       <label>💵 Valor sugerido de abertura de caixa</label>
       <input id="cfgFundoSugerido" type="number" step="0.01" inputmode="decimal" placeholder="ex: 100" onchange="salvarCampo('fundoSugerido', parseFloat(this.value)||0)">
+      <label>🎯 Meta de faturamento do dia</label>
+      <input id="cfgMetaDia" type="number" step="0.01" inputmode="decimal" placeholder="ex: 3000" onchange="salvarCampo('metaDiaria', parseFloat(this.value)||0)">
+      <p style="color:var(--mut);font-size:12px;margin-top:-6px">Aparece como barra de progresso no relatório de Hoje. Deixe vazio pra não mostrar.</p>
       <label>Taxa de serviço (%)</label>
       <div class="pills" style="margin-bottom:8px">
         <button class="pill" onclick="setTaxaRapida(10)">10%</button>
@@ -2776,9 +2779,18 @@ async function renderRel(periodo){
   const topMesas = Object.entries(porMesa).sort((a,b) => b[1] - a[1]).slice(0, 6);
   const maxMesa = topMesas.length ? topMesas[0][1] : 1;
   const btn = (k, lbl) => `<button class="btn o sm" onclick="renderRel('${k}')">${lbl}</button>`;
+  const meta = (CFG && CFG.metaDiaria) || 0;
+  const totSemCortesia = vendas.filter(v => !v.cortesia).reduce((a,v) => a + (v.total || 0), 0);
+  const metaHTML = (periodo === 'hoje' && meta > 0) ? (() => {
+    const pct = Math.min(100, Math.round(totSemCortesia / meta * 100));
+    return `<div class="card"><div class="row" style="align-items:center;justify-content:space-between"><b style="font-size:14px">🎯 Meta do dia</b><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--amber)">${fmt(totSemCortesia)} / ${fmt(meta)}</span></div>
+      <div class="rb" style="margin-top:10px;height:14px"><i style="width:${pct}%;background:${pct >= 100 ? 'var(--green)' : 'var(--amber)'}"></i></div>
+      <p style="text-align:center;font-size:12.5px;color:var(--mut);margin-top:6px">${pct}%${pct >= 100 ? ' 🎉 meta batida!' : ''}</p></div>`;
+  })() : '';
   $('compRel').innerHTML = `
     <div class="row" style="margin-bottom:14px">${btn('hoje','Hoje')}${btn('ontem','Ontem')}${btn('7dias','7 dias')}
       <button class="btn sm" onclick="exportCSV()">⬇️ CSV</button></div>
+    ${metaHTML}
     <div class="repgrid">
       <div class="repcard"><div class="rl">Faturamento</div><div class="rv">${fmt(tot)}</div></div>
       <div class="repcard"><div class="rl">Vendas</div><div class="rv">${vendas.length}</div></div>
@@ -3209,6 +3221,7 @@ function preencherConfig(){
   $('cfgModo').value = CFG.modo || 'restaurante';
   $('cfgMesas').value = CFG.numMesas || 20;
   $('cfgFundoSugerido').value = CFG.fundoSugerido || '';
+  $('cfgMetaDia').value = CFG.metaDiaria || '';
   $('cfgTaxa').value = CFG.taxa != null ? CFG.taxa : 10;
   $('cfgFracRegra').value = CFG.fracRegra || 'cara';
   $('cfgFonteTexto').value = CFG.fonteTexto || 'normal';
