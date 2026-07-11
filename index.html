@@ -78,7 +78,8 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa:active{transform:scale(.93)}
 .mesa .n{font-size:24px;font-weight:800}
 .mesa .st{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
-.mesa .tot{font-size:11px;color:var(--amber);font-family:'IBM Plex Mono',monospace;font-weight:700}
+.mesa .tot{position:absolute;bottom:7px;left:8px;font-size:11px;color:var(--amber);font-family:'IBM Plex Mono',monospace;font-weight:700}
+.mesa .mMenu{position:absolute;bottom:4px;right:4px;width:26px;height:26px;border-radius:8px;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--ink);z-index:2}
 .mesa.ocupada{border-color:var(--amber);background:linear-gradient(160deg,var(--tintAmber),var(--card))}
 .mesa.ocupada .st{color:var(--amber)}
 .mesa.conta{border-color:var(--green);animation:pulse 1.6s infinite}
@@ -525,6 +526,9 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <label>📱 QR / link da mesa para o cliente</label>
       <div class="row"><input id="qrMesaNum" type="number" min="1" placeholder="nº da mesa"><button class="btn sm" onclick="gerarQrMesa()">Gerar</button></div>
       <div id="qrMesaBox"></div>
+      <label>🔧 Destravar mesa (corrigir mesa "sumida" ou travada)</label>
+      <div class="row"><input id="fixMesaNum" type="number" min="1" placeholder="nº da mesa"><button class="btn r sm" onclick="resetarMesa()">Resetar</button></div>
+      <p style="color:var(--mut);font-size:12px;margin-top:4px">Força a mesa a voltar pro estado "livre", apagando itens e agrupamentos dela. Use só se a mesa sumiu da grade ou ficou com status inconsistente.</p>
       <label>📋 Ordem das categorias no cardápio</label>
       <div id="catOrdList"></div>
       <p style="color:var(--mut);font-size:12px;margin:-6px 0 4px">Vale para o cardápio do garçom e do balcão.</p>
@@ -882,7 +886,8 @@ function renderMesas(elId, modoCaixa){
       ${st !== 'livre' && (m.garcomFoto || m.garcom) ? `<div class="gpic">${avatarHTML(m.garcom, m.garcomFoto, 'sm')}</div>` : ''}
       ${numsHTML}<div class="st">${stTxt}</div>
       ${resta > 0 ? `<div class="tot">${fmt(resta)}</div>` : ''}
-      ${st !== 'livre' ? `<div class="tempo">${minsAberta(m)}</div>` : ''}</div>`;
+      ${st !== 'livre' ? `<div class="tempo">${minsAberta(m)}</div>` : ''}
+      ${!modoCaixa && st !== 'livre' ? `<div class="mMenu" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation();abrirMenuRapido(${i})">⋯</div>` : ''}</div>`;
   });
   $(elId).innerHTML = html;
   flipAnimar(elId, before);
@@ -1016,6 +1021,8 @@ async function agruparMesaDrag(src, dest){
     await db.runTransaction(async t => {
       const s = await t.get(sRef), d = await t.get(dRef);
       const sm = s.data() || {}, dm = d.data() || {};
+      const netos = sm.grupoCom || []; // mesas que já estavam agrupadas dentro da mesa "src"
+      const novoGrupo = (dm.grupoCom || []).concat([src]).concat(netos);
       t.set(dRef, { ...dm,
         status: dm.status || 'ocupada', garcom: dm.garcom || garcom, garcomFoto: dm.garcomFoto || garcomFoto,
         abertaEm: dm.abertaEm || firebase.firestore.Timestamp.now(),
@@ -1023,8 +1030,9 @@ async function agruparMesaDrag(src, dest){
         pessoas: (dm.pessoas || []).concat(sm.pessoas || []),
         pagoAvulso: (dm.pagoAvulso || 0) + (sm.pagoAvulso || 0),
         numPessoas: (dm.numPessoas || 1) + (sm.numPessoas || 0),
-        grupoCom: (dm.grupoCom || []).concat([src]) });
-      t.set(sRef, { status: 'agrupada', agrupadaEm: dest });
+        grupoCom: novoGrupo });
+      t.set(sRef, { status: 'agrupada', agrupadaEm: dest, grupoCom: [] });
+      netos.forEach(neto => { t.set(col('mesas').doc(String(neto)), { status: 'agrupada', agrupadaEm: dest }, { merge: true }); });
     });
     logAcao('agrupar_mesas', { mesa: dest, agrupou: src });
     toast('Mesa ' + src + ' agrupada na ' + dest + ' 🪑');
@@ -1080,7 +1088,7 @@ function renderMesaAberta(){
       g.itens.map(it => `<div class="item"><div class="q">${it.qtd}×</div>
         <div class="info"><b>${esc(it.nome)}</b>${itemMods(it)}${it.valorPago ? `<div class="mods" style="color:var(--green)">parcialmente pago: ${fmt(it.valorPago)}</div>` : ''}</div>
         <div class="val">${fmt(it.preco * it.qtd)}</div>
-        <button class="x" onclick="cancelarItem('${it.uid}')">✕</button></div>`).join('') + '</div>';
+        <button class="iconb" style="width:38px;height:38px;flex:0 0 38px" onclick="itemMenu('${it.uid}')">⋯</button></div>`).join('') + '</div>';
   });
   if(pagos.length) html += `<div class="pgrupo"><div class="ph" style="color:var(--green)">✅ Já pagos<span class="psub">${fmt(pagos.reduce((a,x)=>a+x.preco*x.qtd,0))}</span></div></div>`;
   $('mesaItens').innerHTML = html || '<div class="empty"><span class="ic">🪑</span>Nenhum item ainda.<br>Toque em "Adicionar itens".</div>';
@@ -1105,19 +1113,73 @@ async function addPessoa(){
   const nome = prompt('Nome da pessoa (comanda individual):', 'Pessoa ' + (pessoas.length + 1));
   if(!nome) return;
   pessoas.push({ id: uid(), nome: nome.trim(), pagou: false });
-  await col('mesas').doc(String(mesaAtual)).set({ pessoas, numPessoas: Math.max(m.numPessoas || 1, pessoas.length) }, { merge: true });
+  await col('mesas').doc(String(mesaAtual)).set({ pessoas, numPessoas: (m.numPessoas || 0) + 1 }, { merge: true });
 }
-async function cancelarItem(itemUid){
+function itemMenu(itemUid){
+  const m = MESAS[String(mesaAtual)] || {};
+  const it = (m.itens || []).find(x => x.uid === itemUid);
+  if(!it) return;
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">${it.qtd}× ${esc(it.nome)}</h3>
+    <div class="menuops">
+      <button onclick="fecharOv('ovExtra');abrirCancelarChips('${itemUid}')"><span style="font-size:20px">🗑️</span><span>Cancelar item</span></button>
+      <button onclick="fecharOv('ovExtra');transferirItemUI('${itemUid}')"><span style="font-size:20px">🔀</span><span>Transferir pra outra mesa</span></button>
+    </div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
+function abrirCancelarChips(itemUid){
   const m = MESAS[String(mesaAtual)] || {};
   const it = (m.itens || []).find(x => x.uid === itemUid);
   if(!it) return;
   if(!senhaGerente()) return;
-  const motivo = prompt('Motivo do cancelamento de "' + it.qtd + 'x ' + it.nome + '":');
-  if(motivo === null) return;
+  const motivos = ['Cliente desistiu', 'Erro no pedido', 'Demorou muito', 'Outro'];
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🗑️ Cancelar ${it.qtd}× ${esc(it.nome)}</h3>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Motivo rápido (o gerente pode detalhar depois):</p>
+    <div class="menuops">${motivos.map(mo => `<button onclick="confirmarCancelarItem('${itemUid}','${esc(mo)}')"><span style="font-size:18px">${mo === 'Outro' ? '✏️' : '🔸'}</span><span>${esc(mo)}</span></button>`).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+async function confirmarCancelarItem(itemUid, motivo){
+  if(motivo === 'Outro'){ motivo = prompt('Motivo do cancelamento:') || 'Outro (sem detalhe)'; }
+  const m = MESAS[String(mesaAtual)] || {};
+  const it = (m.itens || []).find(x => x.uid === itemUid);
+  if(!it) return;
   const itens = (m.itens || []).filter(x => x.uid !== itemUid);
   await col('mesas').doc(String(mesaAtual)).set({ itens }, { merge: true });
   logAcao('cancelamento', { mesa: mesaAtual, item: it.nome, qtd: it.qtd, valor: it.preco * it.qtd, motivo });
-  toast('Item cancelado (registrado no log)');
+  fecharOv('ovExtra'); toast('Item cancelado (registrado no log)');
+}
+let itemTransfUid = null;
+function transferirItemUI(itemUid){
+  itemTransfUid = itemUid;
+  const n = (CFG && CFG.numMesas) || 20;
+  let opts = [];
+  for(let i = 1; i <= n; i++){ if(i !== mesaAtual && (MESAS[String(i)] || {}).status !== 'agrupada') opts.push(i); }
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🔀 Transferir item pra qual mesa?</h3>
+    <div class="mesagrid" style="margin-top:14px">${opts.map(i => {
+      const st = (MESAS[String(i)] || {}).status || 'livre';
+      return `<div class="mesa ${st}" onclick="transferirItemPara(${i})"><div class="n">${i}</div><div class="st">${st === 'livre' ? 'Livre' : 'Ocupada'}</div></div>`;
+    }).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+}
+async function transferirItemPara(dest){
+  const src = mesaAtual;
+  await trava(async () => {
+    const sRef = col('mesas').doc(String(src)), dRef = col('mesas').doc(String(dest));
+    await db.runTransaction(async t => {
+      const s = await t.get(sRef), d = await t.get(dRef);
+      const sm = s.data() || {}, dm = (d.data() && d.data().status && d.data().status !== 'livre') ? d.data() : { status: 'ocupada', garcom, garcomFoto, itens: [], pessoas: [], pagoAvulso: 0, numPessoas: 1, abertaEm: firebase.firestore.Timestamp.now() };
+      const it = (sm.itens || []).find(x => x.uid === itemTransfUid);
+      if(!it) return;
+      t.set(dRef, { ...dm, itens: (dm.itens || []).concat([{ ...it, pessoa: '' }]) });
+      t.set(sRef, { ...sm, itens: (sm.itens || []).filter(x => x.uid !== itemTransfUid) });
+    });
+    logAcao('transferir_item', { de: src, para: dest });
+    fecharOv('ovExtra'); toast('Item transferido pra mesa ' + dest + ' 🔀');
+  });
 }
 
 /* ---------- menu ⋯ da mesa (transferir / juntar) ---------- */
@@ -1678,7 +1740,10 @@ let cxMesa = null, cxPagamentos = [], cxTaxaOn = true, cxBase = 0, cxDesc = 0, c
 function computadorClicouMesa(n){
   const m = MESAS[String(n)] || {};
   if(m.status === 'agrupada'){ computadorClicouMesa(m.agrupadaEm); return; }
-  if(!m.status || m.status === 'livre'){ modoAtual = 'computador'; abrirMesa(n); return; }
+  if(!m.status || m.status === 'livre'){
+    if((CFG && CFG.exigirCaixa !== false) && !GAVETA){ aguardandoCaixa = 'garcom'; show('scCaixaFechado'); return; }
+    modoAtual = 'computador'; abrirMesa(n); return;
+  }
   mesaAtual = n;
   $('ovExtraBox').innerHTML = `
     <h3 style="font-size:19px">Mesa ${n}</h3>
@@ -2160,21 +2225,26 @@ async function fecharGavetaUI(){
     <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Conte a gaveta e as maquininhas e preencha o que foi <b>contado</b>. O sistema compara com o esperado.</p>
     ${formas.map((f, i) => `
       <label>${f} — esperado ${fmt(espera[f])}</label>
-      <input id="ct_${i}" type="number" step="0.01" inputmode="decimal" placeholder="${espera[f].toFixed(2)}">`).join('')}
+      <input id="ct_${i}" type="number" step="0.01" inputmode="decimal" placeholder="Digite o valor contado aqui">`).join('')}
     <button class="btn g" style="margin-top:16px" onclick='confirmarFechamento(${JSON.stringify(espera)})'>Conferir e fechar</button>
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
   abrirOv('ovExtra');
 }
 async function confirmarFechamento(espera){
   const formas = Object.keys(espera);
-  const contado = {}, difs = [];
+  const contado = {}, difs = [], naoContadas = [];
   formas.forEach((f, i) => {
-    contado[f] = round2(parseFloat(($('ct_' + i).value || '').replace(',', '.')) || espera[f]);
+    const bruto = ($('ct_' + i).value || '').trim();
+    if(!bruto){ naoContadas.push(f); contado[f] = espera[f]; return; }
+    contado[f] = round2(parseFloat(bruto.replace(',', '.')) || 0);
     const d = round2(contado[f] - espera[f]);
     if(Math.abs(d) >= 0.01) difs.push(f + ': ' + (d > 0 ? 'sobra ' : 'falta ') + fmt(Math.abs(d)));
   });
+  if(naoContadas.length){
+    if(!confirm('⚠️ Você não digitou o valor contado de: ' + naoContadas.join(', ') + '.\n\nSem contar de verdade, não dá pra saber se bateu. Continuar mesmo assim (vai assumir que bateu certinho nessas formas)?')) return;
+  }
   const divergencia = round2(formas.reduce((a, f) => a + (contado[f] - espera[f]), 0));
-  if(!confirm((difs.length ? '⚠️ Divergências:\n' + difs.join('\n') : '✅ Sem divergências.') + '\n\nFechar o caixa?')) return;
+  if(!confirm((difs.length ? '⚠️ Divergências:\n' + difs.join('\n') : '✅ Sem divergências nas formas contadas.') + '\n\nFechar o caixa?')) return;
   const quem = prompt('Quem está fechando?', garcom || '') || '';
   await col('caixas').doc(GAVETA.id).update({ status: 'fechado', fechadoEm: TS(), fechadoPor: quem, esperado: espera, contado, divergencia });
   logAcao('fechamento_caixa', { divergencia });
@@ -2707,6 +2777,14 @@ async function trocarSenhaGer(){
   await rcol().update({ senhaGerente: v }); $('cfgSenhaGer').value = ''; toast('Senha do gerente alterada 🔑');
 }
 function copiarLink(){ navigator.clipboard.writeText($('cfgLink').value).then(() => toast('Link copiado 📋')); }
+async function resetarMesa(){
+  const n = parseInt($('fixMesaNum').value);
+  if(!n || n < 1){ toast('Digite o número da mesa'); return; }
+  if(!confirm('Resetar a mesa ' + n + ' completamente pro estado livre? Isso apaga qualquer pedido/agrupamento pendente nela — use só pra corrigir mesa travada/sumida.')) return;
+  await col('mesas').doc(String(n)).set({ status: 'livre', itens: [], pessoas: [], pagoAvulso: 0, garcom: '', garcomFoto: '', numPessoas: 0, grupoCom: [] });
+  logAcao('mesa_resetada_manualmente', { mesa: n });
+  toast('Mesa ' + n + ' resetada ✅');
+}
 function gerarQrMesa(){
   const n = parseInt($('qrMesaNum').value);
   if(!n || n < 1){ toast('Digite o número da mesa'); return; }
@@ -3490,6 +3568,25 @@ function alternarTema(){
   aplicarTema();
 }
 /* ---------- indicador de conexão (fila offline já é feita pelo Firestore) ---------- */
+/* ---------- suporte a mouse (rodinha + arrastar) nas categorias, pro Computador ---------- */
+(function(){
+  document.addEventListener('wheel', e => {
+    const cats = e.target.closest && e.target.closest('.cats');
+    if(!cats) return;
+    if(Math.abs(e.deltaY) > Math.abs(e.deltaX)){ cats.scrollLeft += e.deltaY; e.preventDefault(); }
+  }, { passive: false });
+  let arrastando = null, startX = 0, startScroll = 0;
+  document.addEventListener('mousedown', e => {
+    const cats = e.target.closest && e.target.closest('.cats');
+    if(!cats) return;
+    arrastando = cats; startX = e.clientX; startScroll = cats.scrollLeft;
+  });
+  document.addEventListener('mousemove', e => {
+    if(!arrastando) return;
+    arrastando.scrollLeft = startScroll - (e.clientX - startX);
+  });
+  document.addEventListener('mouseup', () => { arrastando = null; });
+})();
 function atualizarStatusConexao(){
   const bar = $('offlineBar');
   if(!bar) return;
