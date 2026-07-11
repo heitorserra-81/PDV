@@ -1541,9 +1541,9 @@ function renderCardapio(gridId, chipsId){
   $(gridId).innerHTML = lista.length ? lista.map(p => `
     <div class="prod ${p.esgotado ? 'esg' : ''}" onclick="abrirProduto('${p.id}')">
       ${p.foto ? `<img src="${esc(p.foto)}" loading="lazy" onerror="this.remove()">` : ''}
-      <b>${esc(p.nome)}</b>
+      <b>${esc(p.nome)}${p.isCombo ? ' <span class="badge a" style="vertical-align:middle">🎁 combo</span>' : ''}${emHappyHour(p) ? ' <span class="badge g" style="vertical-align:middle">🕒 promo</span>' : ''}</b>
       ${p.descricao ? `<div class="d">${esc(p.descricao)}</div>` : ''}
-      <div class="p">${fmt(p.preco)}</div>
+      <div class="p">${emHappyHour(p) ? `<span style="text-decoration:line-through;color:var(--mut);font-size:12px;font-weight:400">${fmt(p.preco)}</span> ${fmt(p.hhPreco)}` : fmt(p.preco)}</div>
       <div class="set">${esc(nomeSetor(p.setor))}</div>
     </div>`).join('')
     : '<div class="empty" style="grid-column:1/-1"><span class="ic">📦</span>Nenhum produto cadastrado.<br>Configurações → Produtos.</div>';
@@ -1619,6 +1619,14 @@ function nomeSetor(id){
   const s = ((CFG && CFG.setores) || []).find(x => x.id === id);
   return s ? s.nome : (id || 'Sem setor');
 }
+function emHappyHour(p){
+  if(!p || !p.hhAtivo || p.hhPreco == null) return false;
+  const agora = new Date();
+  const hm = String(agora.getHours()).padStart(2,'0') + ':' + String(agora.getMinutes()).padStart(2,'0');
+  if(p.hhInicio <= p.hhFim) return hm >= p.hhInicio && hm < p.hhFim;
+  return hm >= p.hhInicio || hm < p.hhFim; // atravessa a meia-noite
+}
+function precoAtual(p){ return emHappyHour(p) ? p.hhPreco : p.preco; }
 function gruposDoProduto(p){
   const ids = p.grupos || [];
   return GRUPOS.filter(g => ids.includes(g.id));
@@ -1637,8 +1645,9 @@ function abrirProduto(id){
   const fracOk = catFracionada(prodSel.categoria);
   $('ovProdutoBox').innerHTML = `
     <h3 style="font-size:20px">${esc(prodSel.nome)}</h3>
-    <p style="color:var(--mut);font-size:13px;margin-top:4px">${fmt(prodSel.preco)} · ${esc(nomeSetor(prodSel.setor))}</p>
+    <p style="color:var(--mut);font-size:13px;margin-top:4px">${emHappyHour(prodSel) ? `<span style="text-decoration:line-through">${fmt(prodSel.preco)}</span> <b style="color:var(--amber)">${fmt(prodSel.hhPreco)} 🕒 happy hour</b>` : fmt(prodSel.preco)} · ${esc(nomeSetor(prodSel.setor))}</p>
     ${contexto === 'garcom' ? `<div class="pchip" style="pointer-events:none;display:inline-flex;margin-top:6px">${pessoaAtual ? '👤 ' + esc(pessoaAtual.nome) : '🍽 Mesa (todos)'}</div>` : ''}
+    ${prodSel.isCombo && prodSel.comboItens && prodSel.comboItens.length ? `<div class="card" style="padding:10px;margin-top:10px"><b style="font-size:13px">🎁 Esse combo inclui:</b><div style="font-size:13px;color:var(--mut);margin-top:4px;line-height:1.6">${prodSel.comboItens.map(esc).join('<br>')}</div></div>` : ''}
     ${fracOk ? `<label>🍕 Sabores</label>
       <div class="pills">
         <button class="pill on" id="fr1" onclick="setFracao(1)">Inteira</button>
@@ -1657,7 +1666,7 @@ function abrirProduto(id){
     <div class="qty"><button onclick="mudarQtd(-1)">−</button><b id="qtdView">1</b><button onclick="mudarQtd(1)">＋</button></div>
     <label>Observação (opcional)</label>
     <input id="prodObs" placeholder="ex: sem cebola, bem gelada…">
-    <button class="btn g" style="margin-top:18px" onclick="addCarrinho()">Adicionar · <span id="prodTotBtn">${fmt(prodSel.preco)}</span></button>
+    <button class="btn g" style="margin-top:18px" onclick="addCarrinho()">Adicionar · <span id="prodTotBtn">${fmt(precoAtual(prodSel))}</span></button>
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovProduto')">Cancelar</button>`;
   abrirOv('ovProduto');
 }
@@ -1673,8 +1682,8 @@ function setFracao(n){
   calcPreco();
 }
 function precoFracao(){
-  const ps = sabores.map(id => (PRODUTOS.find(p => p.id === id) || prodSel).preco);
-  if(fracao === 1) return prodSel.preco;
+  const ps = sabores.map(id => precoAtual(PRODUTOS.find(p => p.id === id) || prodSel));
+  if(fracao === 1) return precoAtual(prodSel);
   return (CFG && CFG.fracRegra) === 'prop' ? round2(ps.reduce((a,b) => a + b, 0) / ps.length) : Math.max(...ps);
 }
 function extrasSel(){
@@ -1721,10 +1730,11 @@ function addCarrinho(){
     const nomes = sabores.map(id => (PRODUTOS.find(p => p.id === id) || prodSel).nome.replace(/^Pizza\s*/i, ''));
     nome = 'Pizza ' + nomes.map(n => '1/' + fracao + ' ' + n).join(' + ');
   }
+  const modsFinal = prodSel.isCombo && prodSel.comboItens ? prodSel.comboItens.concat(mods) : mods;
   carrinho.push({
     uid: uid(), nome, preco: round2(precoFracao() + extras), qtd: prodQtd,
     setor: prodSel.setor || '',
-    mods, obs: $('prodObs').value.trim(), pessoa: pessoaSel, pago: false, valorPago: 0
+    mods: modsFinal, obs: $('prodObs').value.trim(), pessoa: pessoaSel, pago: false, valorPago: 0
   });
   fecharOv('ovProduto'); atualizarCartBar();
   toast(prodQtd + '× ' + nome + ' no carrinho');
@@ -3578,6 +3588,24 @@ function editarProduto(id){
     <label>Perguntas exclusivas deste produto</label>
     <div id="epMods"></div>
     <button class="btn o sm" onclick="addMod()">＋ Nova pergunta exclusiva</button>
+    <label style="margin-top:16px">🎁 Este produto é um combo?</label>
+    <div class="pills"><button class="pill ${p && p.isCombo ? 'on' : ''}" id="epCombo" onclick="this.classList.toggle('on');$('epComboBox').style.display=this.classList.contains('on')?'':'none'">É combo (junta vários itens)</button></div>
+    <div id="epComboBox" style="display:${p && p.isCombo ? '' : 'none'}">
+      <label>O que vem no combo (um item por linha)</label>
+      <textarea id="epComboItens" rows="4" placeholder="1x X-Salada&#10;1x Batata frita P&#10;1x Coca-Cola lata">${p && p.comboItens ? esc(p.comboItens.join('\n')) : ''}</textarea>
+      <p style="color:var(--mut);font-size:12px;margin-top:4px">Sai listado embaixo do combo no pedido e na comanda, pra cozinha saber tudo que precisa preparar.</p>
+    </div>
+    <label style="margin-top:16px">🕒 Preço por horário (happy hour)?</label>
+    <div class="pills"><button class="pill ${p && p.hhAtivo ? 'on' : ''}" id="epHH" onclick="this.classList.toggle('on');$('epHHBox').style.display=this.classList.contains('on')?'':'none'">Tem preço promocional em horário fixo</button></div>
+    <div id="epHHBox" style="display:${p && p.hhAtivo ? '' : 'none'}">
+      <div class="row">
+        <div><label>Começa</label><input id="epHHIni" type="time" value="${p && p.hhInicio ? p.hhInicio : '17:00'}"></div>
+        <div><label>Termina</label><input id="epHHFim" type="time" value="${p && p.hhFim ? p.hhFim : '19:00'}"></div>
+      </div>
+      <label>Preço promocional (R$)</label>
+      <input id="epHHPreco" type="number" step="0.01" inputmode="decimal" value="${p && p.hhPreco != null ? p.hhPreco : ''}">
+      <p style="color:var(--mut);font-size:12px;margin-top:4px">Fora desse horário, vale o preço normal. Muda sozinho, sem precisar mexer em nada.</p>
+    </div>
     <button class="btn g" style="margin-top:18px" onclick="salvarProduto()">Salvar produto</button>
     ${id ? `<button class="btn r" style="margin-top:10px" onclick="excluirProduto()">🗑️ Excluir produto</button>` : ''}
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovEditProd')">Cancelar</button>`;
@@ -3604,6 +3632,8 @@ async function salvarProduto(){
   const nome = $('epNome').value.trim();
   const preco = parseFloat(($('epPreco').value || '').replace(',', '.'));
   if(!nome || isNaN(preco)){ toast('Preencha nome e preço'); return; }
+  const isCombo = $('epCombo').classList.contains('on');
+  const hhAtivo = $('epHH').classList.contains('on');
   const dados = {
     nome, preco: round2(preco),
     categoria: $('epCat').value.trim() || 'Geral',
@@ -3611,7 +3641,13 @@ async function salvarProduto(){
     descricao: $('epDesc').value.trim(),
     foto: $('epFoto').value.trim(),
     grupos: edGrupos,
-    modificadores: edMods.filter(g => g.nome && g.opcoes.length)
+    modificadores: edMods.filter(g => g.nome && g.opcoes.length),
+    isCombo,
+    comboItens: isCombo ? ($('epComboItens').value.split('\n').map(s => s.trim()).filter(Boolean)) : [],
+    hhAtivo,
+    hhInicio: hhAtivo ? $('epHHIni').value : '',
+    hhFim: hhAtivo ? $('epHHFim').value : '',
+    hhPreco: hhAtivo ? round2(parseFloat($('epHHPreco').value) || 0) : null
   };
   if(edId) await col('produtos').doc(edId).update(dados);
   else await col('produtos').add({ ...dados, esgotado: false, criadoEm: TS() });
