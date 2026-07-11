@@ -340,6 +340,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
     <button class="btn o" style="margin-top:10px;display:none" id="btnMesaCancel" onclick="abrirMesaCancelamento()">🗑️ Mesa de cancelamento</button>
     <button class="btn o" style="margin-top:10px;display:none" id="btnKDS" onclick="entrarKDS()">📺 Modo Cozinha (KDS)</button>
     <button class="btn o" style="margin-top:10px" onclick="entrarChamadasTV()">📺 TV de chamadas</button>
+    <button class="btn o" style="margin-top:10px" onclick="abrirFiados()">💳 Clientes fiado</button>
     <button class="btn o" style="margin-top:10px" id="btnInstalar" onclick="instalarApp()">📲 Instalar aplicativo</button>
     <div class="credit">Desenvolvido por Heitor Serra Neto</div>
   </div>
@@ -2162,7 +2163,7 @@ function renderPagto(){
     <label>Pagamentos</label>
     ${cxPagamentos.map((p, i) => `<div class="pagrow"><b>${esc(p.forma)}</b><span class="v">${fmt(p.valor)}</span><button class="x" style="color:var(--red);font-size:17px" onclick="cxPagamentos.splice(${i},1);renderPagto()">✕</button></div>`).join('')}
     <div class="row" style="margin-top:6px">
-      <select id="cxForma"><option>Dinheiro</option><option>PIX</option><option>Débito</option><option>Crédito</option><option>Voucher</option></select>
+      <select id="cxForma"><option>Dinheiro</option><option>PIX</option><option>Débito</option><option>Crédito</option><option>Voucher</option><option>Fiado</option></select>
       <input id="cxValor" type="number" step="0.01" inputmode="decimal" placeholder="${t.resta.toFixed(2)}">
       <button class="btn sm" onclick="addPagamento()">＋</button>
     </div>
@@ -2197,8 +2198,45 @@ function addPagamento(){
   const t = pagtoTotais();
   const v = parseFloat(($('cxValor').value || '').replace(',', '.')) || t.resta;
   if(v <= 0){ toast('Valor inválido'); return; }
-  cxPagamentos.push({ forma: $('cxForma').value, valor: round2(v) });
+  const forma = $('cxForma').value;
+  if(forma === 'Fiado' && !clienteSel){
+    toast('Escolha o cliente antes de lançar fiado');
+    abrirClientesParaFiado();
+    return;
+  }
+  cxPagamentos.push({ forma, valor: round2(v), clienteFiado: forma === 'Fiado' ? { id: clienteSel.id, nome: clienteSel.nome } : null });
   renderPagto();
+}
+async function abrirClientesParaFiado(){
+  const snap = await col('clientes').orderBy('nome').limit(300).get();
+  CLIENTES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderClientes('');
+  abrirOv('ovExtra');
+}
+async function abrirFiados(){
+  const snap = await col('clientes').where('fiadoSaldo', '>', 0).orderBy('fiadoSaldo', 'desc').get();
+  const devedores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">💳 Clientes com fiado</h3>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Total em aberto: <b style="color:var(--amber)">${fmt(devedores.reduce((a,c) => a + (c.fiadoSaldo || 0), 0))}</b></p>
+    <div style="margin-top:10px">${devedores.map(c => `
+      <div class="pagrow"><b style="flex:1">${esc(c.nome)}${c.telefone ? '<div style="font-size:11.5px;color:var(--mut);font-weight:400">' + esc(c.telefone) + '</div>' : ''}</b>
+        <span class="v" style="color:var(--red)">${fmt(c.fiadoSaldo)}</span>
+        <button class="btn g sm" onclick="receberFiado('${c.id}')">💰 Receber</button></div>`).join('') || '<div class="empty">Ninguém devendo fiado 🎉</div>'}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
+async function receberFiado(clienteId){
+  const doc = await col('clientes').doc(clienteId).get();
+  const c = doc.data();
+  const v = prompt('Quanto ' + c.nome + ' está pagando agora? (deve ' + fmt(c.fiadoSaldo) + ')', c.fiadoSaldo.toFixed(2));
+  if(v === null) return;
+  const valor = round2(parseFloat(v.replace(',', '.')) || 0);
+  if(valor <= 0 || valor > c.fiadoSaldo + 0.01){ toast('Valor inválido'); return; }
+  await col('clientes').doc(clienteId).update({ fiadoSaldo: firebase.firestore.FieldValue.increment(-valor) });
+  logAcao('fiado_recebido', { cliente: c.nome, valor });
+  toast(fmt(valor) + ' recebido de ' + c.nome + ' ✅');
+  abrirFiados();
 }
 async function finalizarPagto(){
   await trava(async () => {
@@ -2216,6 +2254,12 @@ async function finalizarPagto(){
         cliente: cxMesa === null && clienteSel ? { id: clienteSel.id, nome: clienteSel.nome, telefone: clienteSel.telefone || '' } : null,
         caixaId: GAVETA ? GAVETA.id : null, criadoEm: TS()
       });
+      for(const p of cxPagamentos){
+        if(p.forma === 'Fiado' && p.clienteFiado){
+          await col('clientes').doc(p.clienteFiado.id).update({ fiadoSaldo: firebase.firestore.FieldValue.increment(p.valor) });
+          logAcao('fiado_lancado', { cliente: p.clienteFiado.nome, valor: p.valor, mesa: cxMesa });
+        }
+      }
       if(cxMesa === null){
         await col('pedidos').add({ mesa: null, garcom: garcom || 'Balcão', itens: carrinho, tipo: 'pedido', status: 'novo', impresso: false, entregue: false,
           cliente: clienteSel ? { nome: clienteSel.nome, telefone: clienteSel.telefone || '', endereco: clienteSel.endereco || '' } : null, criadoEm: TS() });
@@ -2567,7 +2611,7 @@ async function esperadoGaveta(){
   let trocoTot = 0;
   snap.docs.forEach(d => {
     const v = d.data();
-    (v.pagamentos || []).forEach(p => { porForma[p.forma] = (porForma[p.forma] || 0) + p.valor; });
+    (v.pagamentos || []).forEach(p => { if(p.forma === 'Fiado') return; porForma[p.forma] = (porForma[p.forma] || 0) + p.valor; });
     trocoTot += v.troco || 0;
   });
   const movs = GAVETA.movimentos || [];
