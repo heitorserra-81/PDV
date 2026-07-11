@@ -341,6 +341,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
     <button class="btn o" style="margin-top:10px;display:none" id="btnKDS" onclick="entrarKDS()">📺 Modo Cozinha (KDS)</button>
     <button class="btn o" style="margin-top:10px" onclick="entrarChamadasTV()">📺 TV de chamadas</button>
     <button class="btn o" style="margin-top:10px" onclick="abrirFiados()">💳 Clientes fiado</button>
+    <button class="btn o" style="margin-top:10px" onclick="abrirTrocaDevolucao()">🔄 Troca / Devolução</button>
     <button class="btn o" style="margin-top:10px" id="btnInstalar" onclick="instalarApp()">📲 Instalar aplicativo</button>
     <div class="credit">Desenvolvido por Heitor Serra Neto</div>
   </div>
@@ -453,6 +454,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <div class="screen" id="scBalcao">
   <div class="top"><button class="iconb" onclick="show('scHome')">←</button><div style="flex:1"><h2>Venda balcão</h2><div class="sub" id="balcaoCliente">Sem cliente vinculado</div></div><button class="iconb" onclick="abrirClientes()">👤</button></div>
   <div class="wrap wide">
+    <input id="barcodeInput" placeholder="🔍 Bipa o código de barras aqui…" style="margin-bottom:12px" autocomplete="off" onkeydown="if(event.key==='Enter')processarBarcode(this)">
     <div class="cats" id="catChipsB"></div>
     <div class="prodgrid" id="prodGridB"></div>
   </div>
@@ -2272,6 +2274,29 @@ async function receberFiado(clienteId){
   toast(fmt(valor) + ' recebido de ' + c.nome + ' ✅');
   abrirFiados();
 }
+function abrirTrocaDevolucao(){
+  if(!senhaGerente()) return;
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🔄 Troca / Devolução</h3>
+    <label>O que está sendo devolvido</label>
+    <textarea id="devDescricao" rows="3" placeholder="ex: 1x X-Salada (veio errado)"></textarea>
+    <label>Valor a devolver (R$)</label>
+    <input id="devValor" type="number" step="0.01" inputmode="decimal">
+    <label>Motivo</label>
+    <input id="devMotivo" placeholder="ex: pedido errado, cliente desistiu, produto com defeito…">
+    <button class="btn g" style="margin-top:16px" onclick="confirmarDevolucao()">Confirmar devolução</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+async function confirmarDevolucao(){
+  const descricao = $('devDescricao').value.trim();
+  const valor = round2(parseFloat($('devValor').value) || 0);
+  const motivo = $('devMotivo').value.trim();
+  if(!descricao || valor <= 0){ toast('Preencha a descrição e o valor'); return; }
+  await col('devolucoes').add({ descricao, valor, motivo, quem: garcom || 'Computador', caixaId: GAVETA ? GAVETA.id : null, criadoEm: TS() });
+  logAcao('devolucao', { descricao, valor, motivo });
+  fecharOv('ovExtra'); toast('Devolução registrada 🔄 -' + fmt(valor));
+}
 async function finalizarPagto(){
   await trava(async () => {
     const t = pagtoTotais();
@@ -2408,6 +2433,21 @@ function entrarBalcao(){
   if((CFG && CFG.exigirCaixa !== false) && !GAVETA){ aguardandoCaixa = 'balcao'; show('scCaixaFechado'); return; }
   contexto = 'balcao'; mesaAtual = null; carrinho = []; catAtiva = 'Todos';
   renderCardapio('prodGridB','catChipsB'); atualizarCartBar(); atualizarClienteBar(); show('scBalcao');
+  setTimeout(() => { const el = $('barcodeInput'); if(el){ el.value = ''; el.focus(); } }, 200);
+}
+function processarBarcode(el){
+  const codigo = el.value.trim();
+  el.value = '';
+  if(!codigo) return;
+  const p = PRODUTOS.find(x => x.codigoBarras && x.codigoBarras === codigo);
+  if(!p){ toast('Nenhum produto com esse código: ' + codigo); return; }
+  if(p.esgotado){ toast(p.nome + ' está esgotado'); return; }
+  if(p.porPeso){ abrirProduto(p.id); return; }
+  const jaTem = carrinho.find(it => it.nome === p.nome && !it.mods.length && !it.obs);
+  if(jaTem) jaTem.qtd++;
+  else carrinho.push({ uid: uid(), nome: p.nome, preco: precoAtual(p), qtd: 1, setor: p.setor || '', mods: [], obs: '', pessoa: '', pago: false, valorPago: 0 });
+  atualizarCartBar();
+  toast('✓ ' + p.nome + ' adicionado');
 }
 /* ---------- cliente (QR da mesa) ---------- */
 function entrarCliente(n){
@@ -2732,6 +2772,9 @@ async function montarResumoFechamento(espera, contado, divergencia, quem){
   const porItem = {};
   pedidosSnap.docs.forEach(d => { const p = d.data(); if(p.tipo === 'pedido') (p.itens || []).forEach(it => porItem[it.nome] = (porItem[it.nome] || 0) + it.qtd); });
   const topItens = Object.entries(porItem).sort((a,b) => b[1] - a[1]).slice(0, 5);
+  const devSnap = await col('devolucoes').where('criadoEm', '>=', GAVETA.abertoEm).get();
+  const devolucoes = devSnap.docs.map(d => d.data());
+  const devolucaoTotal = round2(devolucoes.reduce((a, d) => a + (d.valor || 0), 0));
   const movs = GAVETA.movimentos || [];
   const sang = movs.filter(x => x.tipo === 'sangria');
   const refo = movs.filter(x => x.tipo === 'reforco');
@@ -2744,7 +2787,7 @@ async function montarResumoFechamento(espera, contado, divergencia, quem){
     duracaoTxt: duracaoMin < 60 ? duracaoMin + 'min' : Math.floor(duracaoMin/60) + 'h' + String(duracaoMin%60).padStart(2,'0'),
     fundo: GAVETA.fundo || 0, sangrias: sang, reforcos: refo,
     faturamentoBruto, numVendas: vendas.length, ticketMedio: vendas.length ? round2(faturamentoBruto / vendas.length) : 0,
-    descontoTotal, taxaTotal, cancelTotal, numCancelamentos: cancelamentos.length, cortesiasTotal, numCortesias: cortesias.length,
+    descontoTotal, taxaTotal, cancelTotal, numCancelamentos: cancelamentos.length, cortesiasTotal, numCortesias: cortesias.length, devolucaoTotal, numDevolucoes: devolucoes.length,
     porGarcom, topItens
   };
 }
@@ -2771,6 +2814,7 @@ function escposFechamento(r){
   if(r.descontoTotal) s += linhaEsq('Descontos concedidos', fmt(r.descontoTotal)) + '\n';
   if(r.cancelTotal) s += linhaEsq('Cancelamentos (' + r.numCancelamentos + ')', fmt(r.cancelTotal)) + '\n';
   if(r.cortesiasTotal) s += linhaEsq('Cortesias (' + r.numCortesias + ')', fmt(r.cortesiasTotal)) + '\n';
+  if(r.devolucaoTotal) s += linhaEsq('Devolucoes (' + r.numDevolucoes + ')', '-' + fmt(r.devolucaoTotal)) + '\n';
   s += resetTam() + '-'.repeat(colWidth()) + '\n' + tamTexto();
   if(r.sangrias.length || r.reforcos.length){
     r.sangrias.forEach(x => { s += linhaEsq('Sangria: ' + semAcento(x.motivo || ''), '-' + fmt(x.valor)) + '\n'; });
@@ -2806,6 +2850,7 @@ function htmlFechamento(r){
     ${r.descontoTotal ? `<div class="li"><span>Descontos concedidos</span><span>${fmt(r.descontoTotal)}</span></div>` : ''}
     ${r.cancelTotal ? `<div class="li"><span>Cancelamentos (${r.numCancelamentos})</span><span>${fmt(r.cancelTotal)}</span></div>` : ''}
     ${r.cortesiasTotal ? `<div class="li"><span>Cortesias (${r.numCortesias})</span><span>${fmt(r.cortesiasTotal)}</span></div>` : ''}
+    ${r.devolucaoTotal ? `<div class="li"><span>Devoluções (${r.numDevolucoes})</span><span>-${fmt(r.devolucaoTotal)}</span></div>` : ''}
     <div class="sep"></div>
     ${r.sangrias.map(x => `<div class="li"><span>Sangria: ${esc(x.motivo || '')}</span><span>-${fmt(x.valor)}</span></div>`).join('')}
     ${r.reforcos.map(x => `<div class="li"><span>Reforço: ${esc(x.motivo || '')}</span><span>+${fmt(x.valor)}</span></div>`).join('')}
@@ -3723,6 +3768,8 @@ function editarProduto(id){
       <label>Preço por quilo (R$/kg)</label>
       <p style="color:var(--mut);font-size:12px;margin-top:-2px">Se marcar isso, o campo "Preço" acima vira o preço por kg. Na hora do pedido, o garçom digita o peso pesado.</p>
     </div>
+    <label style="margin-top:16px">🔍 Código de barras (opcional)</label>
+    <input id="epBarcode" value="${p && p.codigoBarras ? esc(p.codigoBarras) : ''}" placeholder="Bipa o leitor aqui ou digita o código">
     <button class="btn g" style="margin-top:18px" onclick="salvarProduto()">Salvar produto</button>
     ${id ? `<button class="btn r" style="margin-top:10px" onclick="excluirProduto()">🗑️ Excluir produto</button>` : ''}
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovEditProd')">Cancelar</button>`;
@@ -3765,7 +3812,8 @@ async function salvarProduto(){
     hhInicio: hhAtivo ? $('epHHIni').value : '',
     hhFim: hhAtivo ? $('epHHFim').value : '',
     hhPreco: hhAtivo ? round2(parseFloat($('epHHPreco').value) || 0) : null,
-    porPeso: $('epPeso').classList.contains('on')
+    porPeso: $('epPeso').classList.contains('on'),
+    codigoBarras: $('epBarcode').value.trim()
   };
   if(edId) await col('produtos').doc(edId).update(dados);
   else await col('produtos').add({ ...dados, esgotado: false, criadoEm: TS() });
