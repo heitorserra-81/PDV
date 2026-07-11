@@ -648,7 +648,7 @@ const firebaseConfig = {
   appId: "COLE_AQUI"
 };
 /* Fotos (opcional): cole a URL e a anon key do seu Supabase (mesmo do
-   KonectaRH) e crie um bucket PÚBLICO chamado "pdv". Sem isso, as fotos
+   KonectaRH) e crie um bucket PÚBLICO chamado "PDV". Sem isso, as fotos
    funcionam por URL manual normalmente. */
 const SUPA_URL = "https://prizqulyuqkhuwbjrckv.supabase.co";
 const SUPA_KEY = "sb_publishable_ldNovdxDU9W5SIE1GXM1rw_g2rmuWtb";
@@ -3313,7 +3313,7 @@ async function uploadFoto(blob){
     headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'image/jpeg' },
     body: blob
   });
-  if(!r.ok) throw new Error('Falha no upload (' + r.status + '). O bucket "pdv" existe e é público?');
+  if(!r.ok) throw new Error('Falha no upload (' + r.status + '). O bucket "PDV" existe e é público?');
   return SUPA_URL + '/storage/v1/object/public/PDV/' + nome;
 }
 function escolherFoto(inputEl, destInputId, prevId, formato){
