@@ -1262,6 +1262,56 @@ async function transferirItemPara(dest){
     fecharOv('ovExtra'); toast('Item transferido pra mesa ' + dest + ' 🔀');
   });
 }
+let itensTransfSel = [];
+function transferirVariosItensUI(){
+  const m = MESAS[String(mesaAtual)] || {};
+  itensTransfSel = [];
+  const itens = (m.itens || []).filter(i => !i.pago);
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">☑️ Quais itens transferir?</h3>
+    <div style="margin-top:8px;max-height:44dvh;overflow-y:auto">${itens.map(it => `
+      <div class="chk" id="ti_${it.uid}" onclick="togItemTransf('${it.uid}')"><div class="box"></div>
+        <div class="ci"><b>${it.qtd}× ${esc(it.nome)}</b>${it.pessoa ? `<div class="mods">👤 ${esc(nomePessoaMesa(it.pessoa))}</div>` : ''}</div>
+        <span class="cv">${fmt(it.preco * it.qtd)}</span></div>`).join('') || '<div class="empty">Nenhum item</div>'}</div>
+    <button class="btn g" style="margin-top:14px" onclick="escolherDestinoVariosItens()">Escolher mesa destino →</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+function togItemTransf(uid){
+  const i = itensTransfSel.indexOf(uid);
+  if(i >= 0) itensTransfSel.splice(i, 1); else itensTransfSel.push(uid);
+  const el = $('ti_' + uid);
+  el.classList.toggle('on', itensTransfSel.includes(uid));
+  el.querySelector('.box').textContent = itensTransfSel.includes(uid) ? '✓' : '';
+}
+function escolherDestinoVariosItens(){
+  if(!itensTransfSel.length){ toast('Selecione ao menos um item'); return; }
+  const n = (CFG && CFG.numMesas) || 20;
+  let opts = [];
+  for(let i = 1; i <= n; i++){ if(i !== mesaAtual && (MESAS[String(i)] || {}).status !== 'agrupada') opts.push(i); }
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🔀 Transferir ${itensTransfSel.length} ite${itensTransfSel.length === 1 ? 'm' : 'ns'} pra qual mesa?</h3>
+    <div class="mesagrid" style="margin-top:14px">${opts.map(i => {
+      const st = (MESAS[String(i)] || {}).status || 'livre';
+      return `<div class="mesa ${st}" onclick="transferirVariosItensPara(${i})"><div class="n">${i}</div><div class="st">${st === 'livre' ? 'Livre' : 'Ocupada'}</div></div>`;
+    }).join('')}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+}
+async function transferirVariosItensPara(dest){
+  const src = mesaAtual, uids = itensTransfSel.slice();
+  await trava(async () => {
+    const sRef = col('mesas').doc(String(src)), dRef = col('mesas').doc(String(dest));
+    await db.runTransaction(async t => {
+      const s = await t.get(sRef), d = await t.get(dRef);
+      const sm = s.data() || {}, dm = (d.data() && d.data().status && d.data().status !== 'livre') ? d.data() : { status: 'ocupada', garcom, garcomFoto, itens: [], pessoas: [], pagoAvulso: 0, numPessoas: 1, abertaEm: firebase.firestore.Timestamp.now() };
+      const movidos = (sm.itens || []).filter(x => uids.includes(x.uid)).map(it => ({ ...it, pessoa: '' }));
+      t.set(dRef, { ...dm, itens: (dm.itens || []).concat(movidos) });
+      t.set(sRef, { ...sm, itens: (sm.itens || []).filter(x => !uids.includes(x.uid)) });
+    });
+    logAcao('transferir_varios_itens', { de: src, para: dest, quantos: uids.length });
+    fecharOv('ovExtra'); toast(uids.length + ' ite' + (uids.length === 1 ? 'm' : 'ns') + ' transferido(s) pra mesa ' + dest + ' 🔀');
+  });
+}
 
 /* ---------- menu ⋯ da mesa (transferir / juntar) ---------- */
 function mesaMenu(){
@@ -1289,6 +1339,7 @@ function mesaMenu(){
       ${(m.grupoCom || []).length ? `<button onclick="desagrupar()"><span style="font-size:20px">↔️</span><span>Separar mesas agrupadas (${m.grupoCom.length})</span></button>` : ''}
       <button onclick="escolherDestino('mesa')"><span style="font-size:20px">🔀</span><span>Transferir mesa inteira</span></button>
       ${(m.pessoas || []).length ? `<button onclick="transferirPessoasUI()"><span style="font-size:20px">👥</span><span>Transferir só algumas pessoas</span></button>` : ''}
+      ${!vazia ? `<button onclick="transferirVariosItensUI()"><span style="font-size:20px">☑️</span><span>Transferir itens selecionados</span></button>` : ''}
       ${!vazia ? `<button onclick="juntarUI()"><span style="font-size:20px">🔗</span><span>Juntar outra mesa nesta</span></button>` : ''}
       ${!vazia && m.status !== 'conta' && m.status !== 'paga' ? `<button onclick="fecharOv('ovExtra');mesaAtual=${mesaAtual};pedirConta()"><span style="font-size:20px">🧾</span><span>Pedir a conta</span></button>` : ''}
       ${botaoPagamento}
@@ -1664,22 +1715,37 @@ function nomePessoaMesa(pid){
   return p ? p.nome : '';
 }
 function abrirCarrinho(){
+  const grupos = {};
+  const ordem = [];
+  carrinho.forEach(it => {
+    const chave = it.pessoa || '';
+    if(!grupos[chave]){ grupos[chave] = []; ordem.push(chave); }
+    grupos[chave].push(it);
+  });
+  const nomeGrupo = (chave) => chave ? '👤 ' + esc(nomePessoaMesa(chave)) : '🍽 Mesa (todos)';
   $('ovCartBox').innerHTML = `
     <h3 style="font-size:19px">${mesaAtual ? 'Mesa ' + mesaAtual : 'Venda balcão'} — revisar</h3>
-    <div style="margin-top:10px">${carrinho.map((it, i) => `
-      <div class="item"><div class="q">${it.qtd}×</div>
-        <div class="info"><b>${esc(it.nome)}</b>${itemMods(it)}<div class="mods">${it.pessoa ? '👤 ' + esc(nomePessoaMesa(it.pessoa)) + ' · ' : ''}Setor: ${esc(nomeSetor(it.setor))}</div></div>
-        <div class="val">${fmt(it.preco * it.qtd)}</div>
-        <button class="x" onclick="removerCarrinho(${i})">✕</button></div>`).join('')}</div>
+    <div style="margin-top:8px">${ordem.map(chave => {
+      const sub = grupos[chave].reduce((a,x) => a + x.preco * x.qtd, 0);
+      return `<div class="pgrupo"><div class="ph">${nomeGrupo(chave)}<span class="psub">${fmt(sub)}</span></div>
+        ${grupos[chave].map(it => `
+          <div class="item"><div class="q">${it.qtd}×</div>
+            <div class="info"><b>${esc(it.nome)}</b>${itemMods(it)}</div>
+            <div class="val">${fmt(it.preco * it.qtd)}</div>
+            <button class="x" onclick="removerCarrinho('${it.uid}')">✕</button></div>`).join('')}
+      </div>`;
+    }).join('')}</div>
     <div class="totline big"><span>Total</span><span>${fmt(carrinho.reduce((a,x)=>a+x.preco*x.qtd,0))}</span></div>
+    ${ordem.length > 1 ? `<p style="color:var(--mut);font-size:12px;margin-top:6px">Confirma com cada pessoa antes de enviar 👆</p>` : ''}
     ${contexto === 'balcao'
       ? `<button class="btn g" style="margin-top:16px" onclick="fecharOv('ovCart');abrirCaixaBalcao()">💰 Cobrar agora</button>`
       : `<button class="btn g" style="margin-top:16px" onclick="enviarPedido()">📤 Enviar pedido</button>`}
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovCart')">Continuar adicionando</button>`;
   abrirOv('ovCart');
 }
-function removerCarrinho(i){
-  carrinho.splice(i, 1); atualizarCartBar();
+function removerCarrinho(itemUid){
+  carrinho = carrinho.filter(x => x.uid !== itemUid);
+  atualizarCartBar();
   if(carrinho.length) abrirCarrinho(); else fecharOv('ovCart');
 }
 async function enviarPedido(){
@@ -1829,7 +1895,7 @@ async function abrirReimpressao(){
 }
 
 /* ---------- pagamento (4 modos + desconto) ---------- */
-let cxMesa = null, cxPagamentos = [], cxTaxaOn = true, cxBase = 0, cxDesc = 0, cxModo = 'tudo', cxSel = [], cxPessoa = null, cxPartes = 2, cxDescricao = '';
+let cxMesa = null, cxPagamentos = [], cxTaxaOn = true, cxBase = 0, cxDesc = 0, cxModo = 'tudo', cxSel = [], cxPessoa = null, cxPartes = 2, cxDescricao = '', cxCortesia = false;
 function computadorClicouMesa(n){
   const m = MESAS[String(n)] || {};
   if(m.status === 'agrupada'){ computadorClicouMesa(m.agrupadaEm); return; }
@@ -1965,7 +2031,7 @@ function pagarUmaParte(){
 
 /* ---------- tela final de pagamento ---------- */
 function iniciarPagto(base, taxaDefault){
-  cxPagamentos = []; cxDesc = 0;
+  cxPagamentos = []; cxDesc = 0; cxCortesia = false;
   cxTaxaOn = !!(CFG && CFG.taxa > 0 && taxaDefault);
   renderPagto();
   abrirOv('ovCaixa');
@@ -1982,9 +2048,9 @@ function renderPagto(){
     <h3 style="font-size:19px">💳 ${esc(cxDescricao)}</h3>
     <div class="totline" style="margin-top:8px"><span>Base</span><span>${fmt(cxBase)}</span></div>
     ${(CFG && CFG.taxa > 0) ? `<div class="totline"><span>Taxa ${CFG.taxa}% <button class="btn o sm" style="display:inline-block;padding:4px 10px;margin-left:6px" onclick="cxTaxaOn=!cxTaxaOn;renderPagto()">${cxTaxaOn ? 'remover' : 'incluir'}</button></span><span>${fmt(t.taxa)}</span></div>` : ''}
-    ${cxDesc ? `<div class="totline" style="color:var(--green)"><span>Desconto</span><span>-${fmt(cxDesc)}</span></div>` : ''}
+    ${cxDesc ? `<div class="totline" style="color:var(--green)"><span>${cxCortesia ? '🎁 Cortesia' : 'Desconto'}</span><span>-${fmt(cxDesc)}</span></div>` : ''}
     <div class="totline big"><span>Total</span><span>${fmt(t.total)}</span></div>
-    ${t.total > 0.009 ? `<button class="btn o sm" style="margin-top:8px" onclick="darDesconto()">🏷️ Desconto (gerente)</button>` : ''}
+    ${t.total > 0.009 ? `<div class="row" style="margin-top:8px"><button class="btn o sm" style="flex:1" onclick="darDesconto()">🏷️ Desconto (gerente)</button><button class="btn o sm" style="flex:1" onclick="marcarCortesia()">🎁 Cortesia (gerente)</button></div>` : ''}
     ${t.total <= 0.009 ? `<p style="color:var(--mut);font-size:12.5px;margin-top:10px">Não há valor a cobrar. Toque em Confirmar para liberar a mesa — não precisa lançar nenhum pagamento.</p>` : `
     <label>Pagamentos</label>
     ${cxPagamentos.map((p, i) => `<div class="pagrow"><b>${esc(p.forma)}</b><span class="v">${fmt(p.valor)}</span><button class="x" style="color:var(--red);font-size:17px" onclick="cxPagamentos.splice(${i},1);renderPagto()">✕</button></div>`).join('')}
@@ -2012,6 +2078,13 @@ function darDesconto(){
   logAcao('desconto', { mesa: cxMesa, valor: d, contexto: cxDescricao });
   renderPagto();
 }
+function marcarCortesia(){
+  if(!senhaGerente()) return;
+  if(!confirm('Marcar essa conta inteira como CORTESIA (100% de desconto)? Isso fica registrado separado nos relatórios, sem contar como faturamento.')) return;
+  cxDesc = cxBase; cxCortesia = true;
+  logAcao('cortesia', { mesa: cxMesa, valor: cxBase, contexto: cxDescricao });
+  renderPagto();
+}
 function addPagamento(){
   const t = pagtoTotais();
   const v = parseFloat(($('cxValor').value || '').replace(',', '.')) || t.resta;
@@ -2027,7 +2100,7 @@ async function finalizarPagto(){
       const itensComprovante = cxMesa === null ? carrinho.slice() : calcularItensComprovante(m);
       await col('vendas').add({
         mesa: cxMesa, tipo: cxModo, descricao: cxDescricao,
-        base: cxBase, taxa: t.taxa, desconto: cxDesc, total: t.total,
+        base: cxBase, taxa: t.taxa, desconto: cxDesc, total: t.total, cortesia: !!cxCortesia,
         pagamentos: cxPagamentos, troco: t.troco,
         garcom: cxMesa === null ? (garcom || 'Balcão') : (m.garcom || ''),
         numPessoas: cxModo === 'tudo' ? (m.numPessoas || 1) : (cxModo === 'balcao' ? 1 : 0),
@@ -2442,8 +2515,11 @@ async function confirmarFechamento(espera){
 }
 async function montarResumoFechamento(espera, contado, divergencia, quem){
   const vendasSnap = await col('vendas').where('criadoEm', '>=', GAVETA.abertoEm).get();
-  const vendas = vendasSnap.docs.map(d => d.data());
+  const todasVendas = vendasSnap.docs.map(d => d.data());
+  const cortesias = todasVendas.filter(v => v.cortesia);
+  const vendas = todasVendas.filter(v => !v.cortesia);
   const faturamentoBruto = round2(vendas.reduce((a, v) => a + (v.total || 0), 0));
+  const cortesiasTotal = round2(cortesias.reduce((a, v) => a + (v.base || 0), 0));
   const descontoTotal = round2(vendas.reduce((a, v) => a + (v.desconto || 0), 0));
   const taxaTotal = round2(vendas.reduce((a, v) => a + (v.taxa || 0), 0));
   const porGarcom = {};
@@ -2467,7 +2543,7 @@ async function montarResumoFechamento(espera, contado, divergencia, quem){
     duracaoTxt: duracaoMin < 60 ? duracaoMin + 'min' : Math.floor(duracaoMin/60) + 'h' + String(duracaoMin%60).padStart(2,'0'),
     fundo: GAVETA.fundo || 0, sangrias: sang, reforcos: refo,
     faturamentoBruto, numVendas: vendas.length, ticketMedio: vendas.length ? round2(faturamentoBruto / vendas.length) : 0,
-    descontoTotal, taxaTotal, cancelTotal, numCancelamentos: cancelamentos.length,
+    descontoTotal, taxaTotal, cancelTotal, numCancelamentos: cancelamentos.length, cortesiasTotal, numCortesias: cortesias.length,
     porGarcom, topItens
   };
 }
@@ -2493,6 +2569,7 @@ function escposFechamento(r){
   if(r.taxaTotal) s += linhaEsq('Taxa de servico total', fmt(r.taxaTotal)) + '\n';
   if(r.descontoTotal) s += linhaEsq('Descontos concedidos', fmt(r.descontoTotal)) + '\n';
   if(r.cancelTotal) s += linhaEsq('Cancelamentos (' + r.numCancelamentos + ')', fmt(r.cancelTotal)) + '\n';
+  if(r.cortesiasTotal) s += linhaEsq('Cortesias (' + r.numCortesias + ')', fmt(r.cortesiasTotal)) + '\n';
   s += resetTam() + '-'.repeat(colWidth()) + '\n' + tamTexto();
   if(r.sangrias.length || r.reforcos.length){
     r.sangrias.forEach(x => { s += linhaEsq('Sangria: ' + semAcento(x.motivo || ''), '-' + fmt(x.valor)) + '\n'; });
@@ -2527,6 +2604,7 @@ function htmlFechamento(r){
     ${r.taxaTotal ? `<div class="li"><span>Taxa de serviço total</span><span>${fmt(r.taxaTotal)}</span></div>` : ''}
     ${r.descontoTotal ? `<div class="li"><span>Descontos concedidos</span><span>${fmt(r.descontoTotal)}</span></div>` : ''}
     ${r.cancelTotal ? `<div class="li"><span>Cancelamentos (${r.numCancelamentos})</span><span>${fmt(r.cancelTotal)}</span></div>` : ''}
+    ${r.cortesiasTotal ? `<div class="li"><span>Cortesias (${r.numCortesias})</span><span>${fmt(r.cortesiasTotal)}</span></div>` : ''}
     <div class="sep"></div>
     ${r.sangrias.map(x => `<div class="li"><span>Sangria: ${esc(x.motivo || '')}</span><span>-${fmt(x.valor)}</span></div>`).join('')}
     ${r.reforcos.map(x => `<div class="li"><span>Reforço: ${esc(x.motivo || '')}</span><span>+${fmt(x.valor)}</span></div>`).join('')}
