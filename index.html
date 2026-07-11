@@ -936,11 +936,6 @@ function itensRestanteTotal(m){
 function totalPagoMesa(m){
   return round2((m.itens || []).reduce((a,x) => a + (x.pago ? x.preco * x.qtd : (x.valorPago || 0)), 0) + (m.pagoAvulso || 0));
 }
-function segurarMesa(el){
-  el.classList.add('segurando');
-  clearTimeout(el._segT);
-  el._segT = setTimeout(() => el.classList.remove('segurando'), 260);
-}
 function ordemExibicaoMesas(n){
   const order = [];
   for(let i = 1; i <= n; i++){
@@ -961,7 +956,7 @@ function renderMesas(elId, modoCaixa){
     const m = MESAS[String(i)] || {};
     const st = m.status || 'livre';
     const resta = itensRestanteTotal(m);
-    const dragAttrs = !modoCaixa ? `onpointerdown="iniciarDragMesa(event,${i})"` : `onpointerdown="segurarMesa(this)" onclick="computadorClicouMesa(${i})"`;
+    const dragAttrs = `onpointerdown="iniciarDragMesa(event,${i},'${modoCaixa ? 'computador' : 'garcom'}')"`;
     const grupo = m.grupoCom || [];
     const stTxt = st === 'livre' ? 'Livre' : (st === 'conta' ? 'Pediu conta' : (st === 'paga' ? 'Pago · aguardando baixa' : 'Ocupada'));
     const todos = [i, ...grupo];
@@ -1006,11 +1001,11 @@ function flipAnimar(elId, before){
 
 /* ---------- arrastar mesa com o dedo pra agrupar ---------- */
 let dragState = null;
-function iniciarDragMesa(ev, i){
+function iniciarDragMesa(ev, i, modo){
   const m = MESAS[String(i)] || {};
   if(m.status === 'agrupada') return;
   const el = ev.currentTarget;
-  dragState = { i, el, startX: ev.clientX, startY: ev.clientY, longPress: false, cloneEl: null, pid: ev.pointerId };
+  dragState = { i, el, startX: ev.clientX, startY: ev.clientY, longPress: false, cloneEl: null, pid: ev.pointerId, modo: modo || 'garcom' };
   dragState.timer = setTimeout(() => iniciarArrasteVisual(ev), 220);
 }
 function iniciarArrasteVisual(ev){
@@ -1077,11 +1072,12 @@ function soltarDragMesa(ev){
   clearInterval(window._scrollDragT);
   try{ dragState.el.releasePointerCapture(dragState.pid); }catch(e){}
   const src = dragState.i;
+  const modo = dragState.modo;
   if(dragState.modoScroll){ dragState = null; return; }
   if(!dragState.longPress){
     // toque rápido, sem segurar: abre a mesa normalmente
     dragState = null;
-    abrirMesa(src);
+    if(modo === 'computador') computadorClicouMesa(src); else abrirMesa(src);
     return;
   }
   ev.preventDefault();
