@@ -85,6 +85,17 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.conta{border-color:var(--green);animation:pulse 1.6s infinite}
 .mesa.conta .st{color:var(--green)}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(47,191,113,.45)}50%{box-shadow:0 0 0 9px rgba(47,191,113,0)}}
+.kds-card{background:#1a1a1a;border:3px solid #333;border-radius:16px;padding:16px;color:#fff;display:flex;flex-direction:column;gap:6px}
+.kds-card.aviso{border-color:#E8A33D;background:#2a2010}
+.kds-card.atrasado{border-color:#E0554D;background:#2a1512;animation:pulseKds 1.2s infinite}
+@keyframes pulseKds{0%,100%{box-shadow:0 0 0 0 rgba(224,85,77,.5)}50%{box-shadow:0 0 0 10px rgba(224,85,77,0)}}
+.kds-card .mesa{font-size:26px;font-weight:800}
+.kds-card .tempo{font-size:15px;font-weight:700;color:#E8A33D}
+.kds-card.atrasado .tempo{color:#E0554D}
+.kds-card .item{font-size:17px;padding:4px 0;border-bottom:1px dashed #444}
+.kds-card .mod{font-size:13px;color:#aaa;padding-left:12px}
+.kds-card .btn-pronto{margin-top:10px;padding:14px;border-radius:12px;background:#E8A33D;color:#181410;font-weight:800;font-size:16px;text-align:center}
+.kds-card .btn-entregue{margin-top:8px;padding:14px;border-radius:12px;background:#2FBF71;color:#0d1f14;font-weight:800;font-size:16px;text-align:center}
 
 /* ====== cardápio ====== */
 .cats{display:flex;gap:8px;overflow-x:auto;padding:12px 0;scrollbar-width:none;position:sticky;top:69px;background:var(--bg);z-index:30}
@@ -327,6 +338,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
     </div>
     <button class="btn o" style="margin-top:14px" onclick="abrirChamadas()">🛎️ Ver chamadas de mesa</button>
     <button class="btn o" style="margin-top:10px;display:none" id="btnMesaCancel" onclick="abrirMesaCancelamento()">🗑️ Mesa de cancelamento</button>
+    <button class="btn o" style="margin-top:10px;display:none" id="btnKDS" onclick="entrarKDS()">📺 Modo Cozinha (KDS)</button>
     <button class="btn o" style="margin-top:10px" id="btnInstalar" onclick="instalarApp()">📲 Instalar aplicativo</button>
     <div class="credit">Desenvolvido por Heitor Serra Neto</div>
   </div>
@@ -399,6 +411,12 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
     <p style="color:var(--mut);margin-top:8px;line-height:1.6" id="clienteOkTexto">Já mandamos para a cozinha 🍽️<br>Qualquer coisa, chame o garçom.</p>
     <button class="btn g" style="margin-top:24px" onclick="show('scCliente')">← Voltar</button>
   </div>
+</div>
+
+<!-- ============ KDS (tela de cozinha) ============ -->
+<div class="screen" id="scKDS" style="background:#0a0a0a">
+  <div class="top" style="background:#111"><div style="flex:1"><h2 id="kdsNome" style="font-size:22px">Cozinha</h2><div class="sub" id="kdsHora"></div></div><button class="iconb" onclick="show('scHome')">✕</button></div>
+  <div id="kdsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;padding:16px"></div>
 </div>
 
 <!-- ============ COMPUTADOR ============ -->
@@ -530,6 +548,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <div class="sw"><div><b>Exigir equipe cadastrada</b><small>Se ligado, só quem está cadastrado na Equipe consegue entrar — desliga a entrada por nome livre</small></div><div class="tog" id="togEquipeObrig" onclick="togCampo('equipeObrigatoria', this)"></div></div>
       <div class="sw"><div><b>Exigir caixa aberto para operar</b><small>Ninguém tira pedido nem vende no balcão antes do gerente abrir o caixa do dia</small></div><div class="tog" id="togExigirCaixa" onclick="togCampo('exigirCaixa', this)"></div></div>
       <div class="sw"><div><b>Cliente pode pedir pelo QR</b><small>Se desligar, o QR só mostra "Chamar garçom", sem cardápio</small></div><div class="tog" id="togPedidoQR" onclick="togCampo('pedidoQR', this)"></div></div>
+      <div class="sw"><div><b>📺 Ativar KDS (tela de cozinha)</b><small>Painel em tela cheia pra TV/tablet virado pra cozinha, com cores por tempo de espera</small></div><div class="tog" id="togKDS" onclick="togCampo('kdsAtivo', this)"></div></div>
       <label>📱 QR / link da mesa para o cliente</label>
       <div class="row"><input id="qrMesaNum" type="number" min="1" placeholder="nº da mesa"><button class="btn sm" onclick="gerarQrMesa()">Gerar</button></div>
       <div id="qrMesaBox"></div>
@@ -631,6 +650,7 @@ let unsubs = [], garcom = localStorage.getItem('pdv_garcom') || '', garcomFoto =
 let garcomId = localStorage.getItem('pdv_garcom_id') || '', gerenteOk = false;
 const gParam = new URLSearchParams(location.search).get('g') || '';
 const mesaParam = new URLSearchParams(location.search).get('mesa') || '';
+const telaParam = new URLSearchParams(location.search).get('tela') || '';
 let adminOk = false, mesaAtual = null, carrinho = [], catAtiva = 'Todos', contexto = 'garcom';
 let pedidosVistos = new Set(), primeiraCarga = true, deferredPrompt = null, clienteSel = null;
 let ocupado = false; // trava anti toque-duplo
@@ -728,6 +748,7 @@ async function boot(){
       });
     }));
     if(mesaParam && parseInt(mesaParam) > 0){ entrarCliente(parseInt(mesaParam)); }
+    else if(telaParam === 'kds'){ entrarKDS(); }
     else show('scHome');
   }catch(e){
     console.error(e);
@@ -741,6 +762,7 @@ function aplicarConfig(){
   $('homeCod').textContent = 'código: ' + REST;
   $('cardBalcao').style.display = (CFG.modo === 'restaurante') ? 'none' : '';
   $('btnMesaCancel').style.display = CFG.mesaCancelamento ? '' : 'none';
+  $('btnKDS').style.display = CFG.kdsAtivo ? '' : 'none';
   if($('scConfig').classList.contains('on')) preencherConfig();
 }
 
@@ -1811,6 +1833,39 @@ async function fecharMesaVazia(n){
 }
 
 /* ---------- computador: monitor ---------- */
+function entrarKDS(){
+  $('kdsNome').textContent = (CFG && CFG.nome) || 'Cozinha';
+  show('scKDS');
+  atualizarHoraKDS();
+  clearInterval(window._kdsRelogio);
+  window._kdsRelogio = setInterval(() => { atualizarHoraKDS(); renderKDS(); }, 15000);
+  escutarPedidosKDS();
+}
+function atualizarHoraKDS(){ const el = $('kdsHora'); if(el) el.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
+let unsubKDS = null, pedidosKDS = [];
+function escutarPedidosKDS(){
+  if(unsubKDS) return;
+  unsubKDS = col('pedidos').where('entregue', '==', false).onSnapshot(s => {
+    pedidosKDS = s.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.tipo === 'pedido' && p.impresso)
+      .sort((a, b) => { const ta = a.criadoEm ? a.criadoEm.toMillis() : 0, tb = b.criadoEm ? b.criadoEm.toMillis() : 0; return ta - tb; });
+    renderKDS();
+  });
+  unsubs.push(unsubKDS);
+}
+function renderKDS(){
+  if(!$('scKDS').classList.contains('on')) return;
+  $('kdsGrid').innerHTML = pedidosKDS.map(p => {
+    const min = p.criadoEm ? Math.floor((Date.now() - p.criadoEm.toMillis()) / 60000) : 0;
+    const nivel = min >= 15 ? 'atrasado' : (min >= 8 ? 'aviso' : '');
+    const hora = p.criadoEm ? p.criadoEm.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+    return `<div class="kds-card ${nivel}">
+      <div class="mesa">${p.mesa ? 'MESA ' + p.mesa : 'BALCÃO'}</div>
+      <div class="tempo">🕐 ${hora} · há ${min}min · ${esc(p.garcom || '')}</div>
+      ${(p.itens || []).map(it => `<div class="item">${it.qtd}× ${esc(it.nome)}</div>${(it.mods && it.mods.length) || it.obs ? `<div class="mod">${esc([...(it.mods||[]), it.obs].filter(Boolean).join(' · '))}</div>` : ''}`).join('')}
+      ${p.status !== 'pronto' ? `<div class="btn-pronto" onclick="marcarPronto('${p.id}')">👨‍🍳 Marcar pronto</div>` : `<div class="btn-entregue" onclick="marcarEntregue('${p.id}')">✓ Entregue</div>`}
+    </div>`;
+  }).join('') || '<div style="grid-column:1/-1;text-align:center;color:#777;padding:60px 0;font-size:18px">🍃 Nenhum pedido em andamento</div>';
+}
 function entrarComputador(){
   modoAtual = 'computador';
   compTab('ped'); escutarPedidos(); conectarImpressao(false);
@@ -3121,6 +3176,7 @@ function preencherConfig(){
   $('togEquipeObrig').classList.toggle('on', !!CFG.equipeObrigatoria);
   $('togExigirCaixa').classList.toggle('on', CFG.exigirCaixa !== false);
   $('togPedidoQR').classList.toggle('on', CFG.pedidoQR !== false);
+  $('togKDS').classList.toggle('on', !!CFG.kdsAtivo);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
   renderFracPills(); renderSetores(); renderCatOrd();
 }
