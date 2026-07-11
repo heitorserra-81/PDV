@@ -326,6 +326,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <div class="rolecard" onclick="abrirConfig()"><span class="ic">⚙️</span><b>Configurações</b><span>Produtos, adicionais, equipe e impressoras</span></div>
     </div>
     <button class="btn o" style="margin-top:14px" onclick="abrirChamadas()">🛎️ Ver chamadas de mesa</button>
+    <button class="btn o" style="margin-top:10px;display:none" id="btnMesaCancel" onclick="abrirMesaCancelamento()">🗑️ Mesa de cancelamento</button>
     <button class="btn o" style="margin-top:10px" id="btnInstalar" onclick="instalarApp()">📲 Instalar aplicativo</button>
     <div class="credit">Desenvolvido por Heitor Serra Neto</div>
   </div>
@@ -513,6 +514,8 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <label>Modo de operação</label>
       <select id="cfgModo" onchange="salvarCampo('modo', this.value)"><option value="restaurante">Restaurante (mesas)</option><option value="loja">Loja / Balcão</option><option value="ambos">Ambos</option></select>
       <label>Número de mesas</label><input id="cfgMesas" type="number" min="1" max="200" onchange="salvarCampo('numMesas', parseInt(this.value)||20)">
+      <label>💵 Valor sugerido de abertura de caixa</label>
+      <input id="cfgFundoSugerido" type="number" step="0.01" inputmode="decimal" placeholder="ex: 100" onchange="salvarCampo('fundoSugerido', parseFloat(this.value)||0)">
       <label>Taxa de serviço (%)</label>
       <div class="pills" style="margin-bottom:8px">
         <button class="pill" onclick="setTaxaRapida(10)">10%</button>
@@ -523,6 +526,8 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <div class="sw"><div><b>Impressão automática</b><small>Imprimir pedidos assim que chegam</small></div><div class="tog" id="togAuto" onclick="togCampo('autoImprimir', this)"></div></div>
       <div class="sw"><div><b>Alerta sonoro</b><small>Som quando chega pedido novo</small></div><div class="tog" id="togSom" onclick="togCampo('som', this)"></div></div>
       <div class="sw"><div><b>Baixa da mesa só pelo computador</b><small>Garçom só marca "paga"; o caixa é quem libera a mesa</small></div><div class="tog" id="togBaixa" onclick="togCampo('baixaSoComputador', this)"></div></div>
+      <div class="sw"><div><b>Cancelamento vira "mesa de cancelamento"</b><small>Se ligado, cancelar transfere o item pra uma mesa especial em vez de apagar direto — o gerente confirma depois</small></div><div class="tog" id="togMesaCancel" onclick="togCampo('mesaCancelamento', this)"></div></div>
+      <div class="sw"><div><b>Exigir equipe cadastrada</b><small>Se ligado, só quem está cadastrado na Equipe consegue entrar — desliga a entrada por nome livre</small></div><div class="tog" id="togEquipeObrig" onclick="togCampo('equipeObrigatoria', this)"></div></div>
       <div class="sw"><div><b>Exigir caixa aberto para operar</b><small>Ninguém tira pedido nem vende no balcão antes do gerente abrir o caixa do dia</small></div><div class="tog" id="togExigirCaixa" onclick="togCampo('exigirCaixa', this)"></div></div>
       <div class="sw"><div><b>Cliente pode pedir pelo QR</b><small>Se desligar, o QR só mostra "Chamar garçom", sem cardápio</small></div><div class="tog" id="togPedidoQR" onclick="togCampo('pedidoQR', this)"></div></div>
       <label>📱 QR / link da mesa para o cliente</label>
@@ -631,7 +636,7 @@ function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList
 function abrirOv(id){ $(id).classList.add('on'); }
 function fecharOv(id){ $(id).classList.remove('on'); }
 function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2800); }
-function notif(msg){ const n = $('notif'); n.textContent = msg; n.classList.add('on'); clearTimeout(n._t); n._t = setTimeout(() => n.classList.remove('on'), 6000); beep(); if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]); }
+function notif(msg, somCustom){ const n = $('notif'); n.textContent = msg; n.classList.add('on'); clearTimeout(n._t); n._t = setTimeout(() => n.classList.remove('on'), 6000); (somCustom || beep)(); if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]); }
 function pararListeners(){ unsubs.forEach(u => u()); unsubs = []; }
 function avatarHTML(nome, foto, cls){
   cls = cls || '';
@@ -699,6 +704,16 @@ async function boot(){
       if(primeiraCargaChamadas){ primeiraCargaChamadas = false; return; }
       s.docChanges().forEach(ch => { if(ch.type === 'added') notif('🛎️ Mesa ' + ch.doc.data().mesa + ' está chamando!'); });
     }));
+    let primeiraCargaLog = true;
+    unsubs.push(col('log').where('tipo', '==', 'cancelamento').orderBy('criadoEm', 'desc').limit(5).onSnapshot(s => {
+      if(primeiraCargaLog){ primeiraCargaLog = false; return; }
+      s.docChanges().forEach(ch => {
+        if(ch.type === 'added'){
+          const d = ch.doc.data();
+          notif('🚫 Cancelado: ' + (d.qtd || '') + 'x ' + (d.item || '') + ' · Mesa ' + (d.mesa || '?') + ' · por ' + (d.por || '?') + (d.motivo ? ' · ' + d.motivo : ''), beepAlerta);
+        }
+      });
+    }));
     if(mesaParam && parseInt(mesaParam) > 0){ entrarCliente(parseInt(mesaParam)); }
     else show('scHome');
   }catch(e){
@@ -712,6 +727,7 @@ function aplicarConfig(){
   $('homeNome').textContent = CFG.nome || REST;
   $('homeCod').textContent = 'código: ' + REST;
   $('cardBalcao').style.display = (CFG.modo === 'restaurante') ? 'none' : '';
+  $('btnMesaCancel').style.display = CFG.mesaCancelamento ? '' : 'none';
   if($('scConfig').classList.contains('on')) preencherConfig();
 }
 
@@ -808,6 +824,14 @@ function entrarGarcom(){
 }
 function abrirNome(){
   const garcons = EQUIPE.filter(f => f.funcao === 'garcom' || f.funcao === 'gerente');
+  const obrigatorio = !!(CFG && CFG.equipeObrigatoria);
+  if(!garcons.length && obrigatorio){
+    $('ovNomeBox').innerHTML = `
+      <h3 style="font-size:18px">🔒 Nenhum funcionário cadastrado</h3>
+      <p style="color:var(--mut);font-size:13px;line-height:1.6;margin-top:8px">Esse estabelecimento exige equipe cadastrada pra operar. Peça ao gerente pra cadastrar em <b>Configurações → Equipe</b> antes de usar.</p>
+      <button class="btn o" style="margin-top:16px" onclick="fecharOv('ovNome');show('scHome')">Voltar</button>`;
+    abrirOv('ovNome'); return;
+  }
   $('ovNomeBox').innerHTML = `
     <h3 style="font-size:18px">👤 Quem é você?</h3>
     ${garcons.length ? `<div class="menuops">${garcons.map(f =>
@@ -1142,14 +1166,35 @@ function itemMenu(itemUid){
   const m = MESAS[String(mesaAtual)] || {};
   const it = (m.itens || []).find(x => x.uid === itemUid);
   if(!it) return;
+  const meuPerfil = garcomId ? EQUIPE.find(f => f.id === garcomId) : null;
+  const podeCancelarDireto = modoAtual === 'computador' || !meuPerfil || meuPerfil.podeCancelar !== false;
+  const usaMesaCancelamento = !!(CFG && CFG.mesaCancelamento);
+  const botaoCancelar = (usaMesaCancelamento && !podeCancelarDireto)
+    ? `<button onclick="fecharOv('ovExtra');transferirParaCancelamento('${itemUid}')"><span style="font-size:20px">📤</span><span>Enviar pra revisão do gerente</span></button>`
+    : `<button onclick="fecharOv('ovExtra');abrirCancelarChips('${itemUid}')"><span style="font-size:20px">🗑️</span><span>Cancelar item</span></button>`;
   $('ovExtraBox').innerHTML = `
     <h3 style="font-size:19px">${it.qtd}× ${esc(it.nome)}</h3>
     <div class="menuops">
-      <button onclick="fecharOv('ovExtra');abrirCancelarChips('${itemUid}')"><span style="font-size:20px">🗑️</span><span>Cancelar item</span></button>
+      ${botaoCancelar}
       <button onclick="fecharOv('ovExtra');transferirItemUI('${itemUid}')"><span style="font-size:20px">🔀</span><span>Transferir pra outra mesa</span></button>
     </div>
     <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
   abrirOv('ovExtra');
+}
+async function transferirParaCancelamento(itemUid){
+  const m = MESAS[String(mesaAtual)] || {};
+  const it = (m.itens || []).find(x => x.uid === itemUid);
+  if(!it) return;
+  const cRef = col('mesas').doc('cancelamento');
+  await db.runTransaction(async t => {
+    const c = await t.get(cRef);
+    const cm = c.data() || {};
+    t.set(cRef, { status: 'ocupada', itens: (cm.itens || []).concat([{ ...it, origemMesa: mesaAtual, origemGarcom: garcom }]) }, { merge: true });
+    const itens = (m.itens || []).filter(x => x.uid !== itemUid);
+    t.set(col('mesas').doc(String(mesaAtual)), { itens }, { merge: true });
+  });
+  logAcao('enviado_para_cancelamento', { mesa: mesaAtual, item: it.nome, qtd: it.qtd, por: garcom });
+  fecharOv('ovExtra'); toast('Enviado pra revisão do gerente 📤');
 }
 function abrirCancelarChips(itemUid){
   const m = MESAS[String(mesaAtual)] || {};
@@ -2123,6 +2168,49 @@ async function atenderChamada(id){
   await col('chamadas').doc(id).update({ atendida: true });
   abrirChamadas();
 }
+async function abrirMesaCancelamento(){
+  if(!senhaGerente()) return;
+  const d = await col('mesas').doc('cancelamento').get();
+  const itens = (d.data() && d.data().itens) || [];
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🗑️ Mesa de cancelamento</h3>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Itens que garçons enviaram pra revisão. Confirma o cancelamento de verdade, ou devolve pra mesa de origem se foi engano.</p>
+    <div style="margin-top:10px">${itens.map(it => `
+      <div class="pagrow" style="align-items:flex-start;flex-direction:column;gap:6px">
+        <b>${it.qtd}× ${esc(it.nome)}</b>
+        <span style="font-size:12px;color:var(--mut)">Mesa ${it.origemMesa} · enviado por ${esc(it.origemGarcom || '?')}</span>
+        <div class="row"><button class="btn r sm" onclick="confirmarCancelamentoDefinitivo('${it.uid}')">🗑️ Confirmar cancelamento</button><button class="btn o sm" onclick="devolverDaCancelamento('${it.uid}')">↩️ Devolver pra mesa</button></div>
+      </div>`).join('') || '<div class="empty">Nenhum item pendente 🎉</div>'}</div>
+    <button class="btn o" style="margin-top:14px" onclick="fecharOv('ovExtra')">Fechar</button>`;
+  abrirOv('ovExtra');
+}
+async function confirmarCancelamentoDefinitivo(itemUid){
+  const d = await col('mesas').doc('cancelamento').get();
+  const itens = (d.data() && d.data().itens) || [];
+  const it = itens.find(x => x.uid === itemUid);
+  if(!it) return;
+  const motivo = prompt('Motivo do cancelamento de "' + it.qtd + 'x ' + it.nome + '":') || 'Sem detalhe';
+  await col('mesas').doc('cancelamento').set({ itens: itens.filter(x => x.uid !== itemUid) }, { merge: true });
+  logAcao('cancelamento', { mesa: it.origemMesa, item: it.nome, qtd: it.qtd, valor: it.preco * it.qtd, motivo, confirmadoPor: garcom });
+  toast('Cancelamento confirmado 🗑️'); abrirMesaCancelamento();
+}
+async function devolverDaCancelamento(itemUid){
+  const d = await col('mesas').doc('cancelamento').get();
+  const itens = (d.data() && d.data().itens) || [];
+  const it = itens.find(x => x.uid === itemUid);
+  if(!it) return;
+  const destino = prompt('Devolver pra qual mesa?', it.origemMesa);
+  if(!destino) return;
+  const { origemMesa, origemGarcom, ...itLimpo } = it;
+  await db.runTransaction(async t => {
+    const dRef = col('mesas').doc(String(destino));
+    const dd = await t.get(dRef);
+    const dm = dd.data() || { status: 'ocupada', itens: [], pessoas: [], numPessoas: 1, abertaEm: firebase.firestore.Timestamp.now() };
+    t.set(dRef, { ...dm, itens: (dm.itens || []).concat([itLimpo]) });
+    t.set(col('mesas').doc('cancelamento'), { itens: itens.filter(x => x.uid !== itemUid) }, { merge: true });
+  });
+  toast('Devolvido pra mesa ' + destino + ' ✅'); abrirMesaCancelamento();
+}
 function atualizarClienteBar(){
   $('balcaoCliente').textContent = clienteSel ? ('👤 ' + clienteSel.nome + (clienteSel.telefone ? ' · ' + clienteSel.telefone : '')) : 'Sem cliente vinculado';
 }
@@ -2202,13 +2290,56 @@ function renderGaveta(){
     </div>
     <button class="btn r" style="margin-top:10px" onclick="fecharGavetaUI()">🔒 Fechar caixa (conferência)</button>`;
 }
+const DENOMINACOES = [
+  { v: 200, l: 'R$200' }, { v: 100, l: 'R$100' }, { v: 50, l: 'R$50' }, { v: 20, l: 'R$20' },
+  { v: 10, l: 'R$10' }, { v: 5, l: 'R$5' }, { v: 2, l: 'R$2' },
+  { v: 1, l: 'R$1 (moeda)' }, { v: 0.5, l: '50 centavos' }, { v: 0.25, l: '25 centavos' }, { v: 0.1, l: '10 centavos' }, { v: 0.05, l: '5 centavos' }
+];
+function renderDenominacoes(prefixo){
+  return DENOMINACOES.map((d, i) => `
+    <div class="row" style="align-items:center;margin-bottom:6px">
+      <span style="flex:0 0 90px;font-size:13px;font-weight:700">${d.l}</span>
+      <input id="${prefixo}_${i}" type="number" min="0" inputmode="numeric" placeholder="0" oninput="atualizarSomaDenom('${prefixo}')" style="text-align:center">
+      <span style="flex:0 0 76px;font-size:12.5px;color:var(--mut);text-align:right" id="${prefixo}_sub_${i}">R$ 0,00</span>
+    </div>`).join('');
+}
+function somaDenominacoes(prefixo){
+  let total = 0;
+  DENOMINACOES.forEach((d, i) => {
+    const el = $(prefixo + '_' + i);
+    const qtd = el ? (parseInt(el.value) || 0) : 0;
+    total += qtd * d.v;
+    const sub = $(prefixo + '_sub_' + i);
+    if(sub) sub.textContent = fmt(qtd * d.v);
+  });
+  return round2(total);
+}
+function atualizarSomaDenom(prefixo){
+  const total = somaDenominacoes(prefixo);
+  const el = $(prefixo + '_total');
+  if(el) el.textContent = fmt(total);
+}
 async function abrirGaveta(){
-  const v = prompt('Fundo de troco inicial (R$):', '100');
-  if(v === null) return;
-  const quem = prompt('Quem está abrindo o caixa?', garcom || '');
-  await col('caixas').add({ status: 'aberto', fundo: round2(parseFloat(v.replace(',', '.')) || 0), abertoPor: quem || '', movimentos: [], abertoEm: TS() });
-  logAcao('abertura_caixa', { fundo: v });
-  toast('Caixa aberto 🔓');
+  const sugerido = (CFG && CFG.fundoSugerido) || 0;
+  $('ovExtraBox').innerHTML = `
+    <h3 style="font-size:19px">🔓 Abrir caixa — conte o fundo de troco</h3>
+    ${sugerido ? `<p style="color:var(--mut);font-size:12.5px;margin-top:4px">Valor sugerido pra esse estabelecimento: <b>${fmt(sugerido)}</b></p>` : ''}
+    <div style="margin-top:12px">${renderDenominacoes('ab')}</div>
+    <div class="totline big"><span>Total contado</span><span id="ab_total">R$ 0,00</span></div>
+    <label>Quem está abrindo?</label>
+    <input id="abQuem" value="${esc(garcom || '')}">
+    <button class="btn g" style="margin-top:16px" onclick="confirmarAbrirGaveta()">Abrir caixa</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
+  abrirOv('ovExtra');
+}
+async function confirmarAbrirGaveta(){
+  const fundo = somaDenominacoes('ab');
+  const quem = $('abQuem').value.trim();
+  const denomFundo = {};
+  DENOMINACOES.forEach((d, i) => { const q = parseInt($('ab_' + i).value) || 0; if(q) denomFundo[d.l] = q; });
+  await col('caixas').add({ status: 'aberto', fundo, denomFundo, abertoPor: quem || '', movimentos: [], abertoEm: TS() });
+  logAcao('abertura_caixa', { fundo });
+  fecharOv('ovExtra'); toast('Caixa aberto 🔓 ' + fmt(fundo));
 }
 async function movGaveta(tipo){
   if(!senhaGerente()) return;
@@ -2254,21 +2385,30 @@ async function fecharGavetaUI(){
     logAcao('fechamento_caixa_com_mesa_aberta', { mesas: abertas });
   }
   const espera = await esperadoGaveta();
-  const formas = Object.keys(espera);
+  const outras = Object.keys(espera).filter(f => f !== 'Dinheiro');
   $('ovExtraBox').innerHTML = `
     <h3 style="font-size:19px">🔒 Fechamento — conferência</h3>
-    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Conte a gaveta e as maquininhas e preencha o que foi <b>contado</b>. O sistema compara com o esperado.</p>
-    ${formas.map((f, i) => `
-      <label>${f} — esperado ${fmt(espera[f])}</label>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Conte a gaveta cédula por cédula e preencha as maquininhas. O sistema compara com o esperado.</p>
+    <label>💵 Dinheiro — esperado ${fmt(espera['Dinheiro'] || 0)}</label>
+    <div style="margin-top:6px">${renderDenominacoes('fe')}</div>
+    <div class="totline"><span>Total em dinheiro contado</span><span id="fe_total">R$ 0,00</span></div>
+    ${outras.map((f, i) => `
+      <label style="margin-top:12px">${f} — esperado ${fmt(espera[f])}</label>
       <input id="ct_${i}" type="number" step="0.01" inputmode="decimal" placeholder="Digite o valor contado aqui">`).join('')}
     <button class="btn g" style="margin-top:16px" onclick='confirmarFechamento(${JSON.stringify(espera)})'>Conferir e fechar</button>
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
   abrirOv('ovExtra');
 }
 async function confirmarFechamento(espera){
-  const formas = Object.keys(espera);
+  const outras = Object.keys(espera).filter(f => f !== 'Dinheiro');
   const contado = {}, difs = [], naoContadas = [];
-  formas.forEach((f, i) => {
+  const denomFechamento = {};
+  DENOMINACOES.forEach((d, i) => { const q = parseInt($('fe_' + i).value) || 0; if(q) denomFechamento[d.l] = q; });
+  contado['Dinheiro'] = somaDenominacoes('fe');
+  if(Object.keys(denomFechamento).length === 0) naoContadas.push('Dinheiro');
+  let dDin = round2(contado['Dinheiro'] - (espera['Dinheiro'] || 0));
+  if(Math.abs(dDin) >= 0.01) difs.push('Dinheiro: ' + (dDin > 0 ? 'sobra ' : 'falta ') + fmt(Math.abs(dDin)));
+  outras.forEach((f, i) => {
     const bruto = ($('ct_' + i).value || '').trim();
     if(!bruto){ naoContadas.push(f); contado[f] = espera[f]; return; }
     contado[f] = round2(parseFloat(bruto.replace(',', '.')) || 0);
@@ -2276,42 +2416,112 @@ async function confirmarFechamento(espera){
     if(Math.abs(d) >= 0.01) difs.push(f + ': ' + (d > 0 ? 'sobra ' : 'falta ') + fmt(Math.abs(d)));
   });
   if(naoContadas.length){
-    if(!confirm('⚠️ Você não digitou o valor contado de: ' + naoContadas.join(', ') + '.\n\nSem contar de verdade, não dá pra saber se bateu. Continuar mesmo assim (vai assumir que bateu certinho nessas formas)?')) return;
+    if(!confirm('⚠️ Você não contou de verdade: ' + naoContadas.join(', ') + '.\n\nContinuar mesmo assim (vai assumir que bateu certinho nessas formas)?')) return;
   }
-  const divergencia = round2(formas.reduce((a, f) => a + (contado[f] - espera[f]), 0));
+  const divergencia = round2(Object.keys(espera).reduce((a, f) => a + (contado[f] - espera[f]), 0));
   if(!confirm((difs.length ? '⚠️ Divergências:\n' + difs.join('\n') : '✅ Sem divergências nas formas contadas.') + '\n\nFechar o caixa?')) return;
   const quem = prompt('Quem está fechando?', garcom || '') || '';
-  await col('caixas').doc(GAVETA.id).update({ status: 'fechado', fechadoEm: TS(), fechadoPor: quem, esperado: espera, contado, divergencia });
+  const resumo = await montarResumoFechamento(espera, contado, divergencia, quem);
+  await col('caixas').doc(GAVETA.id).update({ status: 'fechado', fechadoEm: TS(), fechadoPor: quem, esperado: espera, contado, divergencia, denomFechamento, resumo });
   logAcao('fechamento_caixa', { divergencia });
-  imprimirFechamento(espera, contado, divergencia, quem);
+  imprimirFechamento(resumo);
   fecharOv('ovExtra'); toast('Caixa fechado 🔒 ' + (divergencia ? 'Divergência: ' + fmt(divergencia) : 'Bateu certinho!'));
 }
-function imprimirFechamento(espera, contado, divergencia, quem){
-  const imp = (CFG && CFG.impConta) || '';
-  const texto = escposFechamento(espera, contado, divergencia, quem);
-  if(qzOn && imp){ comTimeout(printRaw(imp, texto), 15000).catch(e => { console.error(e); toast('Fechamento não imprimiu: ' + (e.message||e)); }); }
-  else{ fallbackPrint(htmlFechamento(espera, contado, divergencia, quem)); }
+async function montarResumoFechamento(espera, contado, divergencia, quem){
+  const vendasSnap = await col('vendas').where('criadoEm', '>=', GAVETA.abertoEm).get();
+  const vendas = vendasSnap.docs.map(d => d.data());
+  const faturamentoBruto = round2(vendas.reduce((a, v) => a + (v.total || 0), 0));
+  const descontoTotal = round2(vendas.reduce((a, v) => a + (v.desconto || 0), 0));
+  const taxaTotal = round2(vendas.reduce((a, v) => a + (v.taxa || 0), 0));
+  const porGarcom = {};
+  vendas.forEach(v => { if(v.garcom) porGarcom[v.garcom] = round2((porGarcom[v.garcom] || 0) + (v.total || 0)); });
+  const logSnap = await col('log').where('tipo', '==', 'cancelamento').where('criadoEm', '>=', GAVETA.abertoEm).get();
+  const cancelamentos = logSnap.docs.map(d => d.data());
+  const cancelTotal = round2(cancelamentos.reduce((a, c) => a + (c.valor || 0), 0));
+  const pedidosSnap = await col('pedidos').where('criadoEm', '>=', GAVETA.abertoEm).get();
+  const porItem = {};
+  pedidosSnap.docs.forEach(d => { const p = d.data(); if(p.tipo === 'pedido') (p.itens || []).forEach(it => porItem[it.nome] = (porItem[it.nome] || 0) + it.qtd); });
+  const topItens = Object.entries(porItem).sort((a,b) => b[1] - a[1]).slice(0, 5);
+  const movs = GAVETA.movimentos || [];
+  const sang = movs.filter(x => x.tipo === 'sangria');
+  const refo = movs.filter(x => x.tipo === 'reforco');
+  const abertura = GAVETA.abertoEm && GAVETA.abertoEm.toDate ? GAVETA.abertoEm.toDate() : new Date();
+  const fechamento = new Date();
+  const duracaoMin = Math.round((fechamento - abertura) / 60000);
+  return {
+    espera, contado, divergencia, quem,
+    abertoPor: GAVETA.abertoPor || '', abertura: abertura.toLocaleString('pt-BR'), fechamento: fechamento.toLocaleString('pt-BR'),
+    duracaoTxt: duracaoMin < 60 ? duracaoMin + 'min' : Math.floor(duracaoMin/60) + 'h' + String(duracaoMin%60).padStart(2,'0'),
+    fundo: GAVETA.fundo || 0, sangrias: sang, reforcos: refo,
+    faturamentoBruto, numVendas: vendas.length, ticketMedio: vendas.length ? round2(faturamentoBruto / vendas.length) : 0,
+    descontoTotal, taxaTotal, cancelTotal, numCancelamentos: cancelamentos.length,
+    porGarcom, topItens
+  };
 }
-function escposFechamento(espera, contado, divergencia, quem){
+function imprimirFechamento(resumo){
+  const imp = (CFG && CFG.impConta) || '';
+  const texto = escposFechamento(resumo);
+  if(qzOn && imp){ comTimeout(printRaw(imp, texto), 15000).catch(e => { console.error(e); toast('Fechamento não imprimiu: ' + (e.message||e)); }); }
+  else{ fallbackPrint(htmlFechamento(resumo)); }
+}
+function escposFechamento(r){
   const E = '\x1b', G = '\x1d';
   let s = E + '@' + E + 'a' + '\x01';
   s += E + 'E' + '\x01' + semAcento('FECHAMENTO DE CAIXA') + '\n' + E + 'E' + '\x00';
-  s += semAcento((CFG && CFG.nome) || '') + '\n' + semAcento(new Date().toLocaleString('pt-BR')) + '\n';
-  s += semAcento('Fechado por: ' + (quem || '-')) + '\n' + E + 'a' + '\x00' + '-'.repeat(colWidth()) + '\n' + tamTexto();
-  Object.keys(espera).forEach(f => {
-    s += linhaEsq(f + ' esperado', fmt(espera[f])) + '\n';
-    s += linhaEsq(f + ' contado', fmt(contado[f])) + '\n';
+  s += semAcento((CFG && CFG.nome) || '') + '\n' + E + 'a' + '\x00' + '-'.repeat(colWidth()) + '\n' + tamTexto();
+  s += semAcento('Abriu: ' + r.abertura + ' (' + r.abertoPor + ')') + '\n';
+  s += semAcento('Fechou: ' + r.fechamento + ' (' + r.quem + ')') + '\n';
+  s += semAcento('Duracao do turno: ' + r.duracaoTxt) + '\n';
+  s += resetTam() + '-'.repeat(colWidth()) + '\n' + tamTexto();
+  s += linhaEsq('Fundo inicial', fmt(r.fundo)) + '\n';
+  s += linhaEsq('Faturamento bruto', fmt(r.faturamentoBruto)) + '\n';
+  s += linhaEsq('Numero de vendas', String(r.numVendas)) + '\n';
+  s += linhaEsq('Ticket medio', fmt(r.ticketMedio)) + '\n';
+  if(r.taxaTotal) s += linhaEsq('Taxa de servico total', fmt(r.taxaTotal)) + '\n';
+  if(r.descontoTotal) s += linhaEsq('Descontos concedidos', fmt(r.descontoTotal)) + '\n';
+  if(r.cancelTotal) s += linhaEsq('Cancelamentos (' + r.numCancelamentos + ')', fmt(r.cancelTotal)) + '\n';
+  s += resetTam() + '-'.repeat(colWidth()) + '\n' + tamTexto();
+  if(r.sangrias.length || r.reforcos.length){
+    r.sangrias.forEach(x => { s += linhaEsq('Sangria: ' + semAcento(x.motivo || ''), '-' + fmt(x.valor)) + '\n'; });
+    r.reforcos.forEach(x => { s += linhaEsq('Reforco: ' + semAcento(x.motivo || ''), '+' + fmt(x.valor)) + '\n'; });
+    s += resetTam() + '-'.repeat(colWidth()) + '\n' + tamTexto();
+  }
+  Object.keys(r.porGarcom).forEach(g => { s += linhaEsq('Garcom: ' + semAcento(g), fmt(r.porGarcom[g])) + '\n'; });
+  if(r.topItens.length){
+    s += resetTam() + '-'.repeat(colWidth()) + '\n' + tamTexto();
+    s += semAcento('Mais vendidos:') + '\n';
+    r.topItens.forEach(([nome, qtd]) => { s += linhaEsq(semAcento(nome), qtd + 'x') + '\n'; });
+  }
+  s += resetTam() + '-'.repeat(colWidth()) + '\n' + tamTexto();
+  Object.keys(r.espera).forEach(f => {
+    s += linhaEsq(f + ' esperado', fmt(r.espera[f])) + '\n';
+    s += linhaEsq(f + ' contado', fmt(r.contado[f])) + '\n';
   });
   s += resetTam() + '-'.repeat(colWidth()) + '\n';
-  s += tamPreco() + linhaEsq(divergencia === 0 ? 'BATEU CERTINHO' : (divergencia > 0 ? 'SOBRA' : 'FALTA'), fmt(Math.abs(divergencia))) + '\n' + resetTam();
+  s += tamPreco() + linhaEsq(r.divergencia === 0 ? 'BATEU CERTINHO' : (r.divergencia > 0 ? 'SOBRA' : 'FALTA'), fmt(Math.abs(r.divergencia))) + '\n' + resetTam();
   s += '\n\n' + avancoPapel() + G + 'V' + '\x41' + '\x03';
   return s;
 }
-function htmlFechamento(espera, contado, divergencia, quem){
+function htmlFechamento(r){
   return `<h3>FECHAMENTO DE CAIXA</h3><div class="c">${esc((CFG && CFG.nome) || '')}</div>
-    <div class="c">${new Date().toLocaleString('pt-BR')}</div><div class="c">Fechado por: ${esc(quem || '-')}</div><div class="sep"></div>
-    ${Object.keys(espera).map(f => `<div class="li"><span>${esc(f)} esperado</span><span>${fmt(espera[f])}</span></div><div class="li"><span>${esc(f)} contado</span><span>${fmt(contado[f])}</span></div>`).join('')}
-    <div class="sep"></div><div class="li big"><span>${divergencia === 0 ? 'BATEU CERTINHO' : (divergencia > 0 ? 'SOBRA' : 'FALTA')}</span><span>${fmt(Math.abs(divergencia))}</span></div>`;
+    <div class="c">Abriu: ${esc(r.abertura)} (${esc(r.abertoPor)})</div>
+    <div class="c">Fechou: ${esc(r.fechamento)} (${esc(r.quem)})</div>
+    <div class="c">Duração: ${esc(r.duracaoTxt)}</div><div class="sep"></div>
+    <div class="li"><span>Fundo inicial</span><span>${fmt(r.fundo)}</span></div>
+    <div class="li"><span>Faturamento bruto</span><span>${fmt(r.faturamentoBruto)}</span></div>
+    <div class="li"><span>Nº de vendas</span><span>${r.numVendas}</span></div>
+    <div class="li"><span>Ticket médio</span><span>${fmt(r.ticketMedio)}</span></div>
+    ${r.taxaTotal ? `<div class="li"><span>Taxa de serviço total</span><span>${fmt(r.taxaTotal)}</span></div>` : ''}
+    ${r.descontoTotal ? `<div class="li"><span>Descontos concedidos</span><span>${fmt(r.descontoTotal)}</span></div>` : ''}
+    ${r.cancelTotal ? `<div class="li"><span>Cancelamentos (${r.numCancelamentos})</span><span>${fmt(r.cancelTotal)}</span></div>` : ''}
+    <div class="sep"></div>
+    ${r.sangrias.map(x => `<div class="li"><span>Sangria: ${esc(x.motivo || '')}</span><span>-${fmt(x.valor)}</span></div>`).join('')}
+    ${r.reforcos.map(x => `<div class="li"><span>Reforço: ${esc(x.motivo || '')}</span><span>+${fmt(x.valor)}</span></div>`).join('')}
+    ${Object.keys(r.porGarcom).length ? '<div class="sep"></div>' + Object.keys(r.porGarcom).map(g => `<div class="li"><span>Garçom: ${esc(g)}</span><span>${fmt(r.porGarcom[g])}</span></div>`).join('') : ''}
+    ${r.topItens.length ? '<div class="sep"></div><div class="c" style="font-weight:bold">Mais vendidos</div>' + r.topItens.map(([nome, qtd]) => `<div class="li"><span>${esc(nome)}</span><span>${qtd}x</span></div>`).join('') : ''}
+    <div class="sep"></div>
+    ${Object.keys(r.espera).map(f => `<div class="li"><span>${esc(f)} esperado</span><span>${fmt(r.espera[f])}</span></div><div class="li"><span>${esc(f)} contado</span><span>${fmt(r.contado[f])}</span></div>`).join('')}
+    <div class="sep"></div><div class="li big"><span>${r.divergencia === 0 ? 'BATEU CERTINHO' : (r.divergencia > 0 ? 'SOBRA' : 'FALTA')}</span><span>${fmt(Math.abs(r.divergencia))}</span></div>`;
 }
 async function historicoGavetas(){
   const snap = await col('caixas').orderBy('abertoEm', 'desc').limit(15).get();
@@ -2656,6 +2866,20 @@ function beep(){
     });
   }catch(e){}
 }
+function beepAlerta(){
+  if(CFG && CFG.som === false) return;
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[420, 0], [420, .22], [420, .44]].forEach(([f, t]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = f; o.type = 'square';
+      g.gain.setValueAtTime(.28, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + t + .18);
+      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .2);
+    });
+  }catch(e){}
+}
 
 /* ---------- upload de foto (Supabase, opcional) ---------- */
 function redimensionar(file){
@@ -2723,6 +2947,7 @@ function preencherConfig(){
   $('cfgNome').value = CFG.nome || '';
   $('cfgModo').value = CFG.modo || 'restaurante';
   $('cfgMesas').value = CFG.numMesas || 20;
+  $('cfgFundoSugerido').value = CFG.fundoSugerido || '';
   $('cfgTaxa').value = CFG.taxa != null ? CFG.taxa : 10;
   $('cfgFracRegra').value = CFG.fracRegra || 'cara';
   $('cfgFonteTexto').value = CFG.fonteTexto || 'normal';
@@ -2735,6 +2960,8 @@ function preencherConfig(){
   $('togAuto').classList.toggle('on', CFG.autoImprimir !== false);
   $('togSom').classList.toggle('on', CFG.som !== false);
   $('togBaixa').classList.toggle('on', !!CFG.baixaSoComputador);
+  $('togMesaCancel').classList.toggle('on', !!CFG.mesaCancelamento);
+  $('togEquipeObrig').classList.toggle('on', !!CFG.equipeObrigatoria);
   $('togExigirCaixa').classList.toggle('on', CFG.exigirCaixa !== false);
   $('togPedidoQR').classList.toggle('on', CFG.pedidoQR !== false);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
@@ -3273,6 +3500,7 @@ function editarFunc(id){
     <div class="sw"><div><b>Pode lançar pedidos</b><small>Se desligar, ele fica bloqueado até o gerente liberar (mesmo controle da aba Gaveta → Equipe do dia)</small></div><div class="tog ${f && f.habilitado ? 'on' : ''}" id="efHabilitado" onclick="this.classList.toggle('on')"></div></div>
     <div class="sw"><div><b>Pode fechar conta / receber pagamento</b><small>Se desligar, ele só consegue fechar mesa digitando a senha do gerente na hora</small></div><div class="tog ${!f || f.podeFecharConta !== false ? 'on' : ''}" id="efPodeFechar" onclick="this.classList.toggle('on')"></div></div>
     <div class="sw"><div><b>Pode dar desconto</b><small>Além da senha do gerente, permite que ele mesmo aplique desconto</small></div><div class="tog ${f && f.podeDesconto ? 'on' : ''}" id="efPodeDesconto" onclick="this.classList.toggle('on')"></div></div>
+    <div class="sw"><div><b>Pode cancelar item direto</b><small>Se desligar, cancelar sempre transfere pra mesa de cancelamento (se estiver ligada nas Configurações)</small></div><div class="tog ${!f || f.podeCancelar !== false ? 'on' : ''}" id="efPodeCancelar" onclick="this.classList.toggle('on')"></div></div>
     <button class="btn g" style="margin-top:16px" onclick="salvarFunc()">Salvar</button>
     ${id ? `<button class="btn r" style="margin-top:10px" onclick="excluirFunc()">🗑️ Remover</button>` : ''}
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
@@ -3285,7 +3513,8 @@ async function salvarFunc(){
     nome, funcao: $('efFuncao').value, foto: $('efFoto').value.trim(),
     habilitado: $('efHabilitado').classList.contains('on'),
     podeFecharConta: $('efPodeFechar').classList.contains('on'),
-    podeDesconto: $('efPodeDesconto').classList.contains('on')
+    podeDesconto: $('efPodeDesconto').classList.contains('on'),
+    podeCancelar: $('efPodeCancelar').classList.contains('on')
   };
   if(funcId) await col('equipe').doc(funcId).update(dados);
   else await col('equipe').add({ ...dados, criadoEm: TS() });
