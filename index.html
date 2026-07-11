@@ -1009,7 +1009,10 @@ function iniciarDragMesa(ev, i, modo){
   dragState.timer = setTimeout(() => iniciarArrasteVisual(ev), 220);
 }
 function iniciarArrasteVisual(ev){
-  if(!dragState) return;
+  if(!dragState || dragState.modoScroll) return;
+  const dxAgora = (dragState.curX != null ? dragState.curX : ev.clientX) - dragState.startX;
+  const dyAgora = (dragState.curY != null ? dragState.curY : ev.clientY) - dragState.startY;
+  if(Math.hypot(dxAgora, dyAgora) > 6) return; // já estava se movendo — deixa virar scroll, não agrupar
   dragState.longPress = true;
   const el = dragState.el;
   try{ el.setPointerCapture(dragState.pid); }catch(e){}
@@ -1025,6 +1028,7 @@ function iniciarArrasteVisual(ev){
 }
 function moverDragMesa(ev){
   if(!dragState) return;
+  dragState.curX = ev.clientX; dragState.curY = ev.clientY;
   const dx = ev.clientX - dragState.startX, dy = ev.clientY - dragState.startY;
   if(!dragState.longPress){
     if(dragState.modoScroll){
@@ -1033,10 +1037,12 @@ function moverDragMesa(ev){
       dragState.lastScrollY = ev.clientY;
       return;
     }
-    if(Math.hypot(dx, dy) > 10){
+    if(Math.hypot(dx, dy) > 6){
       clearTimeout(dragState.timer);
       dragState.modoScroll = true;
       dragState.lastScrollY = ev.clientY;
+      window.scrollBy(0, -dy);
+      return;
     }
     return;
   }
@@ -2711,16 +2717,26 @@ async function fecharGavetaUI(){
   const outras = Object.keys(espera).filter(f => f !== 'Dinheiro');
   $('ovExtraBox').innerHTML = `
     <h3 style="font-size:19px">🔒 Fechamento — conferência</h3>
-    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Conte a gaveta cédula por cédula e preencha as maquininhas. O sistema compara com o esperado.</p>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Conte a gaveta cédula por cédula. As outras formas já vêm confirmadas automaticamente (raramente erram) — só confere na mão se quiser.</p>
     <label>💵 Dinheiro — esperado ${fmt(espera['Dinheiro'] || 0)}</label>
     <div style="margin-top:6px">${renderDenominacoes('fe')}</div>
     <div class="totline"><span>Total em dinheiro contado</span><span id="fe_total">R$ 0,00</span></div>
     ${outras.map((f, i) => `
-      <label style="margin-top:12px">${f} — esperado ${fmt(espera[f])}</label>
-      <input id="ct_${i}" type="number" step="0.01" inputmode="decimal" placeholder="Digite o valor contado aqui">`).join('')}
+      <div class="row" style="margin-top:12px;align-items:center;justify-content:space-between">
+        <span style="font-size:13.5px">${f}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;color:var(--green);font-weight:700" id="autoLabel_${i}">${fmt(espera[f])} ✓ auto</span>
+      </div>
+      <div id="ctBox_${i}" style="display:none;margin-top:6px"><input id="ct_${i}" type="number" step="0.01" inputmode="decimal" placeholder="Digite o valor contado aqui"></div>
+      <button class="btn o sm" id="confBtn_${i}" style="margin-top:6px" onclick="ativarConferenciaManual(${i})">✏️ Conferir "${f}" manualmente</button>`).join('')}
     <button class="btn g" style="margin-top:16px" onclick='confirmarFechamento(${JSON.stringify(espera)})'>Conferir e fechar</button>
     <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovExtra')">Cancelar</button>`;
   abrirOv('ovExtra');
+}
+function ativarConferenciaManual(i){
+  $('ctBox_' + i).style.display = '';
+  $('autoLabel_' + i).style.display = 'none';
+  $('confBtn_' + i).style.display = 'none';
+  $('ct_' + i).focus();
 }
 async function confirmarFechamento(espera){
   const outras = Object.keys(espera).filter(f => f !== 'Dinheiro');
@@ -2732,17 +2748,19 @@ async function confirmarFechamento(espera){
   let dDin = round2(contado['Dinheiro'] - (espera['Dinheiro'] || 0));
   if(Math.abs(dDin) >= 0.01) difs.push('Dinheiro: ' + (dDin > 0 ? 'sobra ' : 'falta ') + fmt(Math.abs(dDin)));
   outras.forEach((f, i) => {
+    const conferindo = $('ctBox_' + i).style.display !== 'none';
+    if(!conferindo){ contado[f] = espera[f]; return; } // confirmado automaticamente, sem digitar
     const bruto = ($('ct_' + i).value || '').trim();
-    if(!bruto){ naoContadas.push(f); contado[f] = espera[f]; return; }
+    if(!bruto){ contado[f] = espera[f]; return; }
     contado[f] = round2(parseFloat(bruto.replace(',', '.')) || 0);
     const d = round2(contado[f] - espera[f]);
     if(Math.abs(d) >= 0.01) difs.push(f + ': ' + (d > 0 ? 'sobra ' : 'falta ') + fmt(Math.abs(d)));
   });
   if(naoContadas.length){
-    if(!confirm('⚠️ Você não contou de verdade: ' + naoContadas.join(', ') + '.\n\nContinuar mesmo assim (vai assumir que bateu certinho nessas formas)?')) return;
+    if(!confirm('⚠️ Você não contou o Dinheiro de verdade.\n\nContinuar mesmo assim (vai assumir que bateu certinho)?')) return;
   }
   const divergencia = round2(Object.keys(espera).reduce((a, f) => a + (contado[f] - espera[f]), 0));
-  if(!confirm((difs.length ? '⚠️ Divergências:\n' + difs.join('\n') : '✅ Sem divergências nas formas contadas.') + '\n\nFechar o caixa?')) return;
+  if(!confirm((difs.length ? '⚠️ Divergências:\n' + difs.join('\n') : '✅ Sem divergências nas formas conferidas.') + '\n\nFechar o caixa?')) return;
   const quem = prompt('Quem está fechando?', garcom || '') || '';
   const resumo = await montarResumoFechamento(espera, contado, divergencia, quem);
   await col('caixas').doc(GAVETA.id).update({ status: 'fechado', fechadoEm: TS(), fechadoPor: quem, esperado: espera, contado, divergencia, denomFechamento, resumo });
@@ -4333,6 +4351,16 @@ atualizarStatusConexao();
     document.head.appendChild(s);
   }
 })();
+/* ---------- rede de segurança contra travamento silencioso ---------- */
+window.addEventListener('error', e => {
+  console.error('Erro não tratado:', e.error || e.message);
+  toast('⚠️ Algo deu errado: ' + (e.message || 'erro desconhecido') + ' — tenta de novo');
+});
+window.addEventListener('unhandledrejection', e => {
+  console.error('Promise rejeitada sem tratamento:', e.reason);
+  toast('⚠️ Algo deu errado: ' + (e.reason && e.reason.message || e.reason || 'erro desconhecido'));
+  e.preventDefault();
+});
 aplicarTema();
 boot();
 </script>
