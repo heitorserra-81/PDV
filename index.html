@@ -3308,13 +3308,13 @@ function confirmarCrop(){
 async function uploadFoto(blob){
   if(!SUPA_URL || !SUPA_KEY) throw new Error('Supabase não configurado — use o campo de URL da foto');
   const nome = REST + '/' + uid() + '.jpg';
-  const r = await fetch(SUPA_URL + '/storage/v1/object/pdv/' + nome, {
+  const r = await fetch(SUPA_URL + '/storage/v1/object/PDV/' + nome, {
     method: 'POST',
     headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'image/jpeg' },
     body: blob
   });
   if(!r.ok) throw new Error('Falha no upload (' + r.status + '). O bucket "pdv" existe e é público?');
-  return SUPA_URL + '/storage/v1/object/public/pdv/' + nome;
+  return SUPA_URL + '/storage/v1/object/public/PDV/' + nome;
 }
 function escolherFoto(inputEl, destInputId, prevId, formato){
   const f = inputEl.files && inputEl.files[0];
