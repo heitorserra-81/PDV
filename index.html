@@ -2167,7 +2167,8 @@ function renderPagto(){
       <button class="btn sm" onclick="addPagamento()">＋</button>
     </div>
     <div class="totline" style="margin-top:10px"><span>Pago</span><span>${fmt(t.pago)}</span></div>
-    <div class="totline" style="color:${t.resta > 0 ? 'var(--red)' : 'var(--green)'}"><span>${t.resta > 0 ? 'Falta' : 'Troco'}</span><span>${fmt(t.resta > 0 ? t.resta : t.troco)}</span></div>`}
+    <div class="totline" style="color:${t.resta > 0 ? 'var(--red)' : 'var(--green)'}"><span>${t.resta > 0 ? 'Falta' : 'Troco'}</span><span>${fmt(t.resta > 0 ? t.resta : t.troco)}</span></div>
+    ${t.troco > 0.009 ? `<p style="color:var(--mut);font-size:12.5px;margin-top:4px">💵 Sugestão: ${sugerirTroco(t.troco).map(s => s.qtd + 'x ' + s.l).join(' + ')}</p>` : ''}`}
     <button class="btn g" style="margin-top:14px" ${t.resta > 0.009 ? 'disabled' : ''} onclick="finalizarPagto()">✓ Confirmar${t.total <= 0.009 ? ' e liberar mesa' : ' pagamento'}</button>
     <button class="btn o" style="margin-top:10px" onclick="${cxMesa === null ? "fecharOv('ovCaixa')" : 'renderModoPagto()'}">← Voltar</button>`;
 }
@@ -2488,6 +2489,16 @@ const DENOMINACOES = [
   { v: 10, l: 'R$10' }, { v: 5, l: 'R$5' }, { v: 2, l: 'R$2' },
   { v: 1, l: 'R$1 (moeda)' }, { v: 0.5, l: '50 centavos' }, { v: 0.25, l: '25 centavos' }, { v: 0.1, l: '10 centavos' }, { v: 0.05, l: '5 centavos' }
 ];
+function sugerirTroco(valor){
+  let restaCent = Math.round(valor * 100);
+  const sugestao = [];
+  DENOMINACOES.forEach(d => {
+    const vCent = Math.round(d.v * 100);
+    const qtd = Math.floor(restaCent / vCent);
+    if(qtd > 0){ sugestao.push({ l: d.l, qtd }); restaCent -= qtd * vCent; }
+  });
+  return sugestao;
+}
 function renderDenominacoes(prefixo){
   return DENOMINACOES.map((d, i) => `
     <div class="row" style="align-items:center;margin-bottom:6px">
