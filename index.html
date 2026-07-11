@@ -2168,7 +2168,7 @@ function renderPagto(){
     </div>
     <div class="totline" style="margin-top:10px"><span>Pago</span><span>${fmt(t.pago)}</span></div>
     <div class="totline" style="color:${t.resta > 0 ? 'var(--red)' : 'var(--green)'}"><span>${t.resta > 0 ? 'Falta' : 'Troco'}</span><span>${fmt(t.resta > 0 ? t.resta : t.troco)}</span></div>
-    ${t.troco > 0.009 ? `<p style="color:var(--mut);font-size:12.5px;margin-top:4px">💵 Sugestão: ${sugerirTroco(t.troco).map(s => s.qtd + 'x ' + s.l).join(' + ')}</p>` : ''}`}
+    ${t.troco > 0.009 ? `<div style="margin-top:6px"><p style="color:var(--mut);font-size:12.5px;margin-bottom:4px">💵 Sugestão de troco:</p><div style="display:flex;flex-wrap:wrap;gap:8px">${sugerirTroco(t.troco).map(s => `<span style="display:inline-flex;align-items:center;gap:5px;background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:12.5px">${notaIcon(s.d)} ${s.qtd}×</span>`).join('')}</div></div>` : ''}`}
     <button class="btn g" style="margin-top:14px" ${t.resta > 0.009 ? 'disabled' : ''} onclick="finalizarPagto()">✓ Confirmar${t.total <= 0.009 ? ' e liberar mesa' : ' pagamento'}</button>
     <button class="btn o" style="margin-top:10px" onclick="${cxMesa === null ? "fecharOv('ovCaixa')" : 'renderModoPagto()'}">← Voltar</button>`;
 }
@@ -2485,24 +2485,29 @@ function renderGaveta(){
     <button class="btn r" style="margin-top:10px" onclick="fecharGavetaUI()">🔒 Fechar caixa (conferência)</button>`;
 }
 const DENOMINACOES = [
-  { v: 200, l: 'R$200' }, { v: 100, l: 'R$100' }, { v: 50, l: 'R$50' }, { v: 20, l: 'R$20' },
-  { v: 10, l: 'R$10' }, { v: 5, l: 'R$5' }, { v: 2, l: 'R$2' },
-  { v: 1, l: 'R$1 (moeda)' }, { v: 0.5, l: '50 centavos' }, { v: 0.25, l: '25 centavos' }, { v: 0.1, l: '10 centavos' }, { v: 0.05, l: '5 centavos' }
+  { v: 200, l: 'R$200', cor: '#3B2E7E' }, { v: 100, l: 'R$100', cor: '#1E4E8C' }, { v: 50, l: 'R$50', cor: '#8C5A1E' }, { v: 20, l: 'R$20', cor: '#C9A227' },
+  { v: 10, l: 'R$10', cor: '#B3352E' }, { v: 5, l: 'R$5', cor: '#7A3B8C' }, { v: 2, l: 'R$2', cor: '#2E6F8C' },
+  { v: 1, l: 'R$1 (moeda)', cor: '#9c9184' }, { v: 0.5, l: '50 centavos', cor: '#9c9184' }, { v: 0.25, l: '25 centavos', cor: '#9c9184' }, { v: 0.1, l: '10 centavos', cor: '#9c9184' }, { v: 0.05, l: '5 centavos', cor: '#9c9184' }
 ];
+function notaIcon(d){
+  if(d.v >= 2) return `<span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:18px;background:${d.cor};border-radius:3px;font-size:8.5px;color:#fff;font-weight:800;flex:0 0 auto;border:1px solid rgba(255,255,255,.25)">${d.v}</span>`;
+  return `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:${d.cor};border-radius:50%;font-size:6.5px;color:#fff;font-weight:800;flex:0 0 auto;border:1px solid rgba(255,255,255,.25)">${Math.round(d.v * 100)}¢</span>`;
+}
 function sugerirTroco(valor){
   let restaCent = Math.round(valor * 100);
   const sugestao = [];
   DENOMINACOES.forEach(d => {
     const vCent = Math.round(d.v * 100);
     const qtd = Math.floor(restaCent / vCent);
-    if(qtd > 0){ sugestao.push({ l: d.l, qtd }); restaCent -= qtd * vCent; }
+    if(qtd > 0){ sugestao.push({ d, qtd }); restaCent -= qtd * vCent; }
   });
   return sugestao;
 }
 function renderDenominacoes(prefixo){
   return DENOMINACOES.map((d, i) => `
-    <div class="row" style="align-items:center;margin-bottom:6px">
-      <span style="flex:0 0 90px;font-size:13px;font-weight:700">${d.l}</span>
+    <div class="row" style="align-items:center;margin-bottom:6px;gap:8px">
+      ${notaIcon(d)}
+      <span style="flex:0 0 78px;font-size:13px;font-weight:700">${d.l}</span>
       <input id="${prefixo}_${i}" type="number" min="0" inputmode="numeric" placeholder="0" oninput="atualizarSomaDenom('${prefixo}')" style="text-align:center">
       <span style="flex:0 0 76px;font-size:12.5px;color:var(--mut);text-align:right" id="${prefixo}_sub_${i}">R$ 0,00</span>
     </div>`).join('');
@@ -2768,11 +2773,12 @@ async function renderRel(periodo){
   relVendas = vendas;
   const tot = vendas.reduce((a,v) => a + (v.total || 0), 0);
   const nPess = vendas.reduce((a,v) => a + (v.numPessoas || 0), 0);
-  const porForma = {}, porGarcom = {}, porItem = {}, porMesa = {};
+  const porForma = {}, porGarcom = {}, porItem = {}, porMesa = {}, gorjetaGarcom = {};
   let somaDuracao = 0, nDuracao = 0;
   vendas.forEach(v => {
     (v.pagamentos || []).forEach(p => porForma[p.forma] = round2((porForma[p.forma] || 0) + p.valor));
     if(v.garcom) porGarcom[v.garcom] = round2((porGarcom[v.garcom] || 0) + (v.total || 0));
+    if(v.garcom && v.taxa) gorjetaGarcom[v.garcom] = round2((gorjetaGarcom[v.garcom] || 0) + v.taxa);
     if(v.mesa != null) porMesa[v.mesa] = (porMesa[v.mesa] || 0) + 1;
     if(v.duracaoMin != null){ somaDuracao += v.duracaoMin; nDuracao++; }
   });
@@ -2817,6 +2823,8 @@ async function renderRel(periodo){
       ${topMesas.map(([n, q]) => `<div class="repbar"><span style="min-width:60px">Mesa ${n}</span><div class="rb"><i style="width:${Math.round(q/maxMesa*100)}%"></i></div><span class="rn">${q}x</span></div>`).join('') || '<div class="empty" style="padding:16px">Sem dados</div>'}</div>
     <div class="card"><b style="font-size:14px">🧑‍🍳 Por garçom <span style="font-weight:400;color:var(--mut);font-size:11.5px">· toque para ver detalhes</span></b>
       ${Object.entries(porGarcom).sort((a,b) => b[1] - a[1]).map(([g, v]) => `<div class="repbar" style="cursor:pointer" onclick="abrirDetalheGarcom('${esc(g)}')"><span style="min-width:70px">${esc(g)}</span><div class="rb"><i style="width:${tot ? Math.round(v/tot*100) : 0}%"></i></div><span class="rn">${fmt(v)}</span></div>`).join('') || '<div class="empty" style="padding:16px">—</div>'}</div>
+    ${Object.keys(gorjetaGarcom).length ? `<div class="card"><b style="font-size:14px">💰 Gorjeta por garçom (taxa de serviço)</b>
+      ${Object.entries(gorjetaGarcom).sort((a,b) => b[1] - a[1]).map(([g, v]) => `<div class="repbar"><span style="min-width:70px">${esc(g)}</span><div class="rb"><i style="width:${Math.round(v/Object.values(gorjetaGarcom).reduce((a,b)=>Math.max(a,b),1)*100)}%"></i></div><span class="rn">${fmt(v)}</span></div>`).join('')}</div>` : ''}
     <div class="card"><b style="font-size:14px">🧾 Vendas do período</b>
       ${vendas.slice(0, 40).map(v => {
         const h = v.criadoEm && v.criadoEm.toDate ? v.criadoEm.toDate().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
