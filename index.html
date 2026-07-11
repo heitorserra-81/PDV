@@ -576,6 +576,19 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
   <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovSenha')">Cancelar</button>
 </div></div>
 <div class="overlay" id="ovNome"><div class="sheet" id="ovNomeBox"></div></div>
+<div class="overlay" id="ovCrop" style="z-index:400">
+  <div class="sheet" style="text-align:center">
+    <h3 style="font-size:18px">📸 Ajustar foto</h3>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:4px">Arraste pra posicionar e use o controle pra dar zoom</p>
+    <div id="cropFrame" style="position:relative;width:260px;height:260px;margin:16px auto;overflow:hidden;background:#000;touch-action:none">
+      <img id="cropImg" style="position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-select:none;pointer-events:none" draggable="false">
+      <div id="cropMascara" style="position:absolute;inset:0;pointer-events:none;box-shadow:0 0 0 2000px rgba(0,0,0,.55)"></div>
+    </div>
+    <input id="cropZoom" type="range" min="100" max="300" value="100" style="width:100%" oninput="aplicarCropTransform()">
+    <button class="btn g" style="margin-top:14px" onclick="confirmarCrop()">✓ Usar essa foto</button>
+    <button class="btn o" style="margin-top:10px" onclick="fecharOv('ovCrop')">Cancelar</button>
+  </div>
+</div>
 
 <div class="notif" id="notif"></div>
 <div class="toast" id="toast"></div>
@@ -2882,23 +2895,86 @@ function beepAlerta(){
 }
 
 /* ---------- upload de foto (Supabase, opcional) ---------- */
-function redimensionar(file){
-  return new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => {
-      const max = 600, r = Math.min(1, max / Math.max(img.width, img.height));
-      const cv = document.createElement('canvas');
-      cv.width = Math.round(img.width * r); cv.height = Math.round(img.height * r);
-      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-      cv.toBlob(b => b ? res(b) : rej(new Error('erro')), 'image/jpeg', .82);
-    };
-    img.onerror = rej;
-    img.src = URL.createObjectURL(file);
-  });
+/* ---------- crop de foto (arrastar + zoom, formato retângulo ou círculo) ---------- */
+let cropState = null;
+function abrirCrop(file, formato, callback){
+  const img = new Image();
+  img.onload = () => {
+    const frame = 260;
+    const baseScale = Math.max(frame / img.naturalWidth, frame / img.naturalHeight);
+    cropState = { img, formato, baseScale, scale: baseScale, offX: 0, offY: 0, callback, frame };
+    centralizarCrop();
+    const el = $('cropImg');
+    el.src = img.src;
+    $('cropMascara').style.borderRadius = formato === 'circulo' ? '50%' : '10px';
+    $('cropZoom').value = 100;
+    aplicarCropTransform();
+    abrirOv('ovCrop');
+  };
+  img.onerror = () => toast('Não consegui abrir essa imagem');
+  img.src = URL.createObjectURL(file);
 }
-async function uploadFoto(file){
+function centralizarCrop(){
+  if(!cropState) return;
+  const w = cropState.img.naturalWidth * cropState.scale, h = cropState.img.naturalHeight * cropState.scale;
+  cropState.offX = (cropState.frame - w) / 2;
+  cropState.offY = (cropState.frame - h) / 2;
+}
+function aplicarCropTransform(){
+  if(!cropState) return;
+  const zoomPct = parseInt($('cropZoom').value) || 100;
+  const novaScale = cropState.baseScale * (zoomPct / 100);
+  // mantém o centro do frame fixo ao mudar o zoom
+  const cx = cropState.frame / 2, cy = cropState.frame / 2;
+  const relX = (cx - cropState.offX) / cropState.scale, relY = (cy - cropState.offY) / cropState.scale;
+  cropState.offX = cx - relX * novaScale;
+  cropState.offY = cy - relY * novaScale;
+  cropState.scale = novaScale;
+  limitarCropOffset();
+  const el = $('cropImg');
+  el.style.width = (cropState.img.naturalWidth * cropState.scale) + 'px';
+  el.style.height = (cropState.img.naturalHeight * cropState.scale) + 'px';
+  el.style.transform = `translate(${cropState.offX}px,${cropState.offY}px)`;
+}
+function limitarCropOffset(){
+  const w = cropState.img.naturalWidth * cropState.scale, h = cropState.img.naturalHeight * cropState.scale;
+  cropState.offX = Math.min(0, Math.max(cropState.frame - w, cropState.offX));
+  cropState.offY = Math.min(0, Math.max(cropState.frame - h, cropState.offY));
+}
+(function(){
+  let arrastandoCrop = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  document.addEventListener('pointerdown', ev => {
+    if(!ev.target.closest || !ev.target.closest('#cropFrame')) return;
+    if(!cropState) return;
+    arrastandoCrop = true; sx = ev.clientX; sy = ev.clientY; ox = cropState.offX; oy = cropState.offY;
+  });
+  document.addEventListener('pointermove', ev => {
+    if(!arrastandoCrop || !cropState) return;
+    cropState.offX = ox + (ev.clientX - sx); cropState.offY = oy + (ev.clientY - sy);
+    limitarCropOffset();
+    const el = $('cropImg');
+    el.style.transform = `translate(${cropState.offX}px,${cropState.offY}px)`;
+  });
+  document.addEventListener('pointerup', () => { arrastandoCrop = false; });
+})();
+function confirmarCrop(){
+  if(!cropState) return;
+  const out = 500;
+  const cv = document.createElement('canvas'); cv.width = out; cv.height = out;
+  const ctx = cv.getContext('2d');
+  const f = cropState.frame, s = out / f;
+  ctx.drawImage(cropState.img,
+    -cropState.offX / cropState.scale, -cropState.offY / cropState.scale,
+    f / cropState.scale, f / cropState.scale,
+    0, 0, out, out);
+  cv.toBlob(blob => {
+    fecharOv('ovCrop');
+    if(blob) cropState.callback(blob);
+    cropState = null;
+  }, 'image/jpeg', .85);
+}
+async function uploadFoto(blob){
   if(!SUPA_URL || !SUPA_KEY) throw new Error('Supabase não configurado — use o campo de URL da foto');
-  const blob = await redimensionar(file);
   const nome = REST + '/' + uid() + '.jpg';
   const r = await fetch(SUPA_URL + '/storage/v1/object/pdv/' + nome, {
     method: 'POST',
@@ -2908,16 +2984,19 @@ async function uploadFoto(file){
   if(!r.ok) throw new Error('Falha no upload (' + r.status + '). O bucket "pdv" existe e é público?');
   return SUPA_URL + '/storage/v1/object/public/pdv/' + nome;
 }
-async function escolherFoto(inputEl, destInputId, prevId){
+function escolherFoto(inputEl, destInputId, prevId, formato){
   const f = inputEl.files && inputEl.files[0];
   if(!f) return;
-  toast('Enviando foto…');
-  try{
-    const url = await uploadFoto(f);
-    $(destInputId).value = url;
-    if($(prevId)) $(prevId).src = url, $(prevId).style.display = '';
-    toast('Foto enviada 📸');
-  }catch(e){ toast(e.message); }
+  abrirCrop(f, formato || 'retangulo', async (blob) => {
+    toast('Enviando foto…');
+    try{
+      const url = await uploadFoto(blob);
+      $(destInputId).value = url;
+      if($(prevId)) $(prevId).src = url, $(prevId).style.display = '';
+      toast('Foto enviada 📸');
+    }catch(e){ toast(e.message); }
+  });
+  inputEl.value = '';
 }
 
 /* ---------- configurações ---------- */
@@ -3316,7 +3395,7 @@ function editarProduto(id){
     <label>Foto</label>
     <div class="row"><input id="epFoto" value="${p ? esc(p.foto || '') : ''}" placeholder="URL da foto ou envie →">
       <button class="btn sm" style="flex:0 0 auto" onclick="$('epFile').click()">📸</button></div>
-    <input type="file" id="epFile" accept="image/*" style="display:none" onchange="escolherFoto(this,'epFoto','epPrev')">
+    <input type="file" id="epFile" accept="image/*" style="display:none" onchange="escolherFoto(this,'epFoto','epPrev','retangulo')">
     <img id="epPrev" class="fotoprev" src="${p && p.foto ? esc(p.foto) : ''}" style="${p && p.foto ? '' : 'display:none'}" onerror="this.style.display='none'">
     <button class="btn o sm" style="margin-top:8px" onclick="copiarPromptFoto()">🎨 Copiar prompt de foto (IA de imagens)</button>
     <label>Grupos de adicionais (biblioteca)</label>
@@ -3494,7 +3573,7 @@ function editarFunc(id){
     <label>Foto</label>
     <div class="row"><input id="efFoto" value="${f ? esc(f.foto || '') : ''}" placeholder="URL da foto ou envie →">
       <button class="btn sm" style="flex:0 0 auto" onclick="$('efFile').click()">📸</button></div>
-    <input type="file" id="efFile" accept="image/*" style="display:none" onchange="escolherFoto(this,'efFoto','efPrev')">
+    <input type="file" id="efFile" accept="image/*" style="display:none" onchange="escolherFoto(this,'efFoto','efPrev','circulo')">
     <img id="efPrev" class="fotoprev" style="border-radius:50%;${f && f.foto ? '' : 'display:none'}" src="${f && f.foto ? esc(f.foto) : ''}" onerror="this.style.display='none'">
     <label style="margin-top:16px">🔐 Permissões deste funcionário</label>
     <div class="sw"><div><b>Pode lançar pedidos</b><small>Se desligar, ele fica bloqueado até o gerente liberar (mesmo controle da aba Gaveta → Equipe do dia)</small></div><div class="tog ${f && f.habilitado ? 'on' : ''}" id="efHabilitado" onclick="this.classList.toggle('on')"></div></div>
