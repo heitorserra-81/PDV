@@ -85,18 +85,22 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.conta{border-color:var(--green);animation:pulse 1.6s infinite}
 .mesa.conta .st{color:var(--green)}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(47,191,113,.45)}50%{box-shadow:0 0 0 9px rgba(47,191,113,0)}}
-.kds-card{background:#1a1a1a;border:3px solid #333;border-radius:14px;padding:9px;color:#fff;display:flex;flex-direction:column;gap:2px;min-height:0;min-width:0;overflow:hidden;animation:brilhoKds 3s ease-in-out infinite}
-@keyframes brilhoKds{0%,100%{box-shadow:0 0 0 0 rgba(232,163,61,.15)}50%{box-shadow:0 0 14px 2px rgba(232,163,61,.22)}}
+.kds-card{background:#1a1a1a;border:3px solid #2FBF71;border-radius:14px;padding:8px;color:#fff;display:flex;flex-direction:column;gap:2px;min-height:0;min-width:0;overflow:hidden;transition:border-color 1.5s,background 1.5s}
+.kds-card.novo{border-color:#2FBF71;background:#0f2418;animation:brilhoKds 2s ease-in-out infinite}
+@keyframes brilhoKds{0%,100%{box-shadow:0 0 0 0 rgba(47,191,113,.2)}50%{box-shadow:0 0 14px 3px rgba(47,191,113,.35)}}
+.kds-card.andamento{border-color:#4aa3e0;background:#0f1c2a}
 .kds-card.aviso{border-color:#E8A33D;background:#2a2010}
 .kds-card.atrasado{border-color:#E0554D;background:#2a1512;animation:pulseKds 1.2s infinite}
 @keyframes pulseKds{0%,100%{box-shadow:0 0 0 0 rgba(224,85,77,.5)}50%{box-shadow:0 0 0 10px rgba(224,85,77,0)}}
-.kds-card .mesa{font-size:clamp(14px,2.4vw,22px);font-weight:800;line-height:1.15;word-break:break-word;flex:0 0 auto;text-align:center;background:rgba(255,255,255,.08);border-radius:9px;padding:5px 4px;margin-bottom:2px}
-.kds-card .pessoa{font-size:clamp(10px,2.6vw,13px);font-weight:700;color:#8fd0ff;line-height:1.2;word-break:break-word;flex:0 0 auto}
-.kds-card .tempo{font-size:clamp(9px,2.4vw,11.5px);font-weight:700;color:#E8A33D;line-height:1.2;word-break:break-word;flex:0 0 auto;margin-top:2px}
-.kds-card.atrasado .tempo{color:#E0554D}
+.kds-card .mesa{font-size:clamp(12px,1.8vw,16px);font-weight:800;line-height:1.1;word-break:break-word;flex:0 0 auto;text-align:center;background:rgba(255,255,255,.1);border-radius:7px;padding:3px 4px}
+.kds-card .pessoa{font-size:clamp(9px,2vw,12px);font-weight:700;color:#8fd0ff;line-height:1.2;word-break:break-word;flex:0 0 auto;text-align:center;margin-top:1px}
 .kds-card .itens{flex:1;overflow-y:auto;margin-top:3px;min-height:0}
 .kds-card .item{font-size:clamp(10px,2.8vw,13px);padding:1.5px 0;border-bottom:1px dashed #3a3a3a;line-height:1.3;word-break:break-word}
 .kds-card .mod{font-size:9px;color:#aaa;padding-left:8px;word-break:break-word}
+.kds-card .tempo{font-size:clamp(13px,3.2vw,17px);font-weight:800;color:#2FBF71;line-height:1.15;word-break:break-word;flex:0 0 auto;margin-top:3px;text-align:center}
+.kds-card.andamento .tempo{color:#4aa3e0}
+.kds-card.aviso .tempo{color:#E8A33D}
+.kds-card.atrasado .tempo{color:#E0554D}
 .kds-card .btn-pronto{margin-top:4px;padding:7px;border-radius:9px;background:#E8A33D;color:#181410;font-weight:800;font-size:clamp(10px,2.6vw,12.5px);text-align:center;flex:0 0 auto}
 .kds-card .btn-entregue{margin-top:4px;padding:7px;border-radius:9px;background:#2FBF71;color:#0d1f14;font-weight:800;font-size:clamp(10px,2.6vw,12.5px);text-align:center;flex:0 0 auto}
 
@@ -436,7 +440,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <!-- ============ KDS (tela de cozinha) ============ -->
 <div class="screen" id="scKDS" style="background:#0a0a0a">
   <div class="top" style="background:#111"><div style="flex:1"><h2 id="kdsNome" style="font-size:22px">Cozinha</h2><div class="sub" id="kdsHora"></div></div><button class="iconb" onclick="show('scHome')">✕</button></div>
-  <div id="kdsGrid" style="display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(2,1fr);gap:10px;padding:12px;height:calc(100dvh - 90px)"></div>
+  <div id="kdsGrid" style="display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:minmax(0,1fr);gap:10px;padding:12px;height:calc(100dvh - 90px)"></div>
   <div id="kdsQrCorner" style="display:none;position:fixed;right:14px;bottom:14px;background:#fff;border-radius:12px;padding:8px;text-align:center;z-index:50">
     <img id="kdsQrImg" style="width:84px;height:84px;display:block">
     <div style="font-size:9px;color:#333;font-weight:800;margin-top:2px">💌 mande uma mensagem</div>
@@ -600,6 +604,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <div class="sw"><div><b>Cliente pode pedir pelo QR</b><small>Se desligar, o QR só mostra "Chamar garçom", sem cardápio</small></div><div class="tog" id="togPedidoQR" onclick="togCampo('pedidoQR', this)"></div></div>
       <div class="sw"><div><b>📺 Ativar KDS (tela de cozinha)</b><small>Painel em tela cheia pra TV/tablet virado pra cozinha, com cores por tempo de espera</small></div><div class="tog" id="togKDS" onclick="togCampo('kdsAtivo', this)"></div></div>
       <div class="sw"><div><b>💌 QR de mensagem na tela do KDS</b><small>Cliente escaneia, escolhe uma mensagem pronta, e ela aparece animada na TV por 10s</small></div><div class="tog" id="togKdsMsg" onclick="togCampo('kdsQrMensagem', this)"></div></div>
+      <div class="sw"><div><b>👆 KDS tem tela de toque</b><small>Se desligar, some o botão "Pronto"/"Entregue" — use se essa tela for só pra visualização, sem ninguém pra tocar nela</small></div><div class="tog" id="togKdsToque" onclick="togCampo('kdsToque', this)"></div></div>
       <label>📱 QR / link da mesa para o cliente</label>
       <div class="row"><input id="qrMesaNum" type="number" min="1" placeholder="nº da mesa"><button class="btn sm" onclick="gerarQrMesa()">Gerar</button></div>
       <div id="qrMesaBox"></div>
@@ -2024,10 +2029,11 @@ function renderKDS(){
   if(!$('scKDS').classList.contains('on')) return;
   const totalPaginas = Math.max(1, Math.ceil(pedidosKDS.length / KDS_POR_PAGINA));
   const pagina = pedidosKDS.slice(kdsPagina * KDS_POR_PAGINA, kdsPagina * KDS_POR_PAGINA + KDS_POR_PAGINA);
+  const temToque = !CFG || CFG.kdsToque !== false;
   $('kdsHora').textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + (totalPaginas > 1 ? ` · página ${kdsPagina + 1}/${totalPaginas}` : '');
   $('kdsGrid').innerHTML = pagina.map(p => {
     const min = p.criadoEm ? Math.floor((Date.now() - p.criadoEm.toMillis()) / 60000) : 0;
-    const nivel = min >= 15 ? 'atrasado' : (min >= 8 ? 'aviso' : '');
+    const nivel = min >= 15 ? 'atrasado' : (min >= 8 ? 'aviso' : (min >= 2 ? 'andamento' : 'novo'));
     const mesaObj = p.mesa ? (MESAS[String(p.mesa)] || {}) : {};
     const pessoas = [...new Set((p.itens || []).map(it => it.pessoa).filter(Boolean).map(pid => nomePessoaMesa2(mesaObj, pid)).filter(Boolean))];
     const desde = p.criadoEm ? p.criadoEm.toMillis() : Date.now();
@@ -2036,7 +2042,7 @@ function renderKDS(){
       ${pessoas.length ? `<div class="pessoa">👤 ${esc(pessoas.join(', '))}</div>` : ''}
       <div class="itens">${(p.itens || []).map(it => `<div class="item">${it.qtd}× ${esc(it.nome)}</div>`).join('') || '<div class="item" style="color:#888;border:none">(sem itens)</div>'}</div>
       <div class="tempo"><span class="cron">0s</span>${p.garcom ? ' · ' + esc(p.garcom) : ''}</div>
-      ${p.status !== 'pronto' ? `<div class="btn-pronto" onclick="marcarPronto('${p.id}')">👨‍🍳 Pronto</div>` : `<div class="btn-entregue" onclick="marcarEntregue('${p.id}')">✓ Entregue</div>`}
+      ${temToque ? (p.status !== 'pronto' ? `<div class="btn-pronto" onclick="marcarPronto('${p.id}')">👨‍🍳 Pronto</div>` : `<div class="btn-entregue" onclick="marcarEntregue('${p.id}')">✓ Entregue</div>`) : ''}
     </div>`;
   }).join('') || '<div style="grid-column:1/-1;text-align:center;color:#777;padding:60px 0;font-size:18px">🍃 Nenhum pedido em andamento</div>';
   atualizarCronometrosKDS();
@@ -3525,6 +3531,7 @@ function preencherConfig(){
   $('togPedidoQR').classList.toggle('on', CFG.pedidoQR !== false);
   $('togKDS').classList.toggle('on', !!CFG.kdsAtivo);
   $('togKdsMsg').classList.toggle('on', !!CFG.kdsQrMensagem);
+  $('togKdsToque').classList.toggle('on', CFG.kdsToque !== false);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
   renderFracPills(); renderSetores(); renderCatOrd();
 }
