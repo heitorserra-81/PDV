@@ -1932,11 +1932,12 @@ function renderKDS(){
   $('kdsGrid').innerHTML = pagina.map(p => {
     const min = p.criadoEm ? Math.floor((Date.now() - p.criadoEm.toMillis()) / 60000) : 0;
     const nivel = min >= 15 ? 'atrasado' : (min >= 8 ? 'aviso' : '');
-    const pessoas = [...new Set((p.itens || []).map(it => it.pessoa).filter(Boolean).map(nomePessoaMesa))];
+    const mesaObj = p.mesa ? (MESAS[String(p.mesa)] || {}) : {};
+    const pessoas = [...new Set((p.itens || []).map(it => it.pessoa).filter(Boolean).map(pid => nomePessoaMesa2(mesaObj, pid)).filter(Boolean))];
     return `<div class="kds-card ${nivel}">
       <div class="mesa">${p.mesa ? 'MESA ' + p.mesa : 'BALCÃO'}</div>
-      <div class="tempo">${min < 1 ? 'agora' : 'há ' + min + 'min'}${pessoas.length ? ' · ' + esc(pessoas.join(', ')) : ''}</div>
-      <div class="itens">${(p.itens || []).map(it => `<div class="item">${it.qtd}× ${esc(it.nome)}</div>`).join('')}</div>
+      <div class="tempo">${min < 1 ? 'agora' : 'há ' + min + 'min'}${p.garcom ? ' · ' + esc(p.garcom) : ''}${pessoas.length ? ' · ' + esc(pessoas.join(', ')) : ''}</div>
+      <div class="itens">${(p.itens || []).map(it => `<div class="item">${it.qtd}× ${esc(it.nome)}</div>`).join('') || '<div class="item" style="color:#888;border:none">(sem itens)</div>'}</div>
       ${p.status !== 'pronto' ? `<div class="btn-pronto" onclick="marcarPronto('${p.id}')">👨‍🍳 Pronto</div>` : `<div class="btn-entregue" onclick="marcarEntregue('${p.id}')">✓ Entregue</div>`}
     </div>`;
   }).join('') || '<div style="grid-column:1/-1;text-align:center;color:#777;padding:60px 0;font-size:18px">🍃 Nenhum pedido em andamento</div>';
