@@ -90,7 +90,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .kds-card.aviso{border-color:#E8A33D;background:#2a2010}
 .kds-card.atrasado{border-color:#E0554D;background:#2a1512;animation:pulseKds 1.2s infinite}
 @keyframes pulseKds{0%,100%{box-shadow:0 0 0 0 rgba(224,85,77,.5)}50%{box-shadow:0 0 0 10px rgba(224,85,77,0)}}
-.kds-card .mesa{font-size:clamp(13px,4.2vw,20px);font-weight:800;line-height:1.15;word-break:break-word;flex:0 0 auto}
+.kds-card .mesa{font-size:clamp(14px,2.4vw,22px);font-weight:800;line-height:1.15;word-break:break-word;flex:0 0 auto;text-align:center;background:rgba(255,255,255,.08);border-radius:9px;padding:5px 4px;margin-bottom:2px}
 .kds-card .pessoa{font-size:clamp(10px,2.6vw,13px);font-weight:700;color:#8fd0ff;line-height:1.2;word-break:break-word;flex:0 0 auto}
 .kds-card .tempo{font-size:clamp(9px,2.4vw,11.5px);font-weight:700;color:#E8A33D;line-height:1.2;word-break:break-word;flex:0 0 auto;margin-top:2px}
 .kds-card.atrasado .tempo{color:#E0554D}
@@ -418,12 +418,43 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
     <button class="btn g" style="margin-top:24px" onclick="show('scCliente')">← Voltar</button>
   </div>
 </div>
+<div class="screen" id="scMensagemTV">
+  <div class="top"><h2>💌 Mande uma mensagem</h2></div>
+  <div class="wrap">
+    <p style="color:var(--mut);font-size:13px">Escolhe uma mensagem — ela aparece animada na telinha da cozinha, pra galera ver! 🎉</p>
+    <div id="msgTVLista" style="margin-top:14px"></div>
+  </div>
+</div>
+<div class="screen" id="scMensagemTVOk">
+  <div class="wrap" style="display:flex;flex-direction:column;justify-content:center;min-height:100dvh;text-align:center">
+    <span style="font-size:56px">🎉</span>
+    <h2 style="margin-top:14px">Mensagem enviada!</h2>
+    <p style="color:var(--mut);margin-top:8px">Já apareceu na telinha 💌</p>
+  </div>
+</div>
 
 <!-- ============ KDS (tela de cozinha) ============ -->
 <div class="screen" id="scKDS" style="background:#0a0a0a">
   <div class="top" style="background:#111"><div style="flex:1"><h2 id="kdsNome" style="font-size:22px">Cozinha</h2><div class="sub" id="kdsHora"></div></div><button class="iconb" onclick="show('scHome')">✕</button></div>
-  <div id="kdsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));grid-template-rows:repeat(2,1fr);gap:9px;padding:12px;height:calc(100dvh - 90px);justify-content:start"></div>
+  <div id="kdsGrid" style="display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(2,1fr);gap:10px;padding:12px;height:calc(100dvh - 90px)"></div>
+  <div id="kdsQrCorner" style="display:none;position:fixed;right:14px;bottom:14px;background:#fff;border-radius:12px;padding:8px;text-align:center;z-index:50">
+    <img id="kdsQrImg" style="width:84px;height:84px;display:block">
+    <div style="font-size:9px;color:#333;font-weight:800;margin-top:2px">💌 mande uma mensagem</div>
+  </div>
+  <div id="kdsMsgOverlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);align-items:center;justify-content:center;overflow:hidden">
+    <div id="kdsConfete" style="position:absolute;inset:0;pointer-events:none"></div>
+    <div id="kdsCardMsg" style="background:linear-gradient(135deg,#fff,#fff7e6);color:#181410;border-radius:22px;padding:34px 30px;max-width:560px;text-align:center;transform:scaleY(0);transform-origin:top;transition:transform .5s cubic-bezier(.2,1.4,.4,1);box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div id="kdsMsgEmoji" style="font-size:64px;line-height:1">🎉</div>
+      <div id="kdsMsgTexto" style="font-size:28px;font-weight:800;margin-top:10px"></div>
+      <div id="kdsMsgSub" style="font-size:15px;color:#8a7a5e;margin-top:6px"></div>
+    </div>
+    <div style="position:absolute;bottom:8%;font-size:52px;animation:garcomEntra 1s ease-out">🧑‍🍳</div>
+  </div>
 </div>
+<style>
+@keyframes garcomEntra{0%{transform:translateX(-120px) rotate(-10deg);opacity:0}60%{transform:translateX(10px) rotate(3deg);opacity:1}100%{transform:translateX(0) rotate(0);opacity:1}}
+@keyframes confeteCai{0%{transform:translateY(-10vh) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(600deg);opacity:.9}}
+</style>
 
 <!-- ============ TV DE CHAMADAS ============ -->
 <div class="screen" id="scChamadasTV" style="background:#0a0a0a">
@@ -568,6 +599,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
       <div class="sw"><div><b>Exigir caixa aberto para operar</b><small>Ninguém tira pedido nem vende no balcão antes do gerente abrir o caixa do dia</small></div><div class="tog" id="togExigirCaixa" onclick="togCampo('exigirCaixa', this)"></div></div>
       <div class="sw"><div><b>Cliente pode pedir pelo QR</b><small>Se desligar, o QR só mostra "Chamar garçom", sem cardápio</small></div><div class="tog" id="togPedidoQR" onclick="togCampo('pedidoQR', this)"></div></div>
       <div class="sw"><div><b>📺 Ativar KDS (tela de cozinha)</b><small>Painel em tela cheia pra TV/tablet virado pra cozinha, com cores por tempo de espera</small></div><div class="tog" id="togKDS" onclick="togCampo('kdsAtivo', this)"></div></div>
+      <div class="sw"><div><b>💌 QR de mensagem na tela do KDS</b><small>Cliente escaneia, escolhe uma mensagem pronta, e ela aparece animada na TV por 10s</small></div><div class="tog" id="togKdsMsg" onclick="togCampo('kdsQrMensagem', this)"></div></div>
       <label>📱 QR / link da mesa para o cliente</label>
       <div class="row"><input id="qrMesaNum" type="number" min="1" placeholder="nº da mesa"><button class="btn sm" onclick="gerarQrMesa()">Gerar</button></div>
       <div id="qrMesaBox"></div>
@@ -769,6 +801,7 @@ async function boot(){
     if(mesaParam && parseInt(mesaParam) > 0){ entrarCliente(parseInt(mesaParam)); }
     else if(telaParam === 'kds'){ entrarKDS(); }
     else if(telaParam === 'chamadas'){ entrarChamadasTV(); }
+    else if(telaParam === 'mensagemtv'){ entrarMensagemTV(); }
     else show('scHome');
   }catch(e){
     console.error(e);
@@ -1898,6 +1931,13 @@ async function fecharMesaVazia(n){
 /* ---------- computador: monitor ---------- */
 const KDS_POR_PAGINA = 10;
 let kdsPagina = 0;
+const MENSAGENS_TV = [
+  { id: 'aniversario', emoji: '🎂', titulo: 'Feliz Aniversário!', sub: 'que seu dia seja incrível 🎉' },
+  { id: 'amor', emoji: '❤️', titulo: 'Com carinho', sub: 'uma mensagem de amor pra alguém especial' },
+  { id: 'parabens', emoji: '🎉', titulo: 'Parabéns!', sub: 'motivo de comemorar hoje' },
+  { id: 'obrigado', emoji: '🙏', titulo: 'Muito obrigado(a)!', sub: 'gratidão no ar' },
+  { id: 'aplausos', emoji: '👏', titulo: 'Atendimento nota 10!', sub: 'um agradecimento pra equipe' }
+];
 function entrarKDS(){
   $('kdsNome').textContent = (CFG && CFG.nome) || 'Cozinha';
   show('scKDS');
@@ -1905,9 +1945,63 @@ function entrarKDS(){
   atualizarHoraKDS();
   clearInterval(window._kdsRelogio);
   clearInterval(window._kdsPaginaT);
+  clearInterval(window._kdsCron);
   window._kdsRelogio = setInterval(() => { atualizarHoraKDS(); renderKDS(); }, 15000);
   window._kdsPaginaT = setInterval(avancarPaginaKDS, 10000);
+  window._kdsCron = setInterval(atualizarCronometrosKDS, 1000);
   escutarPedidosKDS();
+  if(CFG && CFG.kdsQrMensagem){
+    const url = location.origin + location.pathname + '?rest=' + REST + '&tela=mensagemtv';
+    $('kdsQrImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(url);
+    $('kdsQrCorner').style.display = '';
+    escutarMensagensTV();
+  }else{
+    $('kdsQrCorner').style.display = 'none';
+  }
+}
+let unsubMsgTV = null, primeiraCargaMsgTV = true;
+function escutarMensagensTV(){
+  if(unsubMsgTV) return;
+  primeiraCargaMsgTV = true;
+  unsubMsgTV = col('mensagensTV').orderBy('criadoEm', 'desc').limit(1).onSnapshot(s => {
+    if(primeiraCargaMsgTV){ primeiraCargaMsgTV = false; return; }
+    s.docChanges().forEach(ch => { if(ch.type === 'added') mostrarMensagemTV(ch.doc.data()); });
+  });
+  unsubs.push(unsubMsgTV);
+}
+function mostrarMensagemTV(msg){
+  const tpl = MENSAGENS_TV.find(m => m.id === msg.tipo) || MENSAGENS_TV[0];
+  $('kdsMsgEmoji').textContent = tpl.emoji;
+  $('kdsMsgTexto').textContent = tpl.titulo;
+  $('kdsMsgSub').textContent = tpl.sub;
+  const confeteBox = $('kdsConfete');
+  const cores = ['#E8A33D', '#2FBF71', '#E0554D', '#8fd0ff', '#fff'];
+  confeteBox.innerHTML = Array.from({ length: 40 }).map(() => {
+    const left = Math.random() * 100, delay = Math.random() * 0.6, dur = 2 + Math.random() * 1.5, cor = cores[Math.floor(Math.random() * cores.length)];
+    return `<div style="position:absolute;top:-5%;left:${left}%;width:8px;height:14px;background:${cor};animation:confeteCai ${dur}s ${delay}s ease-in forwards"></div>`;
+  }).join('');
+  $('kdsMsgOverlay').style.display = 'flex';
+  $('kdsCardMsg').style.transform = 'scaleY(0)';
+  requestAnimationFrame(() => { $('kdsCardMsg').style.transform = 'scaleY(1)'; });
+  clearTimeout(window._kdsMsgT);
+  window._kdsMsgT = setTimeout(() => {
+    $('kdsCardMsg').style.transform = 'scaleY(0)';
+    setTimeout(() => { $('kdsMsgOverlay').style.display = 'none'; }, 500);
+  }, 10000);
+  beep();
+}
+function entrarMensagemTV(){
+  $('msgTVLista').innerHTML = MENSAGENS_TV.map(m => `
+    <button class="btn o" style="width:100%;text-align:left;margin-top:10px;display:flex;align-items:center;gap:12px;padding:14px" onclick="enviarMensagemTV('${m.id}')">
+      <span style="font-size:30px">${m.emoji}</span>
+      <span><b style="display:block">${esc(m.titulo)}</b><span style="font-size:12px;color:var(--mut)">${esc(m.sub)}</span></span>
+    </button>`).join('');
+  show('scMensagemTV');
+}
+async function enviarMensagemTV(tipo){
+  await col('mensagensTV').add({ tipo, criadoEm: TS() });
+  show('scMensagemTVOk');
+  setTimeout(() => show('scCliente'), 2500);
 }
 function avancarPaginaKDS(){
   const totalPaginas = Math.max(1, Math.ceil(pedidosKDS.length / KDS_POR_PAGINA));
@@ -1936,14 +2030,25 @@ function renderKDS(){
     const nivel = min >= 15 ? 'atrasado' : (min >= 8 ? 'aviso' : '');
     const mesaObj = p.mesa ? (MESAS[String(p.mesa)] || {}) : {};
     const pessoas = [...new Set((p.itens || []).map(it => it.pessoa).filter(Boolean).map(pid => nomePessoaMesa2(mesaObj, pid)).filter(Boolean))];
-    return `<div class="kds-card ${nivel}">
+    const desde = p.criadoEm ? p.criadoEm.toMillis() : Date.now();
+    return `<div class="kds-card ${nivel}" data-desde="${desde}">
       <div class="mesa">${p.mesa ? 'MESA ' + p.mesa : 'BALCÃO'}</div>
       ${pessoas.length ? `<div class="pessoa">👤 ${esc(pessoas.join(', '))}</div>` : ''}
       <div class="itens">${(p.itens || []).map(it => `<div class="item">${it.qtd}× ${esc(it.nome)}</div>`).join('') || '<div class="item" style="color:#888;border:none">(sem itens)</div>'}</div>
-      <div class="tempo">${min < 1 ? 'agora' : 'há ' + min + 'min'}${p.garcom ? ' · ' + esc(p.garcom) : ''}</div>
+      <div class="tempo"><span class="cron">0s</span>${p.garcom ? ' · ' + esc(p.garcom) : ''}</div>
       ${p.status !== 'pronto' ? `<div class="btn-pronto" onclick="marcarPronto('${p.id}')">👨‍🍳 Pronto</div>` : `<div class="btn-entregue" onclick="marcarEntregue('${p.id}')">✓ Entregue</div>`}
     </div>`;
   }).join('') || '<div style="grid-column:1/-1;text-align:center;color:#777;padding:60px 0;font-size:18px">🍃 Nenhum pedido em andamento</div>';
+  atualizarCronometrosKDS();
+}
+function atualizarCronometrosKDS(){
+  document.querySelectorAll('#kdsGrid .kds-card').forEach(card => {
+    const desde = parseInt(card.dataset.desde);
+    if(!desde) return;
+    const seg = Math.floor((Date.now() - desde) / 1000);
+    const cronEl = card.querySelector('.cron');
+    if(cronEl) cronEl.textContent = seg < 60 ? seg + 's' : Math.floor(seg / 60) + 'min ' + (seg % 60) + 's';
+  });
 }
 function entrarChamadasTV(){
   show('scChamadasTV');
@@ -3419,6 +3524,7 @@ function preencherConfig(){
   $('togExigirCaixa').classList.toggle('on', CFG.exigirCaixa !== false);
   $('togPedidoQR').classList.toggle('on', CFG.pedidoQR !== false);
   $('togKDS').classList.toggle('on', !!CFG.kdsAtivo);
+  $('togKdsMsg').classList.toggle('on', !!CFG.kdsQrMensagem);
   $('cfgLink').value = location.origin + location.pathname + '?rest=' + REST;
   renderFracPills(); renderSetores(); renderCatOrd();
 }
