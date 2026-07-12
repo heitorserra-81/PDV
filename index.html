@@ -1917,7 +1917,7 @@ let unsubKDS = null, pedidosKDS = [];
 function escutarPedidosKDS(){
   if(unsubKDS) return;
   unsubKDS = col('pedidos').where('entregue', '==', false).onSnapshot(s => {
-    pedidosKDS = s.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.tipo === 'pedido' && p.impresso)
+    pedidosKDS = s.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.tipo === 'pedido')
       .sort((a, b) => { const ta = a.criadoEm ? a.criadoEm.toMillis() : 0, tb = b.criadoEm ? b.criadoEm.toMillis() : 0; return ta - tb; });
     if(kdsPagina > 0 && kdsPagina >= Math.ceil(pedidosKDS.length / KDS_POR_PAGINA)) kdsPagina = 0;
     renderKDS();
