@@ -85,24 +85,25 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.conta{border-color:var(--green);animation:pulse 1.6s infinite}
 .mesa.conta .st{color:var(--green)}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(47,191,113,.45)}50%{box-shadow:0 0 0 9px rgba(47,191,113,0)}}
-.kds-card{background:#1a1a1a;border:3px solid #2FBF71;border-radius:14px;padding:8px;color:#fff;display:flex;flex-direction:column;gap:2px;min-height:0;min-width:0;overflow:hidden;transition:border-color 1.5s,background 1.5s}
+.kds-card{background:#1a1a1a;border:4px solid #2FBF71;border-radius:14px;padding:10px;color:#fff;display:flex;flex-direction:column;overflow:hidden;transition:border-color 1.5s,background 1.5s}
 .kds-card.novo{border-color:#2FBF71;background:#0f2418;animation:brilhoKds 2s ease-in-out infinite}
 @keyframes brilhoKds{0%,100%{box-shadow:0 0 0 0 rgba(47,191,113,.2)}50%{box-shadow:0 0 14px 3px rgba(47,191,113,.35)}}
 .kds-card.andamento{border-color:#4aa3e0;background:#0f1c2a}
 .kds-card.aviso{border-color:#E8A33D;background:#2a2010}
 .kds-card.atrasado{border-color:#E0554D;background:#2a1512;animation:pulseKds 1.2s infinite}
 @keyframes pulseKds{0%,100%{box-shadow:0 0 0 0 rgba(224,85,77,.5)}50%{box-shadow:0 0 0 10px rgba(224,85,77,0)}}
-.kds-card .mesa{font-size:clamp(12px,1.8vw,16px);font-weight:800;line-height:1.1;word-break:break-word;flex:0 0 auto;text-align:center;background:rgba(255,255,255,.1);border-radius:7px;padding:3px 4px}
-.kds-card .pessoa{font-size:clamp(9px,2vw,12px);font-weight:700;color:#8fd0ff;line-height:1.2;word-break:break-word;flex:0 0 auto;text-align:center;margin-top:1px}
-.kds-card .itens{flex:1;overflow-y:auto;margin-top:3px;min-height:0}
-.kds-card .item{font-size:clamp(10px,2.8vw,13px);padding:1.5px 0;border-bottom:1px dashed #3a3a3a;line-height:1.3;word-break:break-word}
-.kds-card .mod{font-size:9px;color:#aaa;padding-left:8px;word-break:break-word}
-.kds-card .tempo{font-size:clamp(13px,3.2vw,17px);font-weight:800;color:#2FBF71;line-height:1.15;word-break:break-word;flex:0 0 auto;margin-top:3px;text-align:center}
+.kds-card .mesa{font-size:15px;font-weight:800;text-align:center;flex-shrink:0;color:#fff}
+.kds-card .itens{font-size:13px;margin-top:6px;flex-shrink:1;overflow:hidden;color:#fff}
+.kds-card .item{padding:2px 0;border-bottom:1px dashed #3a3a3a}
+.kds-card .mod{font-size:9px;color:#aaa;padding-left:8px}
+.kds-card .tempo{font-size:16px;font-weight:800;text-align:center;margin-top:auto;padding-top:6px;flex-shrink:0}
 .kds-card.andamento .tempo{color:#4aa3e0}
 .kds-card.aviso .tempo{color:#E8A33D}
 .kds-card.atrasado .tempo{color:#E0554D}
-.kds-card .btn-pronto{margin-top:4px;padding:7px;border-radius:9px;background:#E8A33D;color:#181410;font-weight:800;font-size:clamp(10px,2.6vw,12.5px);text-align:center;flex:0 0 auto}
-.kds-card .btn-entregue{margin-top:4px;padding:7px;border-radius:9px;background:#2FBF71;color:#0d1f14;font-weight:800;font-size:clamp(10px,2.6vw,12.5px);text-align:center;flex:0 0 auto}
+.kds-card:not(.andamento):not(.aviso):not(.atrasado) .tempo{color:#2FBF71}
+.kds-card .pessoa{font-size:11px;color:#8fd0ff;text-align:center;flex-shrink:0}
+.kds-card .btn-pronto{margin-top:6px;padding:8px;border-radius:9px;background:#E8A33D;color:#181410;font-weight:800;font-size:12.5px;text-align:center;flex-shrink:0}
+.kds-card .btn-entregue{margin-top:6px;padding:8px;border-radius:9px;background:#2FBF71;color:#0d1f14;font-weight:800;font-size:12.5px;text-align:center;flex-shrink:0}
 
 /* ====== cardápio ====== */
 .cats{display:flex;gap:8px;overflow-x:auto;padding:12px 0;scrollbar-width:none;position:sticky;top:69px;background:var(--bg);z-index:30}
@@ -1951,7 +1952,12 @@ const MENSAGENS_TV = [
   { id: 'amor', emoji: '❤️', titulo: 'Com carinho', sub: 'uma mensagem de amor pra alguém especial' },
   { id: 'parabens', emoji: '🎉', titulo: 'Parabéns!', sub: 'motivo de comemorar hoje' },
   { id: 'obrigado', emoji: '🙏', titulo: 'Muito obrigado(a)!', sub: 'gratidão no ar' },
-  { id: 'aplausos', emoji: '👏', titulo: 'Atendimento nota 10!', sub: 'um agradecimento pra equipe' }
+  { id: 'aplausos', emoji: '👏', titulo: 'Atendimento nota 10!', sub: 'um agradecimento pra equipe' },
+  { id: 'casamento', emoji: '💍', titulo: 'Vida longa ao casal!', sub: 'brinde pros noivos' },
+  { id: 'saudade', emoji: '🥹', titulo: 'Com saudade', sub: 'pra quem não está aqui hoje' },
+  { id: 'boasvindas', emoji: '👋', titulo: 'Seja bem-vindo(a)!', sub: 'primeira vez aqui? Fica à vontade' },
+  { id: 'ate_mais', emoji: '🍻', titulo: 'Saúde!', sub: 'um brinde pra essa mesa' },
+  { id: 'elogio', emoji: '⭐', titulo: 'Adoramos vir aqui!', sub: 'elogio pro restaurante' }
 ];
 function entrarKDS(){
   $('kdsNome').textContent = (CFG && CFG.nome) || 'Cozinha';
@@ -1987,7 +1993,7 @@ function escutarMensagensTV(){
 function mostrarMensagemTV(msg){
   const tpl = MENSAGENS_TV.find(m => m.id === msg.tipo) || MENSAGENS_TV[0];
   $('kdsMsgEmoji').textContent = tpl.emoji;
-  $('kdsMsgTexto').textContent = tpl.titulo;
+  $('kdsMsgTexto').textContent = msg.texto ? (tpl.titulo + ' ' + msg.texto) : tpl.titulo;
   $('kdsMsgSub').textContent = tpl.sub;
   const confeteBox = $('kdsConfete');
   const cores = ['#E8A33D', '#2FBF71', '#E0554D', '#8fd0ff', '#fff'];
@@ -2007,14 +2013,44 @@ function mostrarMensagemTV(msg){
 }
 function entrarMensagemTV(){
   $('msgTVLista').innerHTML = MENSAGENS_TV.map(m => `
-    <button class="btn o" style="width:100%;text-align:left;margin-top:10px;display:flex;align-items:center;gap:12px;padding:14px" onclick="enviarMensagemTV('${m.id}')">
+    <button class="btn o" style="width:100%;text-align:left;margin-top:10px;display:flex;align-items:center;gap:12px;padding:14px" onclick="escolherMensagemTV('${m.id}')">
       <span style="font-size:30px">${m.emoji}</span>
       <span><b style="display:block">${esc(m.titulo)}</b><span style="font-size:12px;color:var(--mut)">${esc(m.sub)}</span></span>
-    </button>`).join('');
+    </button>`).join('') + `
+    <div style="height:1px;background:var(--line);margin:16px 0"></div>
+    <button class="btn" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;padding:14px" onclick="escolherChamarGarcomTV()">
+      <span style="font-size:30px">🛎️</span>
+      <span><b style="display:block">Chamar o garçom</b><span style="font-size:12px;color:var(--mut)">informa sua mesa e o garçom é avisado</span></span>
+    </button>`;
   show('scMensagemTV');
 }
+function escolherMensagemTV(id){
+  const tpl = MENSAGENS_TV.find(m => m.id === id);
+  $('msgTVLista').innerHTML = `
+    <h3 style="font-size:18px">${tpl.emoji} ${esc(tpl.titulo)}</h3>
+    <label>Quer personalizar? (opcional)</label>
+    <input id="msgTVTexto" placeholder="ex: pro Heitor, com carinho…" maxlength="40">
+    <button class="btn g" style="margin-top:16px" onclick="enviarMensagemTV('${id}')">Enviar pra telinha 📺</button>
+    <button class="btn o" style="margin-top:10px" onclick="entrarMensagemTV()">← Voltar</button>`;
+}
+function escolherChamarGarcomTV(){
+  $('msgTVLista').innerHTML = `
+    <h3 style="font-size:18px">🛎️ Chamar o garçom</h3>
+    <label>Qual o número da sua mesa?</label>
+    <input id="msgTVMesa" type="number" inputmode="numeric" placeholder="ex: 12">
+    <button class="btn g" style="margin-top:16px" onclick="enviarChamarGarcomTV()">Chamar 🛎️</button>
+    <button class="btn o" style="margin-top:10px" onclick="entrarMensagemTV()">← Voltar</button>`;
+}
+async function enviarChamarGarcomTV(){
+  const mesa = parseInt($('msgTVMesa').value);
+  if(!mesa || mesa < 1){ toast('Digite o número da mesa'); return; }
+  await col('chamadas').add({ mesa, atendida: false, criadoEm: TS() });
+  show('scMensagemTVOk');
+  setTimeout(() => show('scCliente'), 2500);
+}
 async function enviarMensagemTV(tipo){
-  await col('mensagensTV').add({ tipo, criadoEm: TS() });
+  const texto = ($('msgTVTexto') && $('msgTVTexto').value.trim()) || '';
+  await col('mensagensTV').add({ tipo, texto, criadoEm: TS() });
   show('scMensagemTVOk');
   setTimeout(() => show('scCliente'), 2500);
 }
@@ -2051,7 +2087,7 @@ function renderKDS(){
       <div class="mesa">${p.mesa ? 'MESA ' + p.mesa : 'BALCÃO'}</div>
       <div class="itens">${(p.itens || []).map(it => `<div class="item">${it.qtd}× ${esc(it.nome)}</div>`).join('') || '<div class="item" style="color:#888;border:none">(sem itens)</div>'}</div>
       <div class="tempo"><span class="cron">0s</span></div>
-      ${pessoas.length ? `<div class="pessoa">👤 ${esc(pessoas.join(', '))}</div>` : (p.garcom ? `<div class="pessoa">${esc(p.garcom)}</div>` : '')}
+      ${p.garcom || pessoas.length ? `<div class="pessoa">${pessoas.length ? '👤 ' + esc(pessoas.join(', ')) : esc(p.garcom)}</div>` : ''}
       ${temToque ? (p.status !== 'pronto' ? `<div class="btn-pronto" onclick="marcarPronto('${p.id}')">👨‍🍳 Pronto</div>` : `<div class="btn-entregue" onclick="marcarEntregue('${p.id}')">✓ Entregue</div>`) : ''}
     </div>`;
   }).join('') || '<div style="grid-column:1/-1;text-align:center;color:#777;padding:60px 0;font-size:18px">🍃 Nenhum pedido em andamento</div>';
