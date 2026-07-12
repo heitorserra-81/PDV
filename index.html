@@ -92,16 +92,16 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .kds-card.aviso{border-color:#E8A33D;background:#2a2010}
 .kds-card.atrasado{border-color:#E0554D;background:#2a1512;animation:pulseKds 1.2s infinite}
 @keyframes pulseKds{0%,100%{box-shadow:0 0 0 0 rgba(224,85,77,.5)}50%{box-shadow:0 0 0 10px rgba(224,85,77,0)}}
-.kds-card .mesa{font-size:15px;font-weight:800;text-align:center;flex-shrink:0;color:#fff}
-.kds-card .itens{font-size:13px;margin-top:6px;flex-shrink:1;overflow:hidden;color:#fff}
-.kds-card .item{padding:2px 0;border-bottom:1px dashed #3a3a3a}
-.kds-card .mod{font-size:9px;color:#aaa;padding-left:8px}
-.kds-card .tempo{font-size:16px;font-weight:800;text-align:center;margin-top:auto;padding-top:6px;flex-shrink:0}
-.kds-card.andamento .tempo{color:#4aa3e0}
-.kds-card.aviso .tempo{color:#E8A33D}
-.kds-card.atrasado .tempo{color:#E0554D}
-.kds-card:not(.andamento):not(.aviso):not(.atrasado) .tempo{color:#2FBF71}
-.kds-card .pessoa{font-size:11px;color:#8fd0ff;text-align:center;flex-shrink:0}
+.kds-card .kmesa{font-size:15px;font-weight:800;text-align:center;flex-shrink:0;color:#fff}
+.kds-card .kitens{font-size:13px;margin-top:6px;flex-shrink:1;overflow:hidden;color:#fff}
+.kds-card .kitem{padding:2px 0;border-bottom:1px dashed #3a3a3a}
+.kds-card .kmod{font-size:9px;color:#aaa;padding-left:8px}
+.kds-card .ktempo{font-size:16px;font-weight:800;text-align:center;margin-top:auto;padding-top:6px;flex-shrink:0}
+.kds-card.andamento .ktempo{color:#4aa3e0}
+.kds-card.aviso .ktempo{color:#E8A33D}
+.kds-card.atrasado .ktempo{color:#E0554D}
+.kds-card:not(.andamento):not(.aviso):not(.atrasado) .ktempo{color:#2FBF71}
+.kds-card .kpessoa{font-size:11px;color:#8fd0ff;text-align:center;flex-shrink:0}
 .kds-card .btn-pronto{margin-top:6px;padding:8px;border-radius:9px;background:#E8A33D;color:#181410;font-weight:800;font-size:12.5px;text-align:center;flex-shrink:0}
 .kds-card .btn-entregue{margin-top:6px;padding:8px;border-radius:9px;background:#2FBF71;color:#0d1f14;font-weight:800;font-size:12.5px;text-align:center;flex-shrink:0}
 
@@ -1993,7 +1993,7 @@ function escutarMensagensTV(){
 function mostrarMensagemTV(msg){
   const tpl = MENSAGENS_TV.find(m => m.id === msg.tipo) || MENSAGENS_TV[0];
   $('kdsMsgEmoji').textContent = tpl.emoji;
-  $('kdsMsgTexto').textContent = msg.texto ? (tpl.titulo + ' ' + msg.texto) : tpl.titulo;
+  $('kdsMsgTexto').textContent = msg.texto || tpl.titulo;
   $('kdsMsgSub').textContent = tpl.sub;
   const confeteBox = $('kdsConfete');
   const cores = ['#E8A33D', '#2FBF71', '#E0554D', '#8fd0ff', '#fff'];
@@ -2024,14 +2024,21 @@ function entrarMensagemTV(){
     </button>`;
   show('scMensagemTV');
 }
+const EMOJIS_TV = ['🎉','❤️','🎂','🥳','🍻','🙏','⭐','👏','🔥','💍','🥹','😍','🤩','👋','🍕','🍰','💐','🎈','😂','🫶'];
 function escolherMensagemTV(id){
   const tpl = MENSAGENS_TV.find(m => m.id === id);
   $('msgTVLista').innerHTML = `
     <h3 style="font-size:18px">${tpl.emoji} ${esc(tpl.titulo)}</h3>
-    <label>Quer personalizar? (opcional)</label>
-    <input id="msgTVTexto" placeholder="ex: pro Heitor, com carinho…" maxlength="40">
+    <label>Escreve a mensagem do seu jeito</label>
+    <input id="msgTVTexto" value="${esc(tpl.titulo)}" maxlength="60">
+    <label style="margin-top:10px">Adiciona um emoji</label>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${EMOJIS_TV.map(e => `<button class="chip" onclick="inserirEmojiTV('${e}')" style="font-size:20px;padding:6px 10px">${e}</button>`).join('')}</div>
     <button class="btn g" style="margin-top:16px" onclick="enviarMensagemTV('${id}')">Enviar pra telinha 📺</button>
     <button class="btn o" style="margin-top:10px" onclick="entrarMensagemTV()">← Voltar</button>`;
+}
+function inserirEmojiTV(e){
+  const el = $('msgTVTexto');
+  el.value = (el.value + ' ' + e).trim();
 }
 function escolherChamarGarcomTV(){
   $('msgTVLista').innerHTML = `
@@ -2084,10 +2091,10 @@ function renderKDS(){
     const pessoas = [...new Set((p.itens || []).map(it => it.pessoa).filter(Boolean).map(pid => nomePessoaMesa2(mesaObj, pid)).filter(Boolean))];
     const desde = p.criadoEm ? p.criadoEm.toMillis() : Date.now();
     return `<div class="kds-card ${nivel}" data-desde="${desde}">
-      <div class="mesa">${p.mesa ? 'MESA ' + p.mesa : 'BALCÃO'}</div>
-      <div class="itens">${(p.itens || []).map(it => `<div class="item">${it.qtd}× ${esc(it.nome)}</div>`).join('') || '<div class="item" style="color:#888;border:none">(sem itens)</div>'}</div>
-      <div class="tempo"><span class="cron">0s</span></div>
-      ${p.garcom || pessoas.length ? `<div class="pessoa">${pessoas.length ? '👤 ' + esc(pessoas.join(', ')) : esc(p.garcom)}</div>` : ''}
+      <div class="kmesa">${p.mesa ? 'MESA ' + p.mesa : 'BALCÃO'}</div>
+      <div class="kitens">${(p.itens || []).map(it => `<div class="kitem">${it.qtd}× ${esc(it.nome)}</div>`).join('') || '<div class="kitem" style="color:#888;border:none">(sem itens)</div>'}</div>
+      <div class="ktempo"><span class="cron">0s</span></div>
+      ${p.garcom || pessoas.length ? `<div class="kpessoa">${pessoas.length ? '👤 ' + esc(pessoas.join(', ')) : esc(p.garcom)}</div>` : ''}
       ${temToque ? (p.status !== 'pronto' ? `<div class="btn-pronto" onclick="marcarPronto('${p.id}')">👨‍🍳 Pronto</div>` : `<div class="btn-entregue" onclick="marcarEntregue('${p.id}')">✓ Entregue</div>`) : ''}
     </div>`;
   }).join('') || '<div style="grid-column:1/-1;text-align:center;color:#777;padding:60px 0;font-size:18px">🍃 Nenhum pedido em andamento</div>';
@@ -2127,8 +2134,8 @@ function renderChamadasTV(){
     const min = c.criadoEm ? Math.floor((Date.now() - c.criadoEm.toMillis()) / 60000) : 0;
     const nivel = min >= 3 ? 'atrasado' : (min >= 1 ? 'aviso' : '');
     return `<div class="kds-card ${nivel}" style="align-items:center;text-align:center">
-      <div class="mesa" style="font-size:40px">🛎️ MESA ${c.mesa}</div>
-      <div class="tempo">há ${min < 1 ? 'menos de 1' : min}min</div>
+      <div class="kmesa" style="font-size:40px">🛎️ MESA ${c.mesa}</div>
+      <div class="ktempo">há ${min < 1 ? 'menos de 1' : min}min</div>
       <div class="btn-entregue" style="width:100%" onclick="atenderChamada('${c.id}')">✅ Atendida</div>
     </div>`;
   }).join('') || '<div style="grid-column:1/-1;text-align:center;color:#777;padding:60px 0;font-size:18px">🎉 Nenhuma chamada pendente</div>';
