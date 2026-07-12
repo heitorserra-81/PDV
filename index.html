@@ -85,18 +85,19 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 .mesa.conta{border-color:var(--green);animation:pulse 1.6s infinite}
 .mesa.conta .st{color:var(--green)}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(47,191,113,.45)}50%{box-shadow:0 0 0 9px rgba(47,191,113,0)}}
-.kds-card{background:#1a1a1a;border:3px solid #333;border-radius:14px;padding:10px;color:#fff;display:flex;flex-direction:column;gap:3px;overflow:hidden;min-height:0}
+.kds-card{background:#1a1a1a;border:3px solid #333;border-radius:14px;padding:10px;color:#fff;display:flex;flex-direction:column;gap:3px;min-height:0;min-width:0}
 .kds-card.aviso{border-color:#E8A33D;background:#2a2010}
 .kds-card.atrasado{border-color:#E0554D;background:#2a1512;animation:pulseKds 1.2s infinite}
 @keyframes pulseKds{0%,100%{box-shadow:0 0 0 0 rgba(224,85,77,.5)}50%{box-shadow:0 0 0 10px rgba(224,85,77,0)}}
-.kds-card .mesa{font-size:19px;font-weight:800;line-height:1.1}
-.kds-card .tempo{font-size:11.5px;font-weight:700;color:#E8A33D;line-height:1.2}
+.kds-card .mesa{font-size:clamp(13px,4.2vw,20px);font-weight:800;line-height:1.15;word-break:break-word;flex:0 0 auto}
+.kds-card .pessoa{font-size:clamp(10px,2.6vw,13px);font-weight:700;color:#8fd0ff;line-height:1.2;word-break:break-word;flex:0 0 auto}
+.kds-card .tempo{font-size:clamp(9px,2.4vw,11.5px);font-weight:700;color:#E8A33D;line-height:1.2;word-break:break-word;flex:0 0 auto;margin-top:2px}
 .kds-card.atrasado .tempo{color:#E0554D}
-.kds-card .itens{flex:1;overflow-y:auto;margin-top:2px}
-.kds-card .item{font-size:12.5px;padding:1.5px 0;border-bottom:1px dashed #3a3a3a;line-height:1.25}
-.kds-card .mod{font-size:10px;color:#aaa;padding-left:8px}
-.kds-card .btn-pronto{margin-top:4px;padding:8px;border-radius:9px;background:#E8A33D;color:#181410;font-weight:800;font-size:12.5px;text-align:center}
-.kds-card .btn-entregue{margin-top:4px;padding:8px;border-radius:9px;background:#2FBF71;color:#0d1f14;font-weight:800;font-size:12.5px;text-align:center}
+.kds-card .itens{flex:1;overflow-y:auto;margin-top:3px;min-height:0}
+.kds-card .item{font-size:clamp(10px,2.8vw,13px);padding:1.5px 0;border-bottom:1px dashed #3a3a3a;line-height:1.3;word-break:break-word}
+.kds-card .mod{font-size:9px;color:#aaa;padding-left:8px;word-break:break-word}
+.kds-card .btn-pronto{margin-top:4px;padding:7px;border-radius:9px;background:#E8A33D;color:#181410;font-weight:800;font-size:clamp(10px,2.6vw,12.5px);text-align:center;flex:0 0 auto}
+.kds-card .btn-entregue{margin-top:4px;padding:7px;border-radius:9px;background:#2FBF71;color:#0d1f14;font-weight:800;font-size:clamp(10px,2.6vw,12.5px);text-align:center;flex:0 0 auto}
 
 /* ====== cardápio ====== */
 .cats{display:flex;gap:8px;overflow-x:auto;padding:12px 0;scrollbar-width:none;position:sticky;top:69px;background:var(--bg);z-index:30}
@@ -420,7 +421,7 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px;font-wei
 <!-- ============ KDS (tela de cozinha) ============ -->
 <div class="screen" id="scKDS" style="background:#0a0a0a">
   <div class="top" style="background:#111"><div style="flex:1"><h2 id="kdsNome" style="font-size:22px">Cozinha</h2><div class="sub" id="kdsHora"></div></div><button class="iconb" onclick="show('scHome')">✕</button></div>
-  <div id="kdsGrid" style="display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(2,1fr);gap:12px;padding:16px;height:calc(100dvh - 90px)"></div>
+  <div id="kdsGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));grid-auto-rows:1fr;gap:10px;padding:14px;height:calc(100dvh - 90px)"></div>
 </div>
 
 <!-- ============ TV DE CHAMADAS ============ -->
@@ -1936,8 +1937,9 @@ function renderKDS(){
     const pessoas = [...new Set((p.itens || []).map(it => it.pessoa).filter(Boolean).map(pid => nomePessoaMesa2(mesaObj, pid)).filter(Boolean))];
     return `<div class="kds-card ${nivel}">
       <div class="mesa">${p.mesa ? 'MESA ' + p.mesa : 'BALCÃO'}</div>
-      <div class="tempo">${min < 1 ? 'agora' : 'há ' + min + 'min'}${p.garcom ? ' · ' + esc(p.garcom) : ''}${pessoas.length ? ' · ' + esc(pessoas.join(', ')) : ''}</div>
+      ${pessoas.length ? `<div class="pessoa">👤 ${esc(pessoas.join(', '))}</div>` : ''}
       <div class="itens">${(p.itens || []).map(it => `<div class="item">${it.qtd}× ${esc(it.nome)}</div>`).join('') || '<div class="item" style="color:#888;border:none">(sem itens)</div>'}</div>
+      <div class="tempo">${min < 1 ? 'agora' : 'há ' + min + 'min'}${p.garcom ? ' · ' + esc(p.garcom) : ''}</div>
       ${p.status !== 'pronto' ? `<div class="btn-pronto" onclick="marcarPronto('${p.id}')">👨‍🍳 Pronto</div>` : `<div class="btn-entregue" onclick="marcarEntregue('${p.id}')">✓ Entregue</div>`}
     </div>`;
   }).join('') || '<div style="grid-column:1/-1;text-align:center;color:#777;padding:60px 0;font-size:18px">🍃 Nenhum pedido em andamento</div>';
